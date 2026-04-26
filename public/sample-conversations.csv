@@ -1,0 +1,25 @@
+conversation_id,agent_name,team_name,channel,transcript_text,conversation_date,customer_id
+CONV-0001,Priya Sharma,Tier 1 Support,chat,"Customer: My order hasn't arrived and it's been 10 days.
+Agent: I'm really sorry for the delay, let me pull up your order right now. Can you share your order ID?
+Customer: It's #A7231.
+Agent: Thanks. I can see it's stuck at the warehouse. I'm escalating this to our logistics team and I'll personally follow up. You'll get an update by tomorrow 5 PM, and I'm also issuing a 10% goodwill credit for the inconvenience.
+Customer: Thank you, that's helpful.",2026-04-20,CUST-5521
+CONV-0002,Rahul Verma,Tier 1 Support,email,"Hi, I wanted to check the status of my refund request from last week.
+
+Hi Rohan, thanks for reaching out. I checked and your refund of Rs 2499 was processed on April 18 and should hit your account within 3-5 working days. Reference number is REF-88123. Let me know if you don't see it by April 25.
+
+Thanks, got it.",2026-04-21,CUST-1182
+CONV-0003,Anita Desai,Tier 2 Support,voice_transcript,"Agent: Thank you for calling, this is Anita, how can I help?
+Customer: My internet has been down for 2 days and no one is helping.
+Agent: I'm sorry about that. Let me run a line check right now... I can see there's an outage in your area, ETA for restoration is 4 hours. I'll also credit you 2 days of rental. Is there anything else?
+Customer: No, that's fine.",2026-04-22,CUST-9981
+CONV-0004,Priya Sharma,Tier 1 Support,chat,"Customer: hey is this the right place to cancel my subscription
+Agent: yeah go to settings and click cancel
+Customer: ok thanks",2026-04-22,CUST-3342
+CONV-0005,Sameer Khan,Tier 2 Support,email,"Customer wrote: I've been charged twice for the same order, please refund.
+
+Hi Neha, I can see the duplicate charge of Rs 1299 on April 20. I've initiated a refund which will reflect in 5-7 working days. I've also added a note to your account so our billing team monitors for any recurrence. Reference: REF-88456. Apologies for the trouble.",2026-04-23,CUST-4451
+CONV-0006,Rahul Verma,Tier 1 Support,chat,"Customer: app is crashing every time I open it
+Agent: try reinstalling
+Customer: done, still crashing
+Agent: idk then maybe wait for an update",2026-04-23,CUST-7723

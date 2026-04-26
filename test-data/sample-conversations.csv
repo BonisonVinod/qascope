@@ -1,0 +1,970 @@
+conversation_id,agent_name,team_name,channel,transcript_text,conversation_date,customer_id
+TEST-AVER-0001,Ananya Reddy,Mumbai-Tier2,voice_transcript,"[Ananya Reddy]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Ananya Reddy]: Okay let me check. What's your account number?
+[Customer]: It's 852787.
+[Ananya Reddy]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Ananya Reddy]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Ananya Reddy]: Within 48 hours.
+[Customer]: Fine.
+[Ananya Reddy]: Anything else?
+[Customer]: No.
+[Ananya Reddy]: Bye.",2026-04-11,CUST-4483
+TEST-AVER-0002,Rohan Desai,Delhi-Email,voice_transcript,"[Rohan Desai]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Rohan Desai]: Okay let me check. What's your account number?
+[Customer]: It's 514850.
+[Rohan Desai]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Rohan Desai]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Rohan Desai]: Within 48 hours.
+[Customer]: Fine.
+[Rohan Desai]: Anything else?
+[Customer]: No.
+[Rohan Desai]: Bye.",2026-04-21,CUST-8517
+TEST-COMP-0003,Rahul Singh,Mumbai-Tier1,chat,"[Customer]: I forgot my password and lost access to my email. Can you tell me what email is on file?
+[Rahul Singh]: Sure, no problem. The email on your account is vinay@gmail.com and the registered number is +91-98765-28301.
+[Customer]: Oh okay thanks.
+[Rahul Singh]: Also your last 4 of card on file is 5040, want me to read it back?
+[Customer]: Yeah read it.
+[Rahul Singh]: It's 9830. Anything else?
+[Customer]: No thanks.",2026-04-09,CUST-8019
+TEST-EXCE-0004,Meera Gupta,Delhi-Email,email,"Hi Kavita,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #57447.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Meera Gupta",2026-04-08,CUST-3266
+TEST-AVER-0005,Karan Shah,Bangalore-Voice,chat,"[Customer]: My subscription was charged twice this month.
+[Karan Shah]: Hi Ajay, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Karan Shah]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Karan Shah]: Great. Anything else?
+[Customer]: No.
+[Karan Shah]: Have a nice day.",2026-04-03,CUST-1771
+TEST-AVER-0006,Priya Iyer,Mumbai-Tier1,voice_transcript,"[Priya Iyer]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Priya Iyer]: Okay let me check. What's your account number?
+[Customer]: It's 757924.
+[Priya Iyer]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Priya Iyer]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Priya Iyer]: Within 48 hours.
+[Customer]: Fine.
+[Priya Iyer]: Anything else?
+[Customer]: No.
+[Priya Iyer]: Bye.",2026-04-06,CUST-7916
+TEST-EXCE-0007,Meera Gupta,Delhi-Email,chat,"[Customer]: Hi, my order 60432 hasn't arrived. It's been 8 days.
+[Meera Gupta]: Hi Suresh, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 7252?
+[Customer]: Yes that's right.
+[Meera Gupta]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Meera Gupta]: My pleasure Suresh. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Meera Gupta]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-20,CUST-8668
+TEST-AVER-0008,Karan Shah,Bangalore-Voice,chat,"[Customer]: My subscription was charged twice this month.
+[Karan Shah]: Hi Vinay, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Karan Shah]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Karan Shah]: Great. Anything else?
+[Customer]: No.
+[Karan Shah]: Have a nice day.",2026-04-18,CUST-1188
+TEST-GOOD-0009,Rohan Desai,Delhi-Email,email,"Hi Suresh,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #99353.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Rohan Desai",2026-04-18,CUST-5371
+TEST-RUDE-0010,Rohan Desai,Delhi-Email,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Rohan Desai]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Rohan Desai]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Rohan Desai]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Rohan Desai]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Rohan Desai]: Have a nice day.",2026-04-04,CUST-5808
+TEST-AVER-0011,Arjun Kumar,Bangalore-Voice,chat,"[Customer]: My subscription was charged twice this month.
+[Arjun Kumar]: Hi Anita, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Arjun Kumar]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Arjun Kumar]: Great. Anything else?
+[Customer]: No.
+[Arjun Kumar]: Have a nice day.",2026-04-15,CUST-1053
+TEST-EXCE-0012,Tanvi Agarwal,Delhi-Email,email,"Hi Vinay,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #75612.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Tanvi Agarwal",2026-04-06,CUST-9317
+TEST-AVER-0013,Priya Iyer,Mumbai-Tier1,chat,"[Customer]: My subscription was charged twice this month.
+[Priya Iyer]: Hi Vinay, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Priya Iyer]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Priya Iyer]: Great. Anything else?
+[Customer]: No.
+[Priya Iyer]: Have a nice day.",2026-04-21,CUST-9317
+TEST-AVER-0014,Meera Gupta,Delhi-Email,chat,"[Customer]: My subscription was charged twice this month.
+[Meera Gupta]: Hi Pooja, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Meera Gupta]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Meera Gupta]: Great. Anything else?
+[Customer]: No.
+[Meera Gupta]: Have a nice day.",2026-04-05,CUST-7126
+TEST-AVER-0015,Rahul Singh,Mumbai-Tier1,chat,"[Customer]: My subscription was charged twice this month.
+[Rahul Singh]: Hi Nisha, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Rahul Singh]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Rahul Singh]: Great. Anything else?
+[Customer]: No.
+[Rahul Singh]: Have a nice day.",2026-04-17,CUST-1009
+TEST-AVER-0016,Meera Gupta,Delhi-Email,voice_transcript,"[Meera Gupta]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Meera Gupta]: Okay let me check. What's your account number?
+[Customer]: It's 612340.
+[Meera Gupta]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Meera Gupta]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Meera Gupta]: Within 48 hours.
+[Customer]: Fine.
+[Meera Gupta]: Anything else?
+[Customer]: No.
+[Meera Gupta]: Bye.",2026-04-01,CUST-2832
+TEST-AVER-0017,Sneha Patel,Mumbai-Tier2,voice_transcript,"[Sneha Patel]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Sneha Patel]: Okay let me check. What's your account number?
+[Customer]: It's 351083.
+[Sneha Patel]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Sneha Patel]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Sneha Patel]: Within 48 hours.
+[Customer]: Fine.
+[Sneha Patel]: Anything else?
+[Customer]: No.
+[Sneha Patel]: Bye.",2026-04-02,CUST-4946
+TEST-COMP-0018,Meera Gupta,Delhi-Email,chat,"[Customer]: I forgot my password and lost access to my email. Can you tell me what email is on file?
+[Meera Gupta]: Sure, no problem. The email on your account is suresh@gmail.com and the registered number is +91-98765-21226.
+[Customer]: Oh okay thanks.
+[Meera Gupta]: Also your last 4 of card on file is 8962, want me to read it back?
+[Customer]: Yeah read it.
+[Meera Gupta]: It's 2133. Anything else?
+[Customer]: No thanks.",2026-04-18,CUST-3060
+TEST-RUDE-0019,Rahul Singh,Mumbai-Tier1,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Rahul Singh]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Rahul Singh]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Rahul Singh]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Rahul Singh]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Rahul Singh]: Have a nice day.",2026-04-18,CUST-3705
+TEST-AVER-0020,Vikram Joshi,Mumbai-Tier2,voice_transcript,"[Vikram Joshi]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Vikram Joshi]: Okay let me check. What's your account number?
+[Customer]: It's 736059.
+[Vikram Joshi]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Vikram Joshi]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Vikram Joshi]: Within 48 hours.
+[Customer]: Fine.
+[Vikram Joshi]: Anything else?
+[Customer]: No.
+[Vikram Joshi]: Bye.",2026-04-14,CUST-4470
+TEST-AVER-0021,Karan Shah,Bangalore-Voice,voice_transcript,"[Karan Shah]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Karan Shah]: Okay let me check. What's your account number?
+[Customer]: It's 847581.
+[Karan Shah]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Karan Shah]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Karan Shah]: Within 48 hours.
+[Customer]: Fine.
+[Karan Shah]: Anything else?
+[Customer]: No.
+[Karan Shah]: Bye.",2026-04-10,CUST-7537
+TEST-GOOD-0022,Rohan Desai,Delhi-Email,email,"Hi Lakshmi,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #67422.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Rohan Desai",2026-04-17,CUST-8397
+TEST-AVER-0023,Priya Iyer,Mumbai-Tier1,voice_transcript,"[Priya Iyer]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Priya Iyer]: Okay let me check. What's your account number?
+[Customer]: It's 335612.
+[Priya Iyer]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Priya Iyer]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Priya Iyer]: Within 48 hours.
+[Customer]: Fine.
+[Priya Iyer]: Anything else?
+[Customer]: No.
+[Priya Iyer]: Bye.",2026-04-03,CUST-6539
+TEST-LOW_-0024,Aarav Mehta,Mumbai-Tier1,email,"Hi Manoj, ticket received. Will update soon. Thanks, Aarav Mehta",2026-04-18,CUST-4770
+TEST-RUDE-0025,Meera Gupta,Delhi-Email,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Meera Gupta]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Meera Gupta]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Meera Gupta]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Meera Gupta]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Meera Gupta]: Have a nice day.",2026-04-01,CUST-2163
+TEST-AVER-0026,Tanvi Agarwal,Delhi-Email,voice_transcript,"[Tanvi Agarwal]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Tanvi Agarwal]: Okay let me check. What's your account number?
+[Customer]: It's 340062.
+[Tanvi Agarwal]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Tanvi Agarwal]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Tanvi Agarwal]: Within 48 hours.
+[Customer]: Fine.
+[Tanvi Agarwal]: Anything else?
+[Customer]: No.
+[Tanvi Agarwal]: Bye.",2026-04-03,CUST-1514
+TEST-RUDE-0027,Sneha Patel,Mumbai-Tier2,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Sneha Patel]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Sneha Patel]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Sneha Patel]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Sneha Patel]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Sneha Patel]: Have a nice day.",2026-04-17,CUST-4899
+TEST-GOOD-0028,Vikram Joshi,Mumbai-Tier2,email,"Hi Ajay,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #38080.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Vikram Joshi",2026-04-18,CUST-3167
+TEST-RUDE-0029,Tanvi Agarwal,Delhi-Email,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Tanvi Agarwal]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Tanvi Agarwal]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Tanvi Agarwal]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Tanvi Agarwal]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Tanvi Agarwal]: Have a nice day.",2026-04-19,CUST-8744
+TEST-AVER-0030,Ananya Reddy,Mumbai-Tier2,voice_transcript,"[Ananya Reddy]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Ananya Reddy]: Okay let me check. What's your account number?
+[Customer]: It's 946721.
+[Ananya Reddy]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Ananya Reddy]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Ananya Reddy]: Within 48 hours.
+[Customer]: Fine.
+[Ananya Reddy]: Anything else?
+[Customer]: No.
+[Ananya Reddy]: Bye.",2026-04-14,CUST-4119
+TEST-EXCE-0031,Priya Iyer,Mumbai-Tier1,email,"Hi Suresh,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #96374.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Priya Iyer",2026-04-14,CUST-6804
+TEST-AVER-0032,Arjun Kumar,Bangalore-Voice,voice_transcript,"[Arjun Kumar]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Arjun Kumar]: Okay let me check. What's your account number?
+[Customer]: It's 589710.
+[Arjun Kumar]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Arjun Kumar]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Arjun Kumar]: Within 48 hours.
+[Customer]: Fine.
+[Arjun Kumar]: Anything else?
+[Customer]: No.
+[Arjun Kumar]: Bye.",2026-04-24,CUST-1887
+TEST-AVER-0033,Rohan Desai,Delhi-Email,chat,"[Customer]: My subscription was charged twice this month.
+[Rohan Desai]: Hi Suresh, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Rohan Desai]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Rohan Desai]: Great. Anything else?
+[Customer]: No.
+[Rohan Desai]: Have a nice day.",2026-04-02,CUST-7596
+TEST-AVER-0034,Tanvi Agarwal,Delhi-Email,chat,"[Customer]: My subscription was charged twice this month.
+[Tanvi Agarwal]: Hi Lakshmi, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Tanvi Agarwal]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Tanvi Agarwal]: Great. Anything else?
+[Customer]: No.
+[Tanvi Agarwal]: Have a nice day.",2026-04-04,CUST-5073
+TEST-AVER-0035,Ananya Reddy,Mumbai-Tier2,chat,"[Customer]: My subscription was charged twice this month.
+[Ananya Reddy]: Hi Pooja, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Ananya Reddy]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Ananya Reddy]: Great. Anything else?
+[Customer]: No.
+[Ananya Reddy]: Have a nice day.",2026-04-18,CUST-8350
+TEST-AVER-0036,Rahul Singh,Mumbai-Tier1,voice_transcript,"[Rahul Singh]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Rahul Singh]: Okay let me check. What's your account number?
+[Customer]: It's 292401.
+[Rahul Singh]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Rahul Singh]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Rahul Singh]: Within 48 hours.
+[Customer]: Fine.
+[Rahul Singh]: Anything else?
+[Customer]: No.
+[Rahul Singh]: Bye.",2026-04-09,CUST-8579
+TEST-LOW_-0037,Ananya Reddy,Mumbai-Tier2,email,"Hi Suresh, ticket received. Will update soon. Thanks, Ananya Reddy",2026-04-15,CUST-2604
+TEST-AVER-0038,Aarav Mehta,Mumbai-Tier1,voice_transcript,"[Aarav Mehta]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Aarav Mehta]: Okay let me check. What's your account number?
+[Customer]: It's 976638.
+[Aarav Mehta]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Aarav Mehta]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Aarav Mehta]: Within 48 hours.
+[Customer]: Fine.
+[Aarav Mehta]: Anything else?
+[Customer]: No.
+[Aarav Mehta]: Bye.",2026-04-01,CUST-2528
+TEST-RUDE-0039,Ananya Reddy,Mumbai-Tier2,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Ananya Reddy]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Ananya Reddy]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Ananya Reddy]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Ananya Reddy]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Ananya Reddy]: Have a nice day.",2026-04-14,CUST-8956
+TEST-EXCE-0040,Deepa Nair,Bangalore-Voice,email,"Hi Pooja,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #62565.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Deepa Nair",2026-04-02,CUST-3697
+TEST-AVER-0041,Arjun Kumar,Bangalore-Voice,voice_transcript,"[Arjun Kumar]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Arjun Kumar]: Okay let me check. What's your account number?
+[Customer]: It's 509386.
+[Arjun Kumar]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Arjun Kumar]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Arjun Kumar]: Within 48 hours.
+[Customer]: Fine.
+[Arjun Kumar]: Anything else?
+[Customer]: No.
+[Arjun Kumar]: Bye.",2026-04-09,CUST-8454
+TEST-GOOD-0042,Vikram Joshi,Mumbai-Tier2,email,"Hi Kavita,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #82845.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Vikram Joshi",2026-04-22,CUST-8973
+TEST-AVER-0043,Rahul Singh,Mumbai-Tier1,voice_transcript,"[Rahul Singh]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Rahul Singh]: Okay let me check. What's your account number?
+[Customer]: It's 411120.
+[Rahul Singh]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Rahul Singh]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Rahul Singh]: Within 48 hours.
+[Customer]: Fine.
+[Rahul Singh]: Anything else?
+[Customer]: No.
+[Rahul Singh]: Bye.",2026-04-07,CUST-1958
+TEST-AVER-0044,Meera Gupta,Delhi-Email,voice_transcript,"[Meera Gupta]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Meera Gupta]: Okay let me check. What's your account number?
+[Customer]: It's 163918.
+[Meera Gupta]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Meera Gupta]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Meera Gupta]: Within 48 hours.
+[Customer]: Fine.
+[Meera Gupta]: Anything else?
+[Customer]: No.
+[Meera Gupta]: Bye.",2026-04-24,CUST-6138
+TEST-GOOD-0045,Aarav Mehta,Mumbai-Tier1,email,"Hi Ravi,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #86569.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Aarav Mehta",2026-04-16,CUST-9238
+TEST-AVER-0046,Karan Shah,Bangalore-Voice,chat,"[Customer]: My subscription was charged twice this month.
+[Karan Shah]: Hi Anita, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Karan Shah]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Karan Shah]: Great. Anything else?
+[Customer]: No.
+[Karan Shah]: Have a nice day.",2026-04-02,CUST-9320
+TEST-AVER-0047,Priya Iyer,Mumbai-Tier1,chat,"[Customer]: My subscription was charged twice this month.
+[Priya Iyer]: Hi Anita, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Priya Iyer]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Priya Iyer]: Great. Anything else?
+[Customer]: No.
+[Priya Iyer]: Have a nice day.",2026-04-03,CUST-2113
+TEST-AVER-0048,Rohan Desai,Delhi-Email,chat,"[Customer]: My subscription was charged twice this month.
+[Rohan Desai]: Hi Pooja, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Rohan Desai]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Rohan Desai]: Great. Anything else?
+[Customer]: No.
+[Rohan Desai]: Have a nice day.",2026-04-13,CUST-2964
+TEST-EXCE-0049,Meera Gupta,Delhi-Email,chat,"[Customer]: Hi, my order 85880 hasn't arrived. It's been 8 days.
+[Meera Gupta]: Hi Pooja, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 1651?
+[Customer]: Yes that's right.
+[Meera Gupta]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Meera Gupta]: My pleasure Pooja. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Meera Gupta]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-20,CUST-2343
+TEST-AVER-0050,Arjun Kumar,Bangalore-Voice,voice_transcript,"[Arjun Kumar]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Arjun Kumar]: Okay let me check. What's your account number?
+[Customer]: It's 692683.
+[Arjun Kumar]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Arjun Kumar]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Arjun Kumar]: Within 48 hours.
+[Customer]: Fine.
+[Arjun Kumar]: Anything else?
+[Customer]: No.
+[Arjun Kumar]: Bye.",2026-04-17,CUST-6183
+TEST-LOW_-0051,Vikram Joshi,Mumbai-Tier2,email,"Hi Pooja, ticket received. Will update soon. Thanks, Vikram Joshi",2026-04-22,CUST-6147
+TEST-AVER-0052,Ananya Reddy,Mumbai-Tier2,voice_transcript,"[Ananya Reddy]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Ananya Reddy]: Okay let me check. What's your account number?
+[Customer]: It's 515011.
+[Ananya Reddy]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Ananya Reddy]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Ananya Reddy]: Within 48 hours.
+[Customer]: Fine.
+[Ananya Reddy]: Anything else?
+[Customer]: No.
+[Ananya Reddy]: Bye.",2026-04-05,CUST-5915
+TEST-EXCE-0053,Deepa Nair,Bangalore-Voice,chat,"[Customer]: Hi, my order 19508 hasn't arrived. It's been 8 days.
+[Deepa Nair]: Hi Lakshmi, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 1152?
+[Customer]: Yes that's right.
+[Deepa Nair]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Deepa Nair]: My pleasure Lakshmi. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Deepa Nair]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-15,CUST-2638
+TEST-AVER-0054,Priya Iyer,Mumbai-Tier1,voice_transcript,"[Priya Iyer]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Priya Iyer]: Okay let me check. What's your account number?
+[Customer]: It's 323508.
+[Priya Iyer]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Priya Iyer]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Priya Iyer]: Within 48 hours.
+[Customer]: Fine.
+[Priya Iyer]: Anything else?
+[Customer]: No.
+[Priya Iyer]: Bye.",2026-04-17,CUST-5345
+TEST-GOOD-0055,Rahul Singh,Mumbai-Tier1,email,"Hi Lakshmi,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #19016.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Rahul Singh",2026-04-08,CUST-7054
+TEST-AVER-0056,Vikram Joshi,Mumbai-Tier2,voice_transcript,"[Vikram Joshi]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Vikram Joshi]: Okay let me check. What's your account number?
+[Customer]: It's 559469.
+[Vikram Joshi]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Vikram Joshi]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Vikram Joshi]: Within 48 hours.
+[Customer]: Fine.
+[Vikram Joshi]: Anything else?
+[Customer]: No.
+[Vikram Joshi]: Bye.",2026-04-18,CUST-5956
+TEST-AVER-0057,Meera Gupta,Delhi-Email,chat,"[Customer]: My subscription was charged twice this month.
+[Meera Gupta]: Hi Nisha, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Meera Gupta]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Meera Gupta]: Great. Anything else?
+[Customer]: No.
+[Meera Gupta]: Have a nice day.",2026-04-01,CUST-5905
+TEST-AVER-0058,Rohan Desai,Delhi-Email,chat,"[Customer]: My subscription was charged twice this month.
+[Rohan Desai]: Hi Suresh, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Rohan Desai]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Rohan Desai]: Great. Anything else?
+[Customer]: No.
+[Rohan Desai]: Have a nice day.",2026-04-05,CUST-5333
+TEST-GOOD-0059,Priya Iyer,Mumbai-Tier1,email,"Hi Suresh,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #82512.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Priya Iyer",2026-04-05,CUST-5462
+TEST-AVER-0060,Vikram Joshi,Mumbai-Tier2,chat,"[Customer]: My subscription was charged twice this month.
+[Vikram Joshi]: Hi Manoj, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Vikram Joshi]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Vikram Joshi]: Great. Anything else?
+[Customer]: No.
+[Vikram Joshi]: Have a nice day.",2026-04-07,CUST-6617
+TEST-GOOD-0061,Ananya Reddy,Mumbai-Tier2,email,"Hi Vinay,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #76244.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Ananya Reddy",2026-04-16,CUST-5114
+TEST-EXCE-0062,Aarav Mehta,Mumbai-Tier1,chat,"[Customer]: Hi, my order 93136 hasn't arrived. It's been 8 days.
+[Aarav Mehta]: Hi Suresh, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 7939?
+[Customer]: Yes that's right.
+[Aarav Mehta]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Aarav Mehta]: My pleasure Suresh. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Aarav Mehta]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-09,CUST-1722
+TEST-EXCE-0063,Aarav Mehta,Mumbai-Tier1,chat,"[Customer]: Hi, my order 27146 hasn't arrived. It's been 8 days.
+[Aarav Mehta]: Hi Lakshmi, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 5291?
+[Customer]: Yes that's right.
+[Aarav Mehta]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Aarav Mehta]: My pleasure Lakshmi. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Aarav Mehta]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-06,CUST-8239
+TEST-AVER-0064,Karan Shah,Bangalore-Voice,chat,"[Customer]: My subscription was charged twice this month.
+[Karan Shah]: Hi Kavita, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Karan Shah]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Karan Shah]: Great. Anything else?
+[Customer]: No.
+[Karan Shah]: Have a nice day.",2026-04-18,CUST-1158
+TEST-RUDE-0065,Priya Iyer,Mumbai-Tier1,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Priya Iyer]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Priya Iyer]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Priya Iyer]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Priya Iyer]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Priya Iyer]: Have a nice day.",2026-04-23,CUST-3442
+TEST-GOOD-0066,Karan Shah,Bangalore-Voice,email,"Hi Ravi,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #58393.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Karan Shah",2026-04-19,CUST-3426
+TEST-RUDE-0067,Arjun Kumar,Bangalore-Voice,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Arjun Kumar]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Arjun Kumar]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Arjun Kumar]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Arjun Kumar]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Arjun Kumar]: Have a nice day.",2026-04-02,CUST-6050
+TEST-AVER-0068,Sneha Patel,Mumbai-Tier2,voice_transcript,"[Sneha Patel]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Sneha Patel]: Okay let me check. What's your account number?
+[Customer]: It's 475190.
+[Sneha Patel]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Sneha Patel]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Sneha Patel]: Within 48 hours.
+[Customer]: Fine.
+[Sneha Patel]: Anything else?
+[Customer]: No.
+[Sneha Patel]: Bye.",2026-04-07,CUST-5088
+TEST-COMP-0069,Rohan Desai,Delhi-Email,chat,"[Customer]: I forgot my password and lost access to my email. Can you tell me what email is on file?
+[Rohan Desai]: Sure, no problem. The email on your account is suresh@gmail.com and the registered number is +91-98765-56357.
+[Customer]: Oh okay thanks.
+[Rohan Desai]: Also your last 4 of card on file is 7658, want me to read it back?
+[Customer]: Yeah read it.
+[Rohan Desai]: It's 3532. Anything else?
+[Customer]: No thanks.",2026-04-08,CUST-3662
+TEST-GOOD-0070,Rahul Singh,Mumbai-Tier1,email,"Hi Kavita,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #13248.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Rahul Singh",2026-04-06,CUST-6442
+TEST-EXCE-0071,Arjun Kumar,Bangalore-Voice,chat,"[Customer]: Hi, my order 44970 hasn't arrived. It's been 8 days.
+[Arjun Kumar]: Hi Pooja, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 3608?
+[Customer]: Yes that's right.
+[Arjun Kumar]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Arjun Kumar]: My pleasure Pooja. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Arjun Kumar]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-23,CUST-2771
+TEST-COMP-0072,Arjun Kumar,Bangalore-Voice,voice_transcript,"[Arjun Kumar]: Hello.
+[Customer]: I want a full refund, the product is broken.
+[Arjun Kumar]: Done, I'll process a full refund right now.
+[Customer]: Really? That fast?
+[Arjun Kumar]: Yes I can override the 7-day return window for you, no problem.
+[Customer]: And I get it back today?
+[Arjun Kumar]: Yes today, guaranteed.
+[Customer]: Great.
+[Arjun Kumar]: Bye.",2026-04-16,CUST-4644
+TEST-AVER-0073,Ananya Reddy,Mumbai-Tier2,chat,"[Customer]: My subscription was charged twice this month.
+[Ananya Reddy]: Hi Ajay, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Ananya Reddy]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Ananya Reddy]: Great. Anything else?
+[Customer]: No.
+[Ananya Reddy]: Have a nice day.",2026-04-12,CUST-6000
+TEST-COMP-0074,Ananya Reddy,Mumbai-Tier2,chat,"[Customer]: I forgot my password and lost access to my email. Can you tell me what email is on file?
+[Ananya Reddy]: Sure, no problem. The email on your account is pooja@gmail.com and the registered number is +91-98765-13101.
+[Customer]: Oh okay thanks.
+[Ananya Reddy]: Also your last 4 of card on file is 4164, want me to read it back?
+[Customer]: Yeah read it.
+[Ananya Reddy]: It's 7528. Anything else?
+[Customer]: No thanks.",2026-04-11,CUST-5564
+TEST-AVER-0075,Priya Iyer,Mumbai-Tier1,voice_transcript,"[Priya Iyer]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Priya Iyer]: Okay let me check. What's your account number?
+[Customer]: It's 468203.
+[Priya Iyer]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Priya Iyer]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Priya Iyer]: Within 48 hours.
+[Customer]: Fine.
+[Priya Iyer]: Anything else?
+[Customer]: No.
+[Priya Iyer]: Bye.",2026-04-21,CUST-9346
+TEST-RUDE-0076,Arjun Kumar,Bangalore-Voice,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Arjun Kumar]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Arjun Kumar]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Arjun Kumar]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Arjun Kumar]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Arjun Kumar]: Have a nice day.",2026-04-11,CUST-1452
+TEST-GOOD-0077,Priya Iyer,Mumbai-Tier1,email,"Hi Vinay,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #33405.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Priya Iyer",2026-04-19,CUST-5349
+TEST-AVER-0078,Aarav Mehta,Mumbai-Tier1,chat,"[Customer]: My subscription was charged twice this month.
+[Aarav Mehta]: Hi Suresh, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Aarav Mehta]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Aarav Mehta]: Great. Anything else?
+[Customer]: No.
+[Aarav Mehta]: Have a nice day.",2026-04-20,CUST-8119
+TEST-RUDE-0079,Sneha Patel,Mumbai-Tier2,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Sneha Patel]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Sneha Patel]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Sneha Patel]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Sneha Patel]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Sneha Patel]: Have a nice day.",2026-04-14,CUST-9379
+TEST-RUDE-0080,Priya Iyer,Mumbai-Tier1,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Priya Iyer]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Priya Iyer]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Priya Iyer]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Priya Iyer]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Priya Iyer]: Have a nice day.",2026-04-19,CUST-4114
+TEST-AVER-0081,Vikram Joshi,Mumbai-Tier2,chat,"[Customer]: My subscription was charged twice this month.
+[Vikram Joshi]: Hi Ravi, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Vikram Joshi]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Vikram Joshi]: Great. Anything else?
+[Customer]: No.
+[Vikram Joshi]: Have a nice day.",2026-04-23,CUST-8144
+TEST-GOOD-0082,Aarav Mehta,Mumbai-Tier1,email,"Hi Nisha,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #80575.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Aarav Mehta",2026-04-22,CUST-4228
+TEST-GOOD-0083,Sneha Patel,Mumbai-Tier2,email,"Hi Kavita,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #19171.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Sneha Patel",2026-04-22,CUST-6409
+TEST-RUDE-0084,Meera Gupta,Delhi-Email,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Meera Gupta]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Meera Gupta]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Meera Gupta]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Meera Gupta]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Meera Gupta]: Have a nice day.",2026-04-22,CUST-3041
+TEST-LOW_-0085,Tanvi Agarwal,Delhi-Email,email,"Hi Vinay, ticket received. Will update soon. Thanks, Tanvi Agarwal",2026-04-17,CUST-6067
+TEST-EXCE-0086,Rohan Desai,Delhi-Email,chat,"[Customer]: Hi, my order 52753 hasn't arrived. It's been 8 days.
+[Rohan Desai]: Hi Kavita, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 7592?
+[Customer]: Yes that's right.
+[Rohan Desai]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Rohan Desai]: My pleasure Kavita. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Rohan Desai]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-23,CUST-5844
+TEST-AVER-0087,Karan Shah,Bangalore-Voice,voice_transcript,"[Karan Shah]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Karan Shah]: Okay let me check. What's your account number?
+[Customer]: It's 301158.
+[Karan Shah]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Karan Shah]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Karan Shah]: Within 48 hours.
+[Customer]: Fine.
+[Karan Shah]: Anything else?
+[Customer]: No.
+[Karan Shah]: Bye.",2026-04-14,CUST-7211
+TEST-RUDE-0088,Rohan Desai,Delhi-Email,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Rohan Desai]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Rohan Desai]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Rohan Desai]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Rohan Desai]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Rohan Desai]: Have a nice day.",2026-04-20,CUST-5930
+TEST-EXCE-0089,Arjun Kumar,Bangalore-Voice,email,"Hi Nisha,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #10053.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Arjun Kumar",2026-04-10,CUST-5700
+TEST-AVER-0090,Ananya Reddy,Mumbai-Tier2,chat,"[Customer]: My subscription was charged twice this month.
+[Ananya Reddy]: Hi Kavita, let me check. I see one charge on the 5th.
+[Customer]: But I see two on my statement.
+[Ananya Reddy]: It might be a pending hold that will drop off. Can you check again in 2-3 days?
+[Customer]: Okay I guess.
+[Ananya Reddy]: Great. Anything else?
+[Customer]: No.
+[Ananya Reddy]: Have a nice day.",2026-04-19,CUST-6279
+TEST-RUDE-0091,Deepa Nair,Bangalore-Voice,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Deepa Nair]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Deepa Nair]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Deepa Nair]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Deepa Nair]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Deepa Nair]: Have a nice day.",2026-04-15,CUST-4501
+TEST-EXCE-0092,Karan Shah,Bangalore-Voice,email,"Hi Ajay,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #32241.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Karan Shah",2026-04-22,CUST-2389
+TEST-GOOD-0093,Vikram Joshi,Mumbai-Tier2,email,"Hi Nisha,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #97012.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Vikram Joshi",2026-04-21,CUST-6491
+TEST-GOOD-0094,Priya Iyer,Mumbai-Tier1,email,"Hi Pooja,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #98184.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Priya Iyer",2026-04-10,CUST-4680
+TEST-AVER-0095,Ananya Reddy,Mumbai-Tier2,voice_transcript,"[Ananya Reddy]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Ananya Reddy]: Okay let me check. What's your account number?
+[Customer]: It's 125611.
+[Ananya Reddy]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Ananya Reddy]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Ananya Reddy]: Within 48 hours.
+[Customer]: Fine.
+[Ananya Reddy]: Anything else?
+[Customer]: No.
+[Ananya Reddy]: Bye.",2026-04-02,CUST-5011
+TEST-AVER-0096,Deepa Nair,Bangalore-Voice,voice_transcript,"[Deepa Nair]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is slow, very slow.
+[Deepa Nair]: Okay let me check. What's your account number?
+[Customer]: It's 991014.
+[Deepa Nair]: Hmm, I don't see anything obvious. Try restarting your router.
+[Customer]: I already did that twice.
+[Deepa Nair]: Okay let me raise a ticket. You'll get a call back.
+[Customer]: When?
+[Deepa Nair]: Within 48 hours.
+[Customer]: Fine.
+[Deepa Nair]: Anything else?
+[Customer]: No.
+[Deepa Nair]: Bye.",2026-04-03,CUST-8461
+TEST-COMP-0097,Arjun Kumar,Bangalore-Voice,voice_transcript,"[Arjun Kumar]: Hello.
+[Customer]: I want a full refund, the product is broken.
+[Arjun Kumar]: Done, I'll process a full refund right now.
+[Customer]: Really? That fast?
+[Arjun Kumar]: Yes I can override the 7-day return window for you, no problem.
+[Customer]: And I get it back today?
+[Arjun Kumar]: Yes today, guaranteed.
+[Customer]: Great.
+[Arjun Kumar]: Bye.",2026-04-07,CUST-7291
+TEST-EXCE-0098,Deepa Nair,Bangalore-Voice,chat,"[Customer]: Hi, my order 41979 hasn't arrived. It's been 8 days.
+[Deepa Nair]: Hi Kavita, I'm so sorry to hear that. Let me look into this for you right away. Can I confirm your registered phone number ends in 3417?
+[Customer]: Yes that's right.
+[Deepa Nair]: Thank you for confirming. I can see your order shipped on the 5th but got delayed at the regional hub. I've personally escalated this and you'll have it within 48 hours. As an apology, I'm adding a 10% credit to your next order.
+[Customer]: Oh that's great, thanks!
+[Deepa Nair]: My pleasure Kavita. You'll get an SMS when it's out for delivery. Is there anything else I can help with?
+[Customer]: No that's all.
+[Deepa Nair]: Thanks for your patience and for being a valued customer. Have a great day!",2026-04-21,CUST-1090
+TEST-EXCE-0099,Priya Iyer,Mumbai-Tier1,email,"Hi Kavita,
+
+Thank you for writing in. I understand you'd like to update the shipping address on order #38683.
+
+I've checked and the order hasn't been dispatched yet, so I've updated the address as requested. You'll receive a confirmation email shortly with the new details.
+
+Is there anything else I can help with?
+
+Best regards,
+Priya Iyer",2026-04-06,CUST-9486
+TEST-RUDE-0100,Deepa Nair,Bangalore-Voice,chat,"[Customer]: Why is my refund taking so long? It's been 3 weeks!
+[Deepa Nair]: It says here you have to wait 21 working days. Read the policy.
+[Customer]: That's not acceptable.
+[Deepa Nair]: Sorry that's just how it is. Nothing I can do.
+[Customer]: Can I speak to your supervisor?
+[Deepa Nair]: They'll tell you the same thing.
+[Customer]: I want to escalate this!
+[Deepa Nair]: Fine, I'll send you the escalation email. But it won't help.
+[Customer]: This is terrible service.
+[Deepa Nair]: Have a nice day.",2026-04-18,CUST-5082

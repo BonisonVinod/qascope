@@ -1,0 +1,47 @@
+"conversation_id","agent_name","team_name","channel","transcript_text","conversation_date","customer_id"
+"SMOKE-AVG-001","Ananya Reddy","Mumbai-Tier2","voice_transcript","[Ananya Reddy]: Hello, thank you for calling. How can I help?
+[Customer]: My internet is down since yesterday.
+[Ananya Reddy]: I am sorry to hear that. Let me check.
+[Customer]: Please be quick.
+[Ananya Reddy]: I have raised a ticket for you. Engineer will visit by 6 PM.","2026-04-22T10:30:00Z","CUST-2001"
+"SMOKE-AVG-002","Rahul Sharma","Bangalore-Voice","voice_transcript","[Rahul Sharma]: Good morning, how can I assist?
+[Customer]: My recharge failed but money got deducted.
+[Rahul Sharma]: Let me look up your account. Can I have your registered number?
+[Customer]: 9876543210.
+[Rahul Sharma]: I see the failed transaction. Refund will reflect in 5 working days.","2026-04-22T11:00:00Z","CUST-2002"
+"SMOKE-EXC-003","Meera Gupta","Delhi-Email","email","Hi Kavita,
+Thanks for reaching out about your delayed order #45221. I have just spoken with our logistics partner and your package will arrive by Thursday. As an apology, I have added a 10 percent voucher to your account valid for 30 days. Please write back if anything else is unclear.
+Best, Meera","2026-04-22T13:20:00Z","CUST-2003"
+"SMOKE-EXC-004","Priya Iyer","Chennai-Chat","chat","[Priya Iyer]: Hi! I see you are facing trouble logging in. Have you tried resetting your password?
+[Customer]: Yes, but the reset email never came.
+[Priya Iyer]: Got it. Let me trigger it manually from our end. Please check your spam folder too.
+[Customer]: Got it now, thanks!
+[Priya Iyer]: Wonderful, anything else I can help with?","2026-04-22T14:00:00Z","CUST-2004"
+"SMOKE-COMP-005","Vikram Singh","Mumbai-Tier2","voice_transcript","[Vikram Singh]: Hello, what do you want?
+[Customer]: I want to cancel my account.
+[Vikram Singh]: Fine, just give me your card number and I will close it.
+[Customer]: Why do you need my card number?
+[Vikram Singh]: To verify, just tell me.","2026-04-22T15:30:00Z","CUST-2005"
+"SMOKE-RUDE-006","Karan Patel","Bangalore-Voice","voice_transcript","[Karan Patel]: What now?
+[Customer]: My bill seems wrong.
+[Karan Patel]: Read it properly. It is correct.
+[Customer]: I have read it three times.
+[Karan Patel]: Then you do not understand it. Goodbye.","2026-04-22T16:45:00Z","CUST-2006"
+"SMOKE-GOOD-007","Sneha Reddy","Delhi-Email","email","Hi Aarav,
+Thanks for the note. I see your refund of 1499 INR is pending review. I have escalated it to our finance team and you should see it credited within 3 working days. I will follow up if there is any delay on our side.
+Regards, Sneha","2026-04-23T09:15:00Z","CUST-2007"
+"SMOKE-GOOD-008","Arjun Nair","Chennai-Chat","chat","[Arjun Nair]: Hi, I can help with that.
+[Customer]: My device is heating up after the latest update.
+[Arjun Nair]: That is annoying. Try a soft restart and let me know if it persists.
+[Customer]: Did that, still heats up.
+[Arjun Nair]: Okay, I am raising a service request for inspection. You will get the details by SMS.","2026-04-23T10:30:00Z","CUST-2008"
+"SMOKE-LOWC-009","Ananya Reddy","Mumbai-Tier2","voice_transcript","[Ananya Reddy]: Yeah hi.
+[Customer]: Mumble mumble subscription mumble.
+[Ananya Reddy]: Okay, sure.
+[Customer]: So that is fine?
+[Ananya Reddy]: Yes that should be fine I think.","2026-04-23T12:00:00Z","CUST-2009"
+"SMOKE-AVG-010","Rahul Sharma","Bangalore-Voice","voice_transcript","[Rahul Sharma]: Hello, how can I help?
+[Customer]: I want to upgrade my plan.
+[Rahul Sharma]: Sure, you currently have the 199 plan. The next tier is 349 with double data.
+[Customer]: Okay, please switch me.
+[Rahul Sharma]: Done, you will get a confirmation message shortly.","2026-04-23T13:45:00Z","CUST-2010"

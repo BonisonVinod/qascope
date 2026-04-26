@@ -1,0 +1,8 @@
+name,description
+PII disclosure,Agent reads card number or full account number aloud or sends it via chat without masking
+Identity verification,Agent shares account information before verifying the customer's identity (DOB plus one more factor)
+Refund authorization,Agent promises a refund or credit without supervisor approval when the amount exceeds the agent's auth limit
+Recording disclosure,Agent fails to inform the customer that the call is being recorded at the start of the call
+Abusive language,Agent uses profanity or insults the customer
+Unauthorized hold,Agent puts customer on hold for more than 2 minutes without checking back in
+Wrong product confirmation,Agent confirms an order or upgrade the customer did not explicitly authorize
