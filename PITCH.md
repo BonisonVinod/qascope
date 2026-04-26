@@ -31,15 +31,31 @@ QAScope is an AI QA copilot for support teams. Upload your agent ↔ customer co
 - **No real billing yet.** Pilot tier (free, 500 conversations/month, 4 teammates) is what you'll use during beta. Growth/Pro pricing on `/billing` is what we plan to charge later — listed for transparency, not committed.
 - **OpenAI cost is on me during beta.** I'll bring my own key. Once the beta ends, you'd either pay a flat platform fee + your own OpenAI key, or an all-inclusive plan — your choice.
 
-## Pricing logic (when we go paid)
+## Pricing (when we go paid)
 
-| Plan | Conversations / mo | Seats included | Extra seats | Price |
+| Plan | Seats | Conversations / mo | OpenAI cost | Price |
 |---|---|---|---|---|
-| Pilot | 500 | 4 | — | Free |
-| Growth | 5,000 | 10 | ₹499 / seat / mo | ₹9,999 / mo |
-| Pro | 25,000 | 25 | ₹399 / seat / mo | ₹24,999 / mo |
+| Pilot | 1 | 500 | We cover it | Free |
+| Starter | 1 | Unlimited | You bring your key | ₹6,999 / mo |
+| Team | 3 | Unlimited | You bring your key | ₹14,999 / mo |
+| Pro | 5 | Unlimited | You bring your key | ₹29,999 / mo |
+| Extra seat | — | — | — | ₹2,999 / seat / mo |
 
-Seats = anyone you invite to your workspace (admins, QA managers, team leads, reviewers, viewers). For a 30-agent BPO with 1 admin + 2 QA managers + 4 team leads, you'd be at 7 seats — fits comfortably in Growth's 10. The agents themselves don't need seats; they're tracked as "agent" entities scored from CSV uploads, not as logged-in users.
+Seats = anyone you invite to your workspace (admins, QA managers, team leads, reviewers). The agents themselves don't need seats — they're scored from CSV uploads, not logged-in users. So a 30-agent BPO might only need 1-3 seats: a QA manager + maybe a team lead.
+
+**On the BYO LLM key:** paid tiers run on your own LLM account, so the provider bills you directly for tokens consumed (~₹0.20 per scored conversation on `gpt-4o-mini`). You see the live usage and exact rupee amount inside QAScope on the `/billing` page — no surprises. We charge a flat platform fee on top, which covers the workflow, dashboards, hosting, support.
+
+**You pick the provider.** QAScope works with any LLM that speaks the OpenAI Chat Completions API — that's a long list:
+
+- **OpenRouter** (recommended): one API key, hundreds of models. Switch between OpenAI, Anthropic Claude, Llama, Mistral, Gemini without changing your QAScope config — just pick a different model id. Great for cost arbitrage.
+- **OpenAI direct**: most reliable, often pricier
+- **Together AI / Groq**: cheap open-source models (Llama 3, Mixtral, etc.)
+- **Azure OpenAI**: for customers with existing MS contracts
+- **Custom**: any OpenAI-API-compatible endpoint (self-hosted, vLLM, LocalAI, etc.)
+
+You set this up once in Settings → LLM provider. Your key never leaves your workspace; we never proxy through any other party.
+
+**Why this works for you:** A 30-agent BPO running QAScope replaces about 1.5 human QA reviewers (~₹45K/month in salary). Paying ₹15K/month + ~₹2K in OpenAI is a 2-3× return on month one.
 
 ## Don't have real data to share?
 

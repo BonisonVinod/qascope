@@ -15,7 +15,7 @@ export type SecondReviewerDecision =
   | "confirm_override"
   | "deny_override"
   | "auto_confirmed";
-export type PlanName = "pilot" | "growth" | "pro";
+export type PlanName = "pilot" | "starter" | "team" | "growth" | "pro";
 export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled";
 
 
@@ -37,6 +37,10 @@ type ClientsRow = {
   sla_hours: number;
   second_reviewer_user_id: string | null;
   pass_threshold: number;
+  llm_provider: string | null;
+  llm_api_key: string | null;
+  llm_base_url: string | null;
+  llm_model: string | null;
   created_at: string;
 };
 
@@ -48,6 +52,17 @@ type UsersRow = {
   role: UserRole;
   team_name: string | null;
   created_at: string;
+};
+
+type OpenaiUsageRow = {
+  id: string;
+  client_id: string;
+  model: string;
+  feature: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  cost_inr_micro: number;
+  called_at: string;
 };
 
 type ReportTemplatesRow = {
@@ -191,6 +206,10 @@ export type Database = {
           sla_hours?: number;
           second_reviewer_user_id?: string | null;
           pass_threshold?: number;
+          llm_provider?: string | null;
+          llm_api_key?: string | null;
+          llm_base_url?: string | null;
+          llm_model?: string | null;
           created_at?: string;
         };
         Update: {
@@ -201,6 +220,10 @@ export type Database = {
           sla_hours?: number;
           second_reviewer_user_id?: string | null;
           pass_threshold?: number;
+          llm_provider?: string | null;
+          llm_api_key?: string | null;
+          llm_base_url?: string | null;
+          llm_model?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -224,6 +247,30 @@ export type Database = {
           role?: UserRole;
           team_name?: string | null;
           created_at?: string;
+        };
+        Relationships: [];
+      };
+      openai_usage: {
+        Row: OpenaiUsageRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          model: string;
+          feature: string;
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          cost_inr_micro?: number;
+          called_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          model?: string;
+          feature?: string;
+          prompt_tokens?: number;
+          completion_tokens?: number;
+          cost_inr_micro?: number;
+          called_at?: string;
         };
         Relationships: [];
       };

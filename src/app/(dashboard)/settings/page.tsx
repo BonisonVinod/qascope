@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ReviewSettingsForm } from "./review-settings-form";
+import { LlmSettingsForm } from "./llm-settings-form";
+import type { LlmProvider } from "@/lib/llm/client";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,9 @@ export default async function SettingsPage() {
   const { data: client } = clientId
     ? await supabase
         .from("clients")
-        .select("name, second_reviewer_user_id, sla_hours, pass_threshold")
+        .select(
+          "name, second_reviewer_user_id, sla_hours, pass_threshold, llm_provider, llm_api_key, llm_base_url, llm_model",
+        )
         .eq("id", clientId)
         .single()
     : { data: null };
@@ -82,6 +86,40 @@ export default async function SettingsPage() {
           </a>
         </div>
       </section>
+
+      {appUser?.role === "admin" && (
+        <section>
+          <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+            LLM provider
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+            QAScope works with any LLM that speaks the OpenAI Chat Completions
+            API. We recommend{" "}
+            <a
+              href="https://openrouter.ai"
+              target="_blank"
+              rel="noreferrer"
+              className="underline hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              OpenRouter
+            </a>{" "}
+            (one key, hundreds of models, pay-as-you-go), but OpenAI direct,
+            Together AI, Groq, Azure, or any custom endpoint also work. Leave
+            everything blank to fall back to the hosted Pilot key.
+          </p>
+
+          <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <LlmSettingsForm
+              current={{
+                provider: (client?.llm_provider as LlmProvider | null) ?? null,
+                apiKey: client?.llm_api_key ?? null,
+                baseUrl: client?.llm_base_url ?? null,
+                model: client?.llm_model ?? null,
+              }}
+            />
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">

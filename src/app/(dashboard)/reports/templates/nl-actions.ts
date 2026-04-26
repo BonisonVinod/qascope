@@ -29,7 +29,17 @@ export async function generateConfigFromDescription(
     return { ok: false, error: "Type what you want the report to show." };
   }
 
-  const result = await nlToConfig(description);
+  // Pull the workspace id so the LLM call gets logged into openai_usage.
+  const { data: me } = await supabase
+    .from("users")
+    .select("client_id")
+    .eq("id", user.id)
+    .single();
+
+  const ctx = me?.client_id
+    ? { supabase, clientId: me.client_id }
+    : undefined;
+  const result = await nlToConfig(description, ctx);
   if (!result.ok) return result;
   return { ok: true, config: result.config, description };
 }

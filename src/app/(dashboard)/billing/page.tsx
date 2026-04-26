@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PLANS, PLAN_ORDER, formatInr, getPlan } from "@/lib/billing/plans";
 import { getUsage } from "@/lib/billing/usage";
+import { formatMicroInr, formatTokens } from "@/lib/billing/openai-cost";
 import { ChangePlanButton } from "./change-plan-button";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,50 @@ export default async function BillingPage() {
         .is("accepted_at", null)
     : { count: 0 };
   const seatsUsed = (memberCount ?? 0) + (openInviteCount ?? 0);
+
+  // OpenAI usage this month — pulled from openai_usage rows we logged on
+  // every chatText call. Aggregated in JS to avoid an extra SQL view.
+  const monthStart = new Date();
+  monthStart.setUTCDate(1);
+  monthStart.setUTCHours(0, 0, 0, 0);
+  const { data: usageRows } = clientId
+    ? await supabase
+        .from("openai_usage")
+        .select("feature, prompt_tokens, completion_tokens, cost_inr_micro")
+        .eq("client_id", clientId)
+        .gte("called_at", monthStart.toISOString())
+        .limit(50_000)
+    : { data: [] };
+
+  type UsageBucket = {
+    feature: string;
+    calls: number;
+    promptTokens: number;
+    completionTokens: number;
+    costMicro: number;
+  };
+  const usageByFeature = new Map<string, UsageBucket>();
+  let totalCalls = 0;
+  let totalPromptTokens = 0;
+  let totalCompletionTokens = 0;
+  let totalCostMicro = 0;
+  for (const r of usageRows ?? []) {
+    totalCalls += 1;
+    totalPromptTokens += r.prompt_tokens ?? 0;
+    totalCompletionTokens += r.completion_tokens ?? 0;
+    totalCostMicro += r.cost_inr_micro ?? 0;
+    const b =
+      usageByFeature.get(r.feature) ??
+      { feature: r.feature, calls: 0, promptTokens: 0, completionTokens: 0, costMicro: 0 };
+    b.calls += 1;
+    b.promptTokens += r.prompt_tokens ?? 0;
+    b.completionTokens += r.completion_tokens ?? 0;
+    b.costMicro += r.cost_inr_micro ?? 0;
+    usageByFeature.set(r.feature, b);
+  }
+  const usageByFeatureRows = [...usageByFeature.values()].sort(
+    (a, b) => b.costMicro - a.costMicro,
+  );
 
   const currentPlan = getPlan(client?.active_plan ?? "pilot");
   const seatsOver = Math.max(0, seatsUsed - currentPlan.seatsIncluded);
@@ -161,6 +206,97 @@ export default async function BillingPage() {
             )}
           </p>
         </div>
+      </section>
+
+      {/* OpenAI usage this month — what they owe OpenAI directly when on a BYO-key tier. */}
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          LLM usage · this month
+        </h2>
+        <p className="mt-1 max-w-2xl text-xs text-zinc-500">
+          {currentPlan.byoOpenAiKey
+            ? "You bring your own OpenAI key on this plan, so OpenAI bills you directly. The numbers below are an estimate based on tokens consumed."
+            : "On the Pilot plan, QAScope covers the OpenAI cost. The numbers below are what you'd be paying if you upgrade — useful to budget."}
+        </p>
+
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-4">
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Estimated cost
+            </p>
+            <p className="mt-1 text-2xl font-semibold">
+              {formatMicroInr(totalCostMicro)}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">at current OpenAI rates</p>
+          </div>
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              API calls
+            </p>
+            <p className="mt-1 text-2xl font-semibold">
+              {totalCalls.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Prompt tokens
+            </p>
+            <p className="mt-1 text-2xl font-semibold">
+              {formatTokens(totalPromptTokens)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Completion tokens
+            </p>
+            <p className="mt-1 text-2xl font-semibold">
+              {formatTokens(totalCompletionTokens)}
+            </p>
+          </div>
+        </div>
+
+        {usageByFeatureRows.length > 0 && (
+          <div className="mt-4 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            <table className="w-full text-sm">
+              <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wider text-zinc-500 dark:bg-zinc-950">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Feature</th>
+                  <th className="px-4 py-2 font-medium">Calls</th>
+                  <th className="px-4 py-2 font-medium">Prompt tokens</th>
+                  <th className="px-4 py-2 font-medium">Completion tokens</th>
+                  <th className="px-4 py-2 text-right font-medium">Cost</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {usageByFeatureRows.map((b) => (
+                  <tr key={b.feature}>
+                    <td className="px-4 py-2 font-medium">
+                      {b.feature.replace("_", " ")}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">
+                      {b.calls.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">
+                      {formatTokens(b.promptTokens)}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">
+                      {formatTokens(b.completionTokens)}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {formatMicroInr(b.costMicro)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {usageByFeatureRows.length === 0 && (
+          <p className="mt-4 rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-4 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950">
+            No OpenAI calls yet this month. Upload a CSV and score it to see usage here.
+          </p>
+        )}
       </section>
 
       {/* Plan picker */}

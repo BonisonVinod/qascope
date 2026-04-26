@@ -153,6 +153,9 @@ export async function scoreConversation(
           system: systemInstruction,
           user: userMessage,
           responseJson: true,
+          supabase,
+          clientId: conv.client_id,
+          feature: "scoring",
         });
         const parsed = parseCriterionJson(raw);
         return { criterion: c, result: parsed };
@@ -251,6 +254,9 @@ export async function scoreConversation(
         })),
       }),
       temperature: 0.4,
+      supabase,
+      clientId: conv.client_id,
+      feature: "coaching",
     });
     await supabase
       .from("qa_scores")

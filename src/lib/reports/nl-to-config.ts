@@ -3,6 +3,8 @@ import {
   type ReportTemplateConfig,
 } from "@/lib/reports/template-engine";
 import { chatText } from "@/lib/scoring/openai";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
 /**
  * System prompt that teaches the model the exact JSON schema for a template
@@ -83,7 +85,10 @@ export type NlToConfigResult =
  * OpenAI call. The result is run through normalizeConfig so any out-of-range
  * or unknown fields get clamped/dropped before reaching the editor.
  */
-export async function nlToConfig(description: string): Promise<NlToConfigResult> {
+export async function nlToConfig(
+  description: string,
+  ctx?: { supabase: SupabaseClient<Database>; clientId: string },
+): Promise<NlToConfigResult> {
   const trimmed = description.trim();
   if (!trimmed) {
     return { ok: false, error: "Description is empty." };
@@ -99,6 +104,9 @@ export async function nlToConfig(description: string): Promise<NlToConfigResult>
       user: trimmed,
       responseJson: true,
       temperature: 0,
+      supabase: ctx?.supabase,
+      clientId: ctx?.clientId,
+      feature: "report_template",
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

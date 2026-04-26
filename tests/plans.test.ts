@@ -2,33 +2,50 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PLANS, PLAN_ORDER, getPlan, formatInr } from "../src/lib/billing/plans.ts";
 
-test("PLAN_ORDER lists pilot, growth, pro in that order", () => {
-  assert.deepEqual(PLAN_ORDER, ["pilot", "growth", "pro"]);
+test("PLAN_ORDER lists the 4 tiers in order", () => {
+  assert.deepEqual(PLAN_ORDER, ["pilot", "starter", "team", "pro"]);
 });
 
-test("PLANS has expected limits", () => {
+test("PLANS has expected conversation caps", () => {
   assert.equal(PLANS.pilot.monthlyLimit, 500);
-  assert.equal(PLANS.growth.monthlyLimit, 5_000);
-  assert.equal(PLANS.pro.monthlyLimit, 25_000);
+  assert.ok(PLANS.starter.monthlyLimit >= 1_000_000, "Starter should be unlimited");
+  assert.ok(PLANS.team.monthlyLimit >= 1_000_000);
+  assert.ok(PLANS.pro.monthlyLimit >= 1_000_000);
 });
 
 test("PLANS has expected pricing", () => {
   assert.equal(PLANS.pilot.monthlyPriceInr, 0);
-  assert.equal(PLANS.growth.monthlyPriceInr, 9_999);
-  assert.equal(PLANS.pro.monthlyPriceInr, 24_999);
+  assert.equal(PLANS.starter.monthlyPriceInr, 6_999);
+  assert.equal(PLANS.team.monthlyPriceInr, 14_999);
+  assert.equal(PLANS.pro.monthlyPriceInr, 29_999);
+});
+
+test("PLANS has expected seat counts", () => {
+  assert.equal(PLANS.pilot.seatsIncluded, 1);
+  assert.equal(PLANS.starter.seatsIncluded, 1);
+  assert.equal(PLANS.team.seatsIncluded, 3);
+  assert.equal(PLANS.pro.seatsIncluded, 5);
+});
+
+test("Pilot is hosted-OpenAI; paid tiers are BYO key", () => {
+  assert.equal(PLANS.pilot.byoOpenAiKey, false);
+  assert.equal(PLANS.starter.byoOpenAiKey, true);
+  assert.equal(PLANS.team.byoOpenAiKey, true);
+  assert.equal(PLANS.pro.byoOpenAiKey, true);
 });
 
 test("getPlan returns the requested plan", () => {
-  assert.equal(getPlan("growth").name, "growth");
+  assert.equal(getPlan("starter").name, "starter");
   assert.equal(getPlan("pro").name, "pro");
 });
 
-test("getPlan defaults to pilot when name is null", () => {
+test("getPlan defaults to pilot when name is null/undefined", () => {
   assert.equal(getPlan(null).name, "pilot");
+  assert.equal(getPlan(undefined).name, "pilot");
 });
 
-test("getPlan defaults to pilot when name is undefined", () => {
-  assert.equal(getPlan(undefined).name, "pilot");
+test("getPlan: legacy 'growth' maps to 'team' for backward compat", () => {
+  assert.equal(getPlan("growth").name, "team");
 });
 
 test("formatInr: zero -> 'Free'", () => {
@@ -36,18 +53,15 @@ test("formatInr: zero -> 'Free'", () => {
 });
 
 test("formatInr: small amount", () => {
-  // en-IN locale formats "999" without grouping
-  assert.equal(formatInr(999), "\u20b9999");
+  assert.equal(formatInr(999), "₹999");
 });
 
 test("formatInr: thousands use Indian grouping", () => {
-  // 9999 -> "9,999" in en-IN
-  assert.equal(formatInr(9_999), "\u20b99,999");
+  assert.equal(formatInr(9_999), "₹9,999");
 });
 
 test("formatInr: lakhs use Indian grouping", () => {
-  // 100000 -> "1,00,000" in en-IN
-  assert.equal(formatInr(100_000), "\u20b91,00,000");
+  assert.equal(formatInr(100_000), "₹1,00,000");
 });
 
 test("plans all have non-empty feature lists", () => {
