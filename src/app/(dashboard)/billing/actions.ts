@@ -77,6 +77,6 @@ export async function changePlan(
 
   return {
     ok: true,
-    message: `Plan changed to ${PLANS[requested].label}.`,
+    message: `Plan changed to ${plan.label}.`,
   };
 }
