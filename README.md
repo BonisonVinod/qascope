@@ -131,3 +131,11 @@ See [`DEPLOY.md`](./DEPLOY.md) for production deployment notes (Vercel + Supabas
 ## Pitch
 
 See [`PITCH.md`](./PITCH.md) for a short shareable summary you can paste into a message when inviting people to try the beta.
+
+## Beyond the MVP
+
+Strategic planning docs live in [`docs/`](./docs/README.md):
+
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md) — engineering work streams for V2 / V3 (real-time ingestion, agent self-coaching, calibration analytics, multi-rubric, voice ingestion, billing & data lifecycle)
+- [`docs/SALES.md`](./docs/SALES.md) — ICP, sales motion, pricing experiments, discovery script, objection handling, pipeline tracking
+- [`docs/MARKETING.md`](./docs/MARKETING.md) — warm-intro generation, LinkedIn cadence, content backlog, lead magnets, weekly metrics
