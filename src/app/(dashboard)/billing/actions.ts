@@ -40,7 +40,11 @@ export async function changePlan(
   if (!me.client_id) return { ok: false, error: "No client associated." };
 
   const requested = String(formData.get("plan") ?? "") as PlanName;
-  if (!PLAN_ORDER.includes(requested)) {
+  // PLAN_ORDER is the catalogue of currently-offered plans; widen the
+  // includes-check to a string array so legacy PlanName values that still
+  // exist in the DB (e.g. 'growth') are correctly rejected without a TS
+  // narrowing complaint.
+  if (!(PLAN_ORDER as readonly string[]).includes(requested)) {
     return { ok: false, error: "Unknown plan." };
   }
 
