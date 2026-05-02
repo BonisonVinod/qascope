@@ -1,10 +1,17 @@
 import type { ScoreStatus } from "@/lib/database.types";
 
+export type SourceCitation = {
+  document_id: string;
+  document_title: string;
+  chunk_id: string;
+};
+
 export type CriterionScore = {
   score: 0 | 1 | 2;
   confidence: number;
   explanation: string;
   evidence: string;
+  sources_used?: SourceCitation[];
 };
 
 export type ScoredCriterion = {
@@ -50,7 +57,12 @@ export function parseCriterionJson(raw: string): CriterionScore {
   const explanation = typeof p.explanation === "string" ? p.explanation : "";
   const evidence = typeof p.evidence === "string" ? p.evidence : "";
 
-  return { score, confidence, explanation, evidence };
+  // Parse sources_used if present
+  const sources_used = Array.isArray(p.sources_used)
+    ? (p.sources_used as SourceCitation[])
+    : undefined;
+
+  return { score, confidence, explanation, evidence, sources_used };
 }
 
 /**

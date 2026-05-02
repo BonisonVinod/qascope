@@ -8,6 +8,7 @@ import {
   buildCoachingUserMessage,
 } from "./prompts";
 import { chatText } from "./openai";
+import { retrieveKnowledge } from "./retrieval";
 import {
   parseCriterionJson,
   computeScoreTotals,
@@ -140,14 +141,26 @@ export async function scoreConversation(
             confidence: 0,
             explanation: `No prompt configured for sort_order ${c.sort_order}`,
             evidence: "",
+            sources_used: [],
           } as CriterionScore,
         };
       }
       // Augment compliance (sortOrder 1) with project-specific fatal rules.
-      const systemInstruction =
+      let systemInstruction =
         prompt.key === "compliance" && fatalRulesBlock
           ? prompt.systemInstruction + fatalRulesBlock
           : prompt.systemInstruction;
+
+      // Retrieve knowledge for this criterion and append to system instruction.
+      const knowledge = await retrieveKnowledge(
+        supabase,
+        conv.client_id,
+        c.name
+      );
+      if (knowledge && knowledge.context) {
+        systemInstruction += `\n\n---\nKNOWLEDGE BASE CONTEXT:\n${knowledge.context}\n---`;
+      }
+
       try {
         const raw = await chatText({
           system: systemInstruction,
@@ -158,7 +171,7 @@ export async function scoreConversation(
           feature: "scoring",
         });
         const parsed = parseCriterionJson(raw);
-        return { criterion: c, result: parsed };
+        return { criterion: c, result: parsed, retrievedSources: knowledge?.sources || [] };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         return {
@@ -168,7 +181,9 @@ export async function scoreConversation(
             confidence: 0,
             explanation: `Scoring error: ${msg}`,
             evidence: "",
+            sources_used: [],
           } as CriterionScore,
+          retrievedSources: [],
         };
       }
     }),
@@ -204,7 +219,7 @@ export async function scoreConversation(
     return { ok: false, error: `qa_scores insert failed: ${scoreErr?.message}` };
   }
 
-  // 7. Insert qa_score_details
+  // 7. Insert qa_score_details (including sources_used from the scorer)
   const details = results.map((r) => ({
     qa_score_id: scoreRow.id,
     criterion_id: r.criterion.id,
@@ -212,6 +227,7 @@ export async function scoreConversation(
     confidence: Math.round(r.result.confidence * 100) / 100,
     explanation: r.result.explanation.slice(0, 2000),
     evidence_span: r.result.evidence.slice(0, 2000),
+    sources_used: JSON.stringify(r.result.sources_used || []),
   }));
   const { error: detailsErr } = await supabase.from("qa_score_details").insert(details);
   if (detailsErr) {
@@ -246,30 +262,4 @@ export async function scoreConversation(
       system: COACHING_SYSTEM_INSTRUCTION,
       user: buildCoachingUserMessage({
         agentName,
-        transcript: conv.transcript_text,
-        scoresTable: results.map((r) => ({
-          criterion: r.criterion.name,
-          score: r.result.score,
-          explanation: r.result.explanation,
-        })),
-      }),
-      temperature: 0.4,
-      supabase,
-      clientId: conv.client_id,
-      feature: "coaching",
-    });
-    await supabase
-      .from("qa_scores")
-      .update({ coaching_note: coachingNote.trim() })
-      .eq("id", scoreRow.id);
-  } catch (e) {
-    console.error("Coaching note generation failed:", e);
-  }
-
-  return {
-    ok: true,
-    qaScoreId: scoreRow.id,
-    totalScore: roundedTotal,
-    status,
-  };
-}
+        tran
