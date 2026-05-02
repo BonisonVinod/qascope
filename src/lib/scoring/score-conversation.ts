@@ -261,5 +261,30 @@ export async function scoreConversation(
     const coachingNote = await chatText({
       system: COACHING_SYSTEM_INSTRUCTION,
       user: buildCoachingUserMessage({
-        agentName,
-        tran
+        transcript: conv.transcript_text,
+        scoresTable: results.map((r) => ({
+          criterion: r.criterion.name,
+          score: r.result.score,
+          explanation: r.result.explanation,
+        })),
+      }),
+      temperature: 0.4,
+      supabase,
+      clientId: conv.client_id,
+      feature: "coaching",
+    });
+    await supabase
+      .from("qa_scores")
+      .update({ coaching_note: coachingNote.trim() })
+      .eq("id", scoreRow.id);
+  } catch (e) {
+    console.error("Coaching note generation failed:", e);
+  }
+
+  return {
+    ok: true,
+    qaScoreId: scoreRow.id,
+    totalScore: roundedTotal,
+    status,
+  };
+}

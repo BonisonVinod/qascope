@@ -7,6 +7,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/upload", label: "Upload" },
   { href: "/rubrics", label: "Rubrics" },
+  { href: "/knowledge", label: "Knowledge" },
   { href: "/results", label: "Results" },
   { href: "/review-queue", label: "Review queue" },
   { href: "/reports", label: "Reports" },
@@ -28,7 +29,6 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Fetch the app user row (name, role, client_id) from public.users.
   const { data: appUser } = await supabase
     .from("users")
     .select("name, email, role, client_id")
@@ -37,13 +37,10 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Sidebar */}
       <aside className="sticky top-0 flex h-screen w-60 flex-col overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-8">
           <h1 className="text-lg font-semibold tracking-tight">QAScope</h1>
-          <p className="text-xs text-zinc-500">
-            {appUser?.name ?? user.email}
-          </p>
+          <p className="text-xs text-zinc-500">{appUser?.name ?? user.email}</p>
           {appUser?.role && (
             <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
               {appUser.role.replace("_", " ")}
@@ -73,7 +70,6 @@ export default async function DashboardLayout({
         </form>
       </aside>
 
-      {/* Main content */}
       <main className="flex-1 p-8">{children}</main>
     </div>
   );

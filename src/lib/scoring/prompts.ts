@@ -168,5 +168,18 @@ Avoid platitudes. Be direct but kind. Do NOT repeat the raw scores - the team le
 
 export function buildCoachingUserMessage(args: {
   agentName: string;
-  transcript: string;
-  scoresTable: { criterion: string; score: number;
+  scoresTable: { criterion: string; score: number; explanation: string }[];
+}): string {
+  const table = args.scoresTable
+    .map((s) => `- ${s.criterion}: ${s.score}/2 - ${s.explanation}`)
+    .join("\n");
+  return `Agent: ${args.agentName}
+
+Transcript:
+---
+${args.transcript}
+---
+
+Criterion scores:
+${table}`;
+}
