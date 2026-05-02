@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>QAScope — One-Pager</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #18181b;
+    font-size: 11pt;
+    line-height: 1.45;
+    background: #fafafa;
+  }
+
+  /* The page itself — fits A4 cleanly. Background framed for screen. Removed in print. */
+  .page {
+    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+    padding: 14mm 14mm 12mm;
+    margin: 12px auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  @media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; padding: 0; min-height: auto; }
+  }
+
+  .accent { color: #059669; }
+  .muted { color: #71717a; }
+
+  /* Header */
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #18181b;
+  }
+  .brand {
+    font-size: 22pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .brand .dot { color: #059669; }
+  .tagline {
+    margin-top: 6px;
+    font-size: 11pt;
+    color: #52525b;
+    max-width: 95mm;
+  }
+  .contact-block {
+    text-align: right;
+    font-size: 9pt;
+    color: #52525b;
+    line-height: 1.4;
+  }
+  .contact-block strong { color: #18181b; }
+
+  /* Hero */
+  .hero {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #f4f4f5;
+    border-left: 4px solid #059669;
+    border-radius: 4px;
+  }
+  .hero-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 8pt;
+    color: #059669;
+    font-weight: 700;
+  }
+  .hero h1 {
+    margin: 4px 0 6px;
+    font-size: 14pt;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .hero p { margin: 0; font-size: 10.5pt; color: #3f3f46; }
+
+  /* Two-column body */
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 14px;
+  }
+  .col h2 {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #71717a;
+    margin: 0 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e4e4e7;
+  }
+  .step, .feature { margin-bottom: 10px; }
+  .step h3, .feature h3 {
+    margin: 0 0 2px;
+    font-size: 10.5pt;
+    font-weight: 700;
+  }
+  .step h3 .num {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    background: #18181b;
+    color: #fff;
+    font-size: 9pt;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .step p, .feature p {
+    margin: 0;
+    font-size: 9.5pt;
+    color: #52525b;
+  }
+
+  /* Metrics band */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .metric {
+    background: #18181b;
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 6px;
+  }
+  .metric .num {
+    font-size: 16pt;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .metric .lbl {
+    margin-top: 4px;
+    font-size: 8pt;
+    color: #d4d4d8;
+    line-height: 1.2;
+  }
+
+  /* Pricing table */
+  .pricing {
+    margin-top: 14px;
+  }
+  .pricing-title {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #71717a;
+    margin: 0 0 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+  th, td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e4e4e7;
+  }
+  th {
+    background: #f4f4f5;
+    font-weight: 700;
+    font-size: 8.5pt;
+    color: #3f3f46;
+  }
+  td.center, th.center { text-align: center; }
+  .price-row td {
+    font-weight: 700;
+    font-size: 10pt;
+    color: #18181b;
+    background: #fafafa;
+  }
+  .price-row td.feat-pro {
+    background: #ecfdf5;
+    color: #059669;
+  }
+  .check { color: #059669; font-weight: 700; }
+  .dash { color: #d4d4d8; }
+  .seat-note {
+    margin: 6px 0 0;
+    font-size: 8.5pt;
+    color: #71717a;
+    font-style: italic;
+  }
+
+  /* Why-trust band */
+  .trust {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: #fffbeb;
+    border-radius: 4px;
+    font-size: 9.5pt;
+    color: #78350f;
+  }
+  .trust strong { color: #92400e; }
+
+  /* Footer CTA */
+  footer {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: #18181b;
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .cta-text {
+    font-size: 10.5pt;
+    line-height: 1.35;
+  }
+  .cta-text strong {
+    display: block;
+    font-size: 12pt;
+    margin-bottom: 2px;
+  }
+  .cta-links {
+    text-align: right;
+    font-size: 9.5pt;
+    line-height: 1.5;
+  }
+  .cta-links a {
+    color: #6ee7b7;
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <header>
+      <div>
+        <div class="brand">QAScope<span class="dot">.</span></div>
+        <div class="tagline">AI QA copilot for support teams. Score every conversation, not just 5%.</div>
+      </div>
+      <div class="contact-block">
+        <strong>Bonison Vinod</strong><br />
+        Founder &middot; ex-BPO Operator<br />
+        ai.ops.automation17@gmail.com<br />
+        qascope.app
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-eyebrow">The 5% problem</div>
+      <h1>Most QA teams review 5% of conversations. The other 95% is where compliance fails and coaching opportunities hide.</h1>
+      <p>QAScope scores every customer interaction against your rubric, flags compliance violations and low-scoring agents, and gives team leads a prioritized review queue with SLA-tracked auto-approve. Built by an ex-BPO operator for SMB BPOs in India.</p>
+    </section>
+
+    <!-- Two columns -->
+    <section class="columns">
+      <div class="col">
+        <h2>How it works</h2>
+        <div class="step">
+          <h3><span class="num">1</span>Upload conversations</h3>
+          <p>Upload a CSV from any source &mdash; Genesys, Five9, Zendesk, Excel exports. Auto-detect maps your columns to QAScope fields. Voice, email, chat all supported.</p>
+        </div>
+        <div class="step">
+          <h3><span class="num">2</span>AI scores against your rubric</h3>
+          <p>Every conversation graded on 7 weighted criteria + your project-specific fatal rules (e.g. PII verification, RBI compliance). Confidence scoring + a coaching note per agent.</p>
+        </div>
+        <div class="step">
+          <h3><span class="num">3</span>Two-tier human review</h3>
+          <p>Anything flagged for compliance or low confidence lands in a review queue with a configurable SLA. Team lead agrees or escalates. Auto-approves if not actioned in time.</p>
+        </div>
+      </div>
+      <div class="col">
+        <h2>What you get</h2>
+        <div class="feature">
+          <h3>Manager dashboard</h3>
+          <p>30-day KPIs, top/bottom agent leaderboards, by-team rollup, by-channel split, status mix, appeal correction rate.</p>
+        </div>
+        <div class="feature">
+          <h3>Saved report templates</h3>
+          <p>Build a custom report once via plain English (&ldquo;agents below 70% in Mumbai this week&rdquo;). Re-run it forever, free.</p>
+        </div>
+        <div class="feature">
+          <h3>Bring your own LLM</h3>
+          <p>Works with OpenAI, OpenRouter, Together AI, Groq, Azure, or any OpenAI-API-compatible endpoint. Your key, your tokens, transparent cost in the dashboard.</p>
+        </div>
+        <div class="feature">
+          <h3>Multi-tenant + RLS</h3>
+          <p>Postgres row-level security at the database. Your data is invisible to every other workspace.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Metrics -->
+    <section class="metrics">
+      <div class="metric"><div class="num">100%</div><div class="lbl">Conversation coverage from day 1</div></div>
+      <div class="metric"><div class="num">15 min</div><div class="lbl">Onboarding to first scored conversation</div></div>
+      <div class="metric"><div class="num">&#8377;0.20</div><div class="lbl">Avg LLM cost per scored conversation</div></div>
+      <div class="metric"><div class="num">2-tier</div><div class="lbl">Configurable review SLA</div></div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="pricing">
+      <div class="pricing-title">Pricing &middot; All paid tiers BYO LLM key</div>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="center">Pilot</th>
+            <th class="center">Starter</th>
+            <th class="center">Team</th>
+            <th class="center">Pro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Conversations / month</td>
+            <td class="center">500</td>
+            <td class="center">Unlimited</td>
+            <td class="center">Unlimited</td>
+            <td class="center">Unlimited</td>
+          </tr>
+          <tr>
+            <td>Seats included</td>
+            <td class="center">1</td>
+            <td class="center">1</td>
+            <td class="center">3</td>
+            <td class="center">5</td>
+          </tr>
+          <tr>
+            <td>LLM cost</td>
+            <td class="center">We cover</td>
+            <td class="center">BYO</td>
+            <td class="center">BYO</td>
+            <td class="center">BYO</td>
+          </tr>
+          <tr>
+            <td>Custom rubric + fatal rules</td>
+            <td class="center"><span class="check">&check;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+          </tr>
+          <tr>
+            <td>Saved report templates</td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+          </tr>
+          <tr>
+            <td>Multi-rubric (multi-campaign)</td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+          </tr>
+          <tr>
+            <td>First CRM integration</td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="dash">&mdash;</span></td>
+            <td class="center"><span class="check">&check;</span></td>
+          </tr>
+          <tr class="price-row">
+            <td>Price (INR / month)</td>
+            <td class="center">Free</td>
+            <td class="center">&#8377;6,999</td>
+            <td class="center">&#8377;14,999</td>
+            <td class="center feat-pro">&#8377;29,999</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="seat-note">Additional seats: &#8377;2,999/seat/month (&#8377;2,499 on Pro).</p>
+    </section>
+
+    <!-- Trust -->
+    <section class="trust">
+      <strong>Built by Bonison Vinod</strong>, ex-Operations Manager, who got tired of QA teams reviewing 5% of calls and missing 95% of risk. Fellow operators who tested an early version called it <em>&ldquo;the QA tool I&rsquo;d build if I had time.&rdquo;</em>
+    </section>
+
+    <!-- Footer CTA -->
+    <footer>
+      <div class="cta-text">
+        <strong>Want to interview the tool?</strong>
+        Same time commitment as screening a candidate &mdash; 30 minutes, on your data, no commitment.
+      </div>
+      <div class="cta-links">
+        <a href="mailto:ai.ops.automation17@gmail.com">ai.ops.automation17@gmail.com</a><br />
+        <a href="https://qascope.app">qascope.app</a><br />
+        <span style="color:#a1a1aa">Reply to schedule a 30-min walkthrough</span>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>
