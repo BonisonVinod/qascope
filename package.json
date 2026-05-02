@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --no-warnings --test tests/*.test.ts"
+    "test": "node --experimental-strip-types --no-warnings --env-file-if-exists=.env.local --test tests/*.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
