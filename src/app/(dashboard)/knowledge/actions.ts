@@ -232,3 +232,54 @@ export async function uploadDocumentAction(
     };
   }
 }
+
+export type DocumentDeleteResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+/**
+ * Delete a knowledge document. Cascade-deletes all its chunks.
+ * Authorization: only admin or qa_manager in the document's workspace can delete.
+ */
+export async function deleteDocumentAction(
+  documentId: string
+): Promise<DocumentDeleteResult> {
+  if (!documentId || typeof documentId !== "string") {
+    return { ok: false, error: "Missing document id." };
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Not signed in." };
+  }
+
+  const { data: appUser, error: appUserErr } = await supabase
+    .from("users")
+    .select("client_id, role")
+    .eq("id", user.id)
+    .single();
+  if (appUserErr || !appUser) {
+    return { ok: false, error: "Could not load your account." };
+  }
+
+  if (appUser.role !== "admin" && appUser.role !== "qa_manager") {
+    return { ok: false, error: "You don't have permission to delete documents." };
+  }
+
+  const { error: delErr } = await supabase
+    .from("workspace_documents")
+    .delete()
+    .eq("id", documentId)
+    .eq("workspace_id", appUser.client_id);
+
+  if (delErr) {
+    return { ok: false, error: `Failed to delete: ${delErr.message}` };
+  }
+
+  revalidatePath("/knowledge");
+  return { ok: true };
+}
