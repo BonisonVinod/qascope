@@ -24,6 +24,7 @@ export type DocumentUploadResult =
  * @returns DocumentUploadResult
  */
 export async function uploadDocumentAction(
+  _prev: DocumentUploadResult | undefined,
   formData: FormData
 ): Promise<DocumentUploadResult> {
   const file = formData.get("file");
