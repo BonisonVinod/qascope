@@ -1,50 +1,76 @@
 /**
  * Embedding utility for RAG ingest and retrieval.
- * Hardcoded to OpenAI's text-embedding-3-small (1536 dimensions) for v1.
  *
- * v1 uses the hosted OPENAI_API_KEY. BYO embedding provider (e.g., Cohere, Voyage)
- * is deferred to v2.
+ * Uses AWS Bedrock — Amazon Titan Text Embeddings v1 (1536 dimensions),
+ * authenticated via a Bedrock API key (Bearer token).
+ *
+ * Required env vars:
+ *   AWS_REGION                 — e.g. us-east-1
+ *   AWS_BEARER_TOKEN_BEDROCK   — long-term Bedrock API key
+ *
+ * Output is a 1536-dimensional vector that drops directly into the
+ * vector(1536) column on document_chunks (see migration 011).
+ *
+ * No SDK dependency — calls the Bedrock REST endpoint directly.
  */
 
-import OpenAI from "openai";
+const TITAN_EMBED_MODEL_ID = "amazon.titan-embed-text-v1";
+const EMBEDDING_DIM = 1536;
 
-let _embeddingClient: OpenAI | null = null;
-
-/**
- * Get or create the embedding client.
- * Uses OPENAI_API_KEY from environment.
- */
-function getEmbeddingClient(): OpenAI {
-  if (!_embeddingClient) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY is not set in environment.");
-    }
-    _embeddingClient = new OpenAI({ apiKey });
+function getBedrockEndpoint(): string {
+  const region = process.env.AWS_REGION;
+  if (!region) {
+    throw new Error("AWS_REGION is not set in environment.");
   }
-  return _embeddingClient;
+  return `https://bedrock-runtime.${region}.amazonaws.com`;
 }
 
-/**
- * Get an embedding for a text string.
- * Returns a 1536-dimensional vector.
- *
- * @param text - Text to embed
- * @returns Promise<number[]> — the 1536-dim embedding vector
- * @throws if OPENAI_API_KEY is not set or the API call fails
- */
-export async function getEmbedding(text: string): Promise<number[]> {
-  const client = getEmbeddingClient();
-  const response = await client.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text,
-    encoding_format: "float",
-  });
+function getBearerToken(): string {
+  const token = process.env.AWS_BEARER_TOKEN_BEDROCK;
+  if (!token) {
+    throw new Error(
+      "AWS_BEARER_TOKEN_BEDROCK is not set. Generate a Bedrock API key in the AWS console."
+    );
+  }
+  return token;
+}
 
-  const embedding = response.data[0]?.embedding;
-  if (!embedding) {
-    throw new Error("No embedding returned from OpenAI.");
+export async function getEmbedding(text: string): Promise<number[]> {
+  if (!text || text.trim().length === 0) {
+    throw new Error("getEmbedding called with empty text.");
   }
 
-  return embedding;
+  const endpoint = getBedrockEndpoint();
+  const token = getBearerToken();
+  const url = `${endpoint}/model/${TITAN_EMBED_MODEL_ID}/invoke`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ inputText: text }),
+  });
+
+  if (!response.ok) {
+    const errBody = await response.text().catch(() => "<no body>");
+    throw new Error(
+      `Bedrock embedding call failed (${response.status} ${response.statusText}): ${errBody}`
+    );
+  }
+
+  const data = (await response.json()) as {
+    embedding?: number[];
+    inputTextTokenCount?: number;
+  };
+
+  if (!Array.isArray(data.embedding) || data.embedding.length !== EMBEDDING_DIM) {
+    throw new Error(
+      `Bedrock returned unexpected embedding shape (length=${data.embedding?.length}).`
+    );
+  }
+
+  return data.embedding;
 }
