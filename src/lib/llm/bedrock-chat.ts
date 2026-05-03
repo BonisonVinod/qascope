@@ -7,13 +7,13 @@
  *   AWS_REGION                  — e.g. us-east-1
  *   AWS_BEARER_TOKEN_BEDROCK    — long-term Bedrock API key
  * Optional:
- *   BEDROCK_CHAT_MODEL_ID       — defaults to us.anthropic.claude-3-5-sonnet-20241022-v2:0
+ *   BEDROCK_CHAT_MODEL_ID       — defaults to global.anthropic.claude-sonnet-4-6
  *
  * No SDK dep — calls Bedrock REST endpoint directly with Bearer auth and
  * the Anthropic Messages API request shape.
  */
 
-const DEFAULT_MODEL_ID = "us.anthropic.claude-3-5-sonnet-20241022-v2:0";
+const DEFAULT_MODEL_ID = "global.anthropic.claude-sonnet-4-6";
 const MAX_RETRIES = 4;
 const INITIAL_BACKOFF_MS = 800;
 const MAX_BACKOFF_MS = 8000;
