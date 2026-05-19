@@ -1,19 +1,23 @@
 /**
- * Bedrock Anthropic Claude chat — used as scoring fallback when
- * AWS_BEARER_TOKEN_BEDROCK is set and no workspace-level LLM provider
- * is configured.
+ * Bedrock chat — provider-agnostic, uses the Bedrock Converse API.
+ *
+ * The Converse API has a single request/response shape that works across
+ * every Bedrock-hosted model family (Amazon Nova, Anthropic Claude, Meta
+ * Llama, Mistral, Cohere, etc.). To swap the underlying model, change the
+ * BEDROCK_CHAT_MODEL_ID env var — no code change required.
  *
  * Required env vars:
  *   AWS_REGION                  — e.g. us-east-1
- *   AWS_BEARER_TOKEN_BEDROCK    — long-term Bedrock API key
+ *   AWS_BEARER_TOKEN_BEDROCK    — long-term Bedrock API key (Bearer token)
  * Optional:
- *   BEDROCK_CHAT_MODEL_ID       — defaults to global.anthropic.claude-sonnet-4-6
+ *   BEDROCK_CHAT_MODEL_ID       — defaults to us.amazon.nova-pro-v1:0
  *
- * No SDK dep — calls Bedrock REST endpoint directly with Bearer auth and
- * the Anthropic Messages API request shape.
+ * No SDK dep — calls the Bedrock REST endpoint directly with Bearer auth.
+ *
+ * Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
  */
 
-const DEFAULT_MODEL_ID = "global.anthropic.claude-sonnet-4-6";
+const DEFAULT_MODEL_ID = "us.amazon.nova-pro-v1:0";
 const MAX_RETRIES = 4;
 const INITIAL_BACKOFF_MS = 800;
 const MAX_BACKOFF_MS = 8000;
@@ -31,7 +35,11 @@ function getBearerToken(): string {
 }
 
 export function getBedrockChatModelId(): string {
-  return process.env.BEDROCK_CHAT_MODEL_ID || DEFAULT_MODEL_ID;
+  return (
+    process.env.BEDROCK_CHAT_MODEL_ID ||
+    process.env.LLM_MODEL ||
+    DEFAULT_MODEL_ID
+  );
 }
 
 export function bedrockChatAvailable(): boolean {
@@ -42,21 +50,35 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-interface BedrockClaudeUsage {
-  input_tokens?: number;
-  output_tokens?: number;
+interface ConverseUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
 }
 
-interface BedrockClaudeResponse {
-  content?: Array<{ type: string; text?: string }>;
-  usage?: BedrockClaudeUsage;
-  stop_reason?: string;
+interface ConverseContentBlock {
+  text?: string;
+  [k: string]: unknown;
+}
+
+interface ConverseResponse {
+  output?: {
+    message?: {
+      role?: string;
+      content?: ConverseContentBlock[];
+    };
+  };
+  usage?: ConverseUsage;
+  stopReason?: string;
   [k: string]: unknown;
 }
 
 /**
- * Call Bedrock Anthropic Claude with a system + user message pair.
+ * Call Bedrock Converse API with a system + user message pair.
  * Returns the assistant text plus usage tokens.
+ *
+ * Works with any Converse-compatible Bedrock model (Nova, Claude, Llama,
+ * Mistral, Cohere, etc.) — set BEDROCK_CHAT_MODEL_ID to pick one.
  */
 export async function bedrockChat(args: {
   system: string;
@@ -68,22 +90,26 @@ export async function bedrockChat(args: {
   const modelId = getBedrockChatModelId();
   const endpoint = getEndpoint();
   const token = getBearerToken();
-  const url = `${endpoint}/model/${encodeURIComponent(modelId)}/invoke`;
+  const url = `${endpoint}/model/${encodeURIComponent(modelId)}/converse`;
 
-  // Anthropic doesn't have a hard json-response mode; nudge in the system
+  // Converse API doesn't have a hard json-response mode; nudge in the system
   // prompt if the caller asked for JSON output.
   const systemPrompt = args.responseJson
     ? args.system + "\n\nIMPORTANT: Respond with a single valid JSON object only, no surrounding prose, no markdown code fences."
     : args.system;
 
   const body = {
-    anthropic_version: "bedrock-2023-05-31",
-    max_tokens: args.maxTokens ?? 2048,
-    temperature: args.temperature ?? 0.2,
-    system: systemPrompt,
     messages: [
-      { role: "user", content: args.user },
+      {
+        role: "user",
+        content: [{ text: args.user }],
+      },
     ],
+    system: [{ text: systemPrompt }],
+    inferenceConfig: {
+      maxTokens: args.maxTokens ?? 2048,
+      temperature: args.temperature ?? 0.2,
+    },
   };
 
   let lastErr: unknown;
@@ -101,13 +127,14 @@ export async function bedrockChat(args: {
     });
 
     if (response.ok) {
-      const data = (await response.json()) as BedrockClaudeResponse;
-      const textBlocks = (data.content || [])
-        .filter((b) => b.type === "text" && typeof b.text === "string")
+      const data = (await response.json()) as ConverseResponse;
+      const contentBlocks = data.output?.message?.content || [];
+      const textBlocks = contentBlocks
+        .filter((b) => typeof b.text === "string")
         .map((b) => b.text as string);
       let text = textBlocks.join("");
       if (!text) {
-        throw new Error("Bedrock Claude returned empty content.");
+        throw new Error("Bedrock Converse returned empty content.");
       }
       // If JSON mode, strip a possible code fence wrapper.
       if (args.responseJson) {
@@ -115,8 +142,8 @@ export async function bedrockChat(args: {
       }
       return {
         text,
-        promptTokens: data.usage?.input_tokens ?? 0,
-        completionTokens: data.usage?.output_tokens ?? 0,
+        promptTokens: data.usage?.inputTokens ?? 0,
+        completionTokens: data.usage?.outputTokens ?? 0,
         model: modelId,
       };
     }

@@ -1,152 +1,137 @@
 /**
  * Embedding utility for RAG ingest and retrieval.
  *
- * Uses AWS Bedrock — Amazon Titan Text Embeddings v1 (1536 dimensions),
- * authenticated via a Bedrock API key (Bearer token).
+ * Production policy: every workspace must bring its own API key. There is
+ * no env-var or AWS Bedrock fallback. Resolution order:
  *
- * Required env vars:
- *   AWS_REGION                 — e.g. us-east-1
- *   AWS_BEARER_TOKEN_BEDROCK   — long-term Bedrock API key
+ *   1. If clients.llm_embedding_api_key is set, use that (with the
+ *      optional clients.llm_embedding_base_url) — lets a workspace pay for
+ *      embeddings on a different / cheaper provider than chat.
+ *   2. Otherwise use the workspace's chat key (clients.llm_api_key,
+ *      clients.llm_base_url) — same /embeddings endpoint.
+ *   3. If neither is configured, throw — the caller surfaces a clean
+ *      "Configure your QA engine in Settings" message.
  *
- * Features:
- *   - In-memory cache keyed by exact text (massive savings for criterion-name
- *     embeddings during batch scoring)
- *   - Automatic retry with exponential backoff on 429 (Bedrock rate limit)
- *
- * No SDK dependency — calls the Bedrock REST endpoint directly.
+ * Vector dimension is fixed at 1536 (text-embedding-3-small default), so
+ * the pgvector column stays compatible across providers. text-embedding-3-large
+ * works too — we ask for 1536 dims explicitly.
  */
 
-const TITAN_EMBED_MODEL_ID = "amazon.titan-embed-text-v1";
-const EMBEDDING_DIM = 1536;
+import OpenAI from "openai";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
-const MAX_RETRIES = 5;
-const INITIAL_BACKOFF_MS = 600;
-const MAX_BACKOFF_MS = 8000;
+const OPENAI_COMPAT_EMBED_MODEL = "text-embedding-3-small";
+const EMBEDDING_DIM = 1536;
 const CACHE_MAX_ENTRIES = 1000;
 
-// Process-level cache: text -> embedding vector.
-// Bounded to CACHE_MAX_ENTRIES (LRU-ish via insertion order).
+// Process-level cache: text -> embedding vector. Bounded LRU-ish.
 const _embeddingCache = new Map<string, number[]>();
 
-function cacheGet(text: string): number[] | undefined {
-  return _embeddingCache.get(text);
+function cacheGet(key: string): number[] | undefined {
+  return _embeddingCache.get(key);
 }
 
-function cacheSet(text: string, embedding: number[]): void {
+function cacheSet(key: string, embedding: number[]): void {
   if (_embeddingCache.size >= CACHE_MAX_ENTRIES) {
-    // Drop the oldest entry (Map preserves insertion order)
     const firstKey = _embeddingCache.keys().next().value;
     if (firstKey !== undefined) _embeddingCache.delete(firstKey);
   }
-  _embeddingCache.set(text, embedding);
+  _embeddingCache.set(key, embedding);
 }
 
-function getBedrockEndpoint(): string {
-  const region = process.env.AWS_REGION;
-  if (!region) {
-    throw new Error("AWS_REGION is not set in environment.");
+type EmbeddingCreds = {
+  apiKey: string;
+  baseUrl: string;
+  /** Where this came from — only used in error/log messages, not behaviour. */
+  source: "embedding-key" | "chat-key";
+};
+
+async function resolveEmbeddingCreds(
+  supabase: SupabaseClient<Database>,
+  clientId: string,
+): Promise<EmbeddingCreds | null> {
+  const { data: c } = await supabase
+    .from("clients")
+    .select(
+      "llm_api_key, llm_base_url, llm_embedding_api_key, llm_embedding_base_url",
+    )
+    .eq("id", clientId)
+    .single();
+
+  if (c?.llm_embedding_api_key) {
+    return {
+      apiKey: c.llm_embedding_api_key,
+      baseUrl: c.llm_embedding_base_url ?? "",
+      source: "embedding-key",
+    };
   }
-  return `https://bedrock-runtime.${region}.amazonaws.com`;
+  if (c?.llm_api_key) {
+    return {
+      apiKey: c.llm_api_key,
+      baseUrl: c.llm_base_url ?? "",
+      source: "chat-key",
+    };
+  }
+  return null;
 }
 
-function getBearerToken(): string {
-  const token = process.env.AWS_BEARER_TOKEN_BEDROCK;
-  if (!token) {
+async function callOpenAiCompatEmbed(
+  apiKey: string,
+  baseUrl: string,
+  text: string,
+): Promise<number[]> {
+  const client = new OpenAI({ apiKey, baseURL: baseUrl || undefined });
+  const resp = await client.embeddings.create({
+    model: OPENAI_COMPAT_EMBED_MODEL,
+    input: text,
+    // Force 1536 dims even on text-embedding-3-large — keeps the pgvector
+    // column compatible with existing rows.
+    dimensions: EMBEDDING_DIM,
+  });
+  const v = resp.data[0]?.embedding;
+  if (!Array.isArray(v) || v.length !== EMBEDDING_DIM) {
     throw new Error(
-      "AWS_BEARER_TOKEN_BEDROCK is not set. Generate a Bedrock API key in the AWS console."
+      `Embedding endpoint returned unexpected shape (length=${v?.length}).`,
     );
   }
-  return token;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function callBedrockEmbed(text: string): Promise<number[]> {
-  const endpoint = getBedrockEndpoint();
-  const token = getBearerToken();
-  const url = `${endpoint}/model/${TITAN_EMBED_MODEL_ID}/invoke`;
-
-  let lastErr: unknown;
-  let backoff = INITIAL_BACKOFF_MS;
-
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ inputText: text }),
-    });
-
-    if (response.ok) {
-      const data = (await response.json()) as {
-        embedding?: number[];
-        inputTextTokenCount?: number;
-      };
-      if (
-        !Array.isArray(data.embedding) ||
-        data.embedding.length !== EMBEDDING_DIM
-      ) {
-        throw new Error(
-          `Bedrock returned unexpected embedding shape (length=${data.embedding?.length}).`
-        );
-      }
-      return data.embedding;
-    }
-
-    // Retry on 429 (rate limit) and 5xx (transient server)
-    if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
-      const errBody = await response.text().catch(() => "<no body>");
-      lastErr = new Error(
-        `Bedrock embedding call failed (${response.status} ${response.statusText}): ${errBody}`
-      );
-      if (attempt < MAX_RETRIES - 1) {
-        // Add small jitter to avoid thundering herd
-        const jitter = Math.floor(Math.random() * 200);
-        await sleep(backoff + jitter);
-        backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
-        continue;
-      }
-    } else {
-      // Non-retryable error
-      const errBody = await response.text().catch(() => "<no body>");
-      throw new Error(
-        `Bedrock embedding call failed (${response.status} ${response.statusText}): ${errBody}`
-      );
-    }
-  }
-
-  throw lastErr ?? new Error("Bedrock embedding call failed after retries.");
+  return v;
 }
 
 /**
- * Get an embedding for a text string.
- * Returns a 1536-dimensional vector from Amazon Titan Text Embeddings v1.
+ * Get an embedding for a text string. Always uses the workspace's own
+ * API key — no env-var fallback. Throws if no key is configured.
  *
- * Cached: identical text returns the cached vector without hitting Bedrock.
- * This is a big win for batch scoring (the same criterion names get embedded
- * over and over).
+ * Cached: identical (creds, text) returns the cached vector without
+ * hitting any provider. Big win for batch scoring where the same
+ * criterion names get embedded over and over.
  */
-export async function getEmbedding(text: string): Promise<number[]> {
+export async function getEmbedding(
+  text: string,
+  opts: { supabase: SupabaseClient<Database>; clientId: string },
+): Promise<number[]> {
   if (!text || text.trim().length === 0) {
     throw new Error("getEmbedding called with empty text.");
   }
 
-  const cached = cacheGet(text);
+  const creds = await resolveEmbeddingCreds(opts.supabase, opts.clientId);
+  if (!creds) {
+    throw new Error(
+      "QA engine API key is not configured for this workspace. " +
+        "An admin must set it in Settings → QA engine provider.",
+    );
+  }
+
+  const cacheKey = `wb:${creds.source}:${creds.baseUrl}:${creds.apiKey.slice(-6)}:${text}`;
+  const cached = cacheGet(cacheKey);
   if (cached) return cached;
 
-  const embedding = await callBedrockEmbed(text);
-  cacheSet(text, embedding);
+  const embedding = await callOpenAiCompatEmbed(creds.apiKey, creds.baseUrl, text);
+  cacheSet(cacheKey, embedding);
   return embedding;
 }
 
-/**
- * Test-only helper: clear the in-memory cache. Not exported to consumers.
- */
+/** Test-only helper: clear the in-memory cache. */
 export function _clearEmbeddingCacheForTests(): void {
   _embeddingCache.clear();
 }

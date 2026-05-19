@@ -159,8 +159,23 @@ function ScoreHeader({
   return (
     <div className="text-right">
       <p className={`text-4xl font-bold ${tone}`}>{total.toFixed(1)}</p>
-      <p className="mt-1 text-xs text-zinc-500">
-        Confidence {(confidence * 100).toFixed(0)}% \u00b7 {statusLabel(status)}
+      <p className="mt-1 inline-flex items-center justify-end gap-1 text-xs text-zinc-500">
+        Confidence {(confidence * 100).toFixed(0)}%
+        <span
+          tabIndex={0}
+          role="img"
+          aria-label="What does confidence mean?"
+          title={
+            "Confidence is the QA engine\u2019s self-rated certainty, weighted across criteria. " +
+            "Below your workspace threshold (Settings \u2192 Review), the conversation is flagged for human review. " +
+            "Higher numbers mean the engine is sure about its judgement; lower numbers mean it wants a second pair of eyes."
+          }
+          className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-zinc-300 text-[10px] font-bold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-600 dark:hover:bg-zinc-800"
+        >
+          ?
+        </span>
+        {" \u00b7 "}
+        {statusLabel(status)}
       </p>
     </div>
   );

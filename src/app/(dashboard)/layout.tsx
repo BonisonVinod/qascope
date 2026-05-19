@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signout } from "../(auth)/actions";
+import { ScoringProgress } from "./scoring-progress";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard" },
@@ -36,8 +37,10 @@ export default async function DashboardLayout({
     .single();
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <aside className="sticky top-0 flex h-screen w-60 flex-col overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
+      <ScoringProgress />
+      <div className="flex flex-1">
+        <aside className="sticky top-0 flex h-screen w-60 flex-col overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-8">
           <h1 className="text-lg font-semibold tracking-tight">QAScope</h1>
           <p className="text-xs text-zinc-500">{appUser?.name ?? user.email}</p>
@@ -70,7 +73,8 @@ export default async function DashboardLayout({
         </form>
       </aside>
 
-      <main className="flex-1 p-8">{children}</main>
+        <main className="flex-1 p-8">{children}</main>
+      </div>
     </div>
   );
 }

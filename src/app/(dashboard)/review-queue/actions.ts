@@ -183,7 +183,7 @@ async function resolveTier2(
     message:
       decision === "confirm_override"
         ? "Override confirmed — score updated to final."
-        : "Override denied — original AI score stands.",
+        : "Override denied — original QA score stands.",
   };
 }
 

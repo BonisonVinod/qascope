@@ -53,7 +53,13 @@ export async function retrieveKnowledge(
 
   let queryEmbedding: number[];
   try {
-    queryEmbedding = await getEmbedding(query);
+    // Pass workspace context so the embedding goes through the BYO LLM
+    // provider (Settings → LLM provider) when the workspace has one
+    // configured. Falls back to env Bedrock Titan otherwise.
+    queryEmbedding = await getEmbedding(query, {
+      supabase,
+      clientId: workspace_id,
+    });
   } catch (err) {
     console.error("Failed to embed query:", err);
     return null;

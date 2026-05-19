@@ -113,7 +113,7 @@ export default async function BillingPage() {
       <div>
         <h1 className="text-2xl font-semibold">Billing</h1>
         <p className="mt-2 text-sm text-zinc-500">
-          {client?.name ? `${client.name} \u00b7 ` : ""}plan, usage, and history.
+          {client?.name ? `${client.name} · ` : ""}plan, usage, and history.
         </p>
       </div>
 
@@ -143,28 +143,21 @@ export default async function BillingPage() {
 
         <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-            This month's usage
+            This month&rsquo;s volume
           </p>
           {usage ? (
             <>
               <p className="mt-1 text-2xl font-semibold">
                 {usage.conversationsThisMonth.toLocaleString()}
                 <span className="ml-2 text-sm font-normal text-zinc-500">
-                  / {usage.monthlyLimit.toLocaleString()} conversations
+                  conversations
                 </span>
               </p>
-              <UsageBar percent={usage.percentUsed} over={usage.isOverLimit} />
               <p className="mt-2 text-xs text-zinc-500">
-                {usage.isOverLimit ? (
-                  <span className="font-medium text-red-600 dark:text-red-400">
-                    Over limit \u2014 new uploads will be blocked. Upgrade below.
-                  </span>
-                ) : (
-                  <>
-                    {usage.remaining.toLocaleString()} conversations remaining this
-                    cycle.
-                  </>
-                )}
+                Every plan includes unlimited conversations &mdash; this number
+                is for your reference. Plans differ on features (see the
+                comparison below), not volume. You pay your own QA-engine
+                provider for the underlying API calls.
               </p>
             </>
           ) : (
@@ -208,15 +201,15 @@ export default async function BillingPage() {
         </div>
       </section>
 
-      {/* OpenAI usage this month — what they owe OpenAI directly when on a BYO-key tier. */}
+      {/* QA engine usage this month — what they owe their QA engine provider directly when on a BYO-key tier. */}
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
-          LLM usage · this month
+          QA engine usage · this month
         </h2>
         <p className="mt-1 max-w-2xl text-xs text-zinc-500">
           {currentPlan.byoOpenAiKey
-            ? "You bring your own OpenAI key on this plan, so OpenAI bills you directly. The numbers below are an estimate based on tokens consumed."
-            : "On the Pilot plan, QAScope covers the OpenAI cost. The numbers below are what you'd be paying if you upgrade — useful to budget."}
+            ? "You bring your own QA engine key on this plan, so your provider bills you directly. The numbers below are an estimate based on tokens consumed."
+            : "On the Pilot plan, QAScope covers the QA engine cost. The numbers below are what you'd be paying if you upgrade — useful to budget. You pay the QA engine provider directly; QAScope just shows the receipt."}
         </p>
 
         <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -227,7 +220,7 @@ export default async function BillingPage() {
             <p className="mt-1 text-2xl font-semibold">
               {formatMicroInr(totalCostMicro)}
             </p>
-            <p className="mt-1 text-xs text-zinc-500">at current OpenAI rates</p>
+            <p className="mt-1 text-xs text-zinc-500">at current provider rates</p>
           </div>
           <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -294,7 +287,7 @@ export default async function BillingPage() {
 
         {usageByFeatureRows.length === 0 && (
           <p className="mt-4 rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-4 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950">
-            No OpenAI calls yet this month. Upload a CSV and score it to see usage here.
+            No LLM calls yet this month. Upload a CSV and score it to see usage here.
           </p>
         )}
       </section>
@@ -338,7 +331,7 @@ export default async function BillingPage() {
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-1.5">
                       <span className="mt-0.5 text-emerald-600 dark:text-emerald-400">
-                        \u2713
+                        ✓
                       </span>
                       <span>{f}</span>
                     </li>
@@ -369,7 +362,7 @@ export default async function BillingPage() {
           })}
         </div>
         <p className="mt-3 text-xs text-zinc-500">
-          Razorpay checkout integration is staged \u2014 plan switches today are
+          Razorpay checkout integration is staged — plan switches today are
           recorded directly. Once Razorpay credentials are configured, upgrades
           will route through Razorpay's hosted checkout.
         </p>

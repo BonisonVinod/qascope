@@ -56,7 +56,7 @@ export default async function ReviewQueuePage() {
   const { data: client } = clientId
     ? await supabase
         .from("clients")
-        .select("second_reviewer_user_id, sla_hours")
+        .select("second_reviewer_user_id, sla_hours, latest_upload_batch_id")
         .eq("id", clientId)
         .single()
     : { data: null };
@@ -64,38 +64,83 @@ export default async function ReviewQueuePage() {
   const isSecondReviewer =
     !!client?.second_reviewer_user_id && client.second_reviewer_user_id === user!.id;
 
-  // Pull review queue items. RLS scopes these to this client's qa_scores.
-  const { data: queue } = await supabase
-    .from("review_queue")
-    .select(
-      "id, qa_score_id, reason, state, sla_deadline, created_at, first_reviewer_decision, first_reviewer_notes, first_reviewer_at, second_reviewer_decision, second_reviewer_notes, second_reviewer_at",
-    )
-    .order("created_at", { ascending: false })
-    .limit(200);
+  // Always restrict the review queue to the latest upload batch. Old
+  // queue items still exist in the DB (Reports has access) but should not
+  // clutter the active review surface.
+  const latestBatchId = client?.latest_upload_batch_id ?? null;
 
-  const rows = await hydrateRows(supabase, queue ?? []);
+  let batchScoreIds: string[] = [];
+  if (latestBatchId && clientId) {
+    const { data: batchConvs } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("upload_batch_id", latestBatchId);
+    const convIds = (batchConvs ?? []).map((c) => c.id);
+    if (convIds.length > 0) {
+      const { data: scores } = await supabase
+        .from("qa_scores")
+        .select("id")
+        .in("conversation_id", convIds);
+      batchScoreIds = (scores ?? []).map((s) => s.id);
+    }
+  }
+
+  let queue: Array<{
+    id: string;
+    qa_score_id: string;
+    reason: string;
+    state: ReviewState;
+    sla_deadline: string | null;
+    created_at: string;
+    first_reviewer_decision: FirstReviewerDecision | null;
+    first_reviewer_notes: string | null;
+    first_reviewer_at: string | null;
+    second_reviewer_decision: SecondReviewerDecision | null;
+    second_reviewer_notes: string | null;
+    second_reviewer_at: string | null;
+  }> = [];
+  if (batchScoreIds.length > 0) {
+    const { data } = await supabase
+      .from("review_queue")
+      .select(
+        "id, qa_score_id, reason, state, sla_deadline, created_at, first_reviewer_decision, first_reviewer_notes, first_reviewer_at, second_reviewer_decision, second_reviewer_notes, second_reviewer_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .in("qa_score_id", batchScoreIds);
+    queue = data ?? [];
+  }
+
+  const rows = await hydrateRows(supabase, queue);
   const pendingFirst = rows.filter((r) => r.state === "pending_first");
   const pendingSecond = rows.filter((r) => r.state === "pending_second");
   const resolved = rows.filter((r) => r.state === "closed");
 
-  const { count: totalConvs } = await supabase
-    .from("conversations")
-    .select("id", { count: "exact", head: true })
-    .eq("client_id", clientId!);
+  let totalConvs: number | null = null;
+  if (latestBatchId && clientId) {
+    const { count } = await supabase
+      .from("conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", clientId)
+      .eq("upload_batch_id", latestBatchId);
+    totalConvs = count ?? null;
+  }
 
   return (
     <div>
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Review queue</h1>
           <p className="mt-2 text-sm text-zinc-500">
             {pendingFirst.length} awaiting first review &middot; {pendingSecond.length}{" "}
             awaiting second review &middot; {resolved.length} resolved
             {typeof totalConvs === "number" ? ` of ${totalConvs} total` : ""}
+            {latestBatchId ? " · current upload" : ""}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             SLA: {client?.sla_hours ?? 24}h per tier &middot; items auto-approve after
-            deadline.
+            deadline. Showing only the most recent upload.
           </p>
         </div>
       </div>

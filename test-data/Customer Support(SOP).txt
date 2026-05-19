@@ -1,0 +1,26 @@
+# AGENT OPERATIONAL GUIDE: STANDARDS & PROTOCOLS
+
+## 1. COMMUNICATION STANDARDS
+*   **Greeting:** Every interaction must begin with a professional greeting, the agent's name, and an offer to help.
+*   **Active Listening:** Acknowledge the specific issue mentioned by the customer before providing a solution.
+*   **Closing:** Before ending any interaction, agents must ask if the customer requires further assistance and provide a professional sign-off.
+
+## 2. SECURITY & DATA PRIVACY (CRITICAL)
+*   **Verification Requirement:** Agents must verify account ownership before discussing specific account details.
+*   **Prohibited Disclosures:** Agents are strictly prohibited from stating full credit card numbers, full phone numbers, or plain-text passwords in any chat or voice transcript.
+*   **Information Redaction:** If a customer asks for account details, agents should only provide partial information (e.g., "the email on file ends in @gmail.com") once the customer has been verified.
+*   *Note for Audit:* Refer to `TEST-COMP-0003` in **sample-conversations.csv** as a primary example of a security violation where an agent disclosed too much information.
+
+## 3. TECHNICAL TROUBLESHOOTING & RESOLUTION
+*   **Step-by-Step Logic:** For technical issues (like slow internet), agents should first verify the account status and then suggest basic troubleshooting like a router restart.
+*   **Escalation Protocol:** If a basic fix does not work, agents must raise a formal support ticket and provide a specific expected resolution timeframe (e.g., "48 hours").
+*   **Billing Inquiries:** For double-charge complaints, agents must investigate the transaction history and explain "pending holds" clearly to the customer.
+
+## 4. CHANNEL-SPECIFIC INSTRUCTIONS
+*   **Email:** Use formal signatures including "Best regards" and the agent's full name.
+*   **Chat:** Maintain a conversational but professional tone. Avoid slang or overly casual abbreviations.
+*   **Voice Transcripts:** Ensure all spoken information is captured accurately in the transcript, including the customer’s confirmation of the resolution.
+
+## 5. DOCUMENTATION IN SAMPLE-CONVERSATIONS.CSV
+*   **Logging:** All actions taken (e.g., address updates, ticket creation) must be reflected in the conversation logs.
+*   **Accuracy:** Agents must ensure the `channel` field correctly reflects the medium used (e.g., don't log a voice call as an email).

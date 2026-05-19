@@ -141,13 +141,18 @@ export async function uploadDocumentAction(
       return { ok: false, error: "Document produced no chunks." };
     }
 
-    // Embed and insert chunks
+    // Embed and insert chunks. Pass workspace context so embeddings go
+    // through the BYO LLM provider (Settings → LLM provider) when configured;
+    // falls back to env Bedrock Titan otherwise.
     const chunkRecords = [];
     for (let i = 0; i < chunks.length; i++) {
       const chunkText = chunks[i];
       let embedding: number[];
       try {
-        embedding = await getEmbedding(chunkText);
+        embedding = await getEmbedding(chunkText, {
+          supabase,
+          clientId: workspaceId,
+        });
       } catch (err) {
         // Embedding failed — mark document as failed
         await supabase

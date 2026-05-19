@@ -41,6 +41,11 @@ type ClientsRow = {
   llm_api_key: string | null;
   llm_base_url: string | null;
   llm_model: string | null;
+  scoring_stop_requested_at: string | null;
+  latest_upload_batch_id: string | null;
+  review_confidence_threshold: number;
+  llm_embedding_api_key: string | null;
+  llm_embedding_base_url: string | null;
   created_at: string;
 };
 
@@ -119,6 +124,7 @@ type ConversationsRow = {
   customer_id: string | null;
   metadata_json: Record<string, unknown> | null;
   external_conversation_id: string | null;
+  upload_batch_id: string | null;
   created_at: string;
 };
 
@@ -210,6 +216,11 @@ export type Database = {
           llm_api_key?: string | null;
           llm_base_url?: string | null;
           llm_model?: string | null;
+          scoring_stop_requested_at?: string | null;
+          latest_upload_batch_id?: string | null;
+          review_confidence_threshold?: number;
+          llm_embedding_api_key?: string | null;
+          llm_embedding_base_url?: string | null;
           created_at?: string;
         };
         Update: {
@@ -224,6 +235,11 @@ export type Database = {
           llm_api_key?: string | null;
           llm_base_url?: string | null;
           llm_model?: string | null;
+          scoring_stop_requested_at?: string | null;
+          latest_upload_batch_id?: string | null;
+          review_confidence_threshold?: number;
+          llm_embedding_api_key?: string | null;
+          llm_embedding_base_url?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -382,6 +398,7 @@ export type Database = {
           customer_id?: string | null;
           metadata_json?: Record<string, unknown> | null;
           external_conversation_id?: string | null;
+          upload_batch_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -394,6 +411,7 @@ export type Database = {
           customer_id?: string | null;
           metadata_json?: Record<string, unknown> | null;
           external_conversation_id?: string | null;
+          upload_batch_id?: string | null;
           created_at?: string;
         };
         Relationships: [];

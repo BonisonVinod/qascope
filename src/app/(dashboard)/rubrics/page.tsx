@@ -128,7 +128,7 @@ function ReadOnlyView({
                 <td className="px-4 py-2 text-zinc-500">{c.sort_order}</td>
                 <td className="px-4 py-2 font-medium">{c.name}</td>
                 <td className="px-4 py-2 text-xs text-zinc-500">
-                  {c.description ?? "\u2014"}
+                  {c.description ?? "—"}
                 </td>
                 <td className="px-4 py-2 text-right">{c.weight}</td>
                 <td className="px-4 py-2 text-center">
@@ -137,7 +137,7 @@ function ReadOnlyView({
                       Yes
                     </span>
                   ) : (
-                    <span className="text-zinc-400">\u2014</span>
+                    <span className="text-zinc-400">—</span>
                   )}
                 </td>
               </tr>

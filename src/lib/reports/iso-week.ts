@@ -33,7 +33,7 @@ export function isoWeekRange(ref: Date, today: Date = new Date()): IsoWeek {
       year: "numeric",
       timeZone: "UTC",
     });
-  const label = `${fmt(start)} \u2013 ${fmt(new Date(end.getTime() - 86400 * 1000))}`;
+  const label = `${fmt(start)} – ${fmt(new Date(end.getTime() - 86400 * 1000))}`;
   const isCurrent = today.getTime() >= start.getTime() && today.getTime() < end.getTime();
   return { start, end, label, isCurrent };
 }

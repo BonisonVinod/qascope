@@ -105,12 +105,16 @@ export function computeScoreTotals(scored: ScoredCriterion[]): ScoreTotals {
  *   - Any critical fail wins.
  *   - Below confidence threshold -> needs_review.
  *   - Otherwise final.
+ *
+ * The threshold is workspace-configurable (clients.review_confidence_threshold).
+ * Pass the workspace value as fraction 0-1; falls back to LOW_CONFIDENCE_THRESHOLD.
  */
 export function deriveStatus(
   criticalFail: boolean,
   overallConfidence: number,
+  threshold: number = LOW_CONFIDENCE_THRESHOLD,
 ): ScoreStatus {
   if (criticalFail) return "critical_fail";
-  if (overallConfidence < LOW_CONFIDENCE_THRESHOLD) return "needs_review";
+  if (overallConfidence < threshold) return "needs_review";
   return "final";
 }

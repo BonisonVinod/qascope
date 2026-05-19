@@ -62,11 +62,13 @@ export async function scoreConversation(
   // 2. Load the client's default rubric + criteria, plus SLA & pass threshold.
   const { data: client } = await supabase
     .from("clients")
-    .select("id, sla_hours, pass_threshold")
+    .select("id, sla_hours, pass_threshold, review_confidence_threshold")
     .eq("id", conv.client_id)
     .single();
   const slaHours = client?.sla_hours ?? 24;
   const passThreshold = client?.pass_threshold ?? 70;
+  // Stored as percentage (0-100) for human readability; deriveStatus uses 0-1.
+  const reviewConfidenceThreshold = (client?.review_confidence_threshold ?? 70) / 100;
 
   const { data: rubric, error: rubricErr } = await supabase
     .from("qa_rubrics")
@@ -196,7 +198,11 @@ export async function scoreConversation(
     result: r.result,
   }));
   const { totalScore, overallConfidence, criticalFail } = computeScoreTotals(scored);
-  const status: ScoreStatus = deriveStatus(criticalFail, overallConfidence);
+  const status: ScoreStatus = deriveStatus(
+    criticalFail,
+    overallConfidence,
+    reviewConfidenceThreshold,
+  );
 
   const roundedTotal = Math.round(totalScore * 100) / 100;
   const roundedConfidence = Math.round(overallConfidence * 100) / 100;

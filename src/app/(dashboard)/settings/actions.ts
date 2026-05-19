@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type SettingsActionState =
   | undefined
@@ -9,9 +10,14 @@ export type SettingsActionState =
   | { ok: false; error: string };
 
 /**
- * Save the client's review-workflow config: who the second reviewer is
- * and how many hours each tier has before auto-resolution. Admin / QA
- * managers only — other roles get a permission error.
+ * Save the client's review-workflow config: who the second reviewer is,
+ * SLA hours per tier, pass threshold, and review-confidence threshold.
+ *
+ * The clients table has SELECT-only RLS for tenant users, so the
+ * UPDATE has to go through the admin (service-role) Supabase client
+ * — otherwise it silently affects 0 rows. Authorization is enforced
+ * here in code (admin/qa_manager only) and the update is scoped to the
+ * user's own client_id.
  */
 export async function saveReviewSettings(
   _prev: SettingsActionState,
@@ -37,6 +43,7 @@ export async function saveReviewSettings(
   const rawSecond = String(formData.get("secondReviewer") ?? "").trim();
   const rawHours = String(formData.get("slaHours") ?? "").trim();
   const rawPass = String(formData.get("passThreshold") ?? "").trim();
+  const rawConf = String(formData.get("reviewConfidenceThreshold") ?? "").trim();
 
   const secondReviewer = rawSecond.length === 0 ? null : rawSecond;
   const hoursNum = Number(rawHours);
@@ -46,6 +53,10 @@ export async function saveReviewSettings(
   const passNum = Number(rawPass);
   if (!Number.isFinite(passNum) || passNum < 0 || passNum > 100) {
     return { ok: false, error: "Pass threshold must be between 0 and 100." };
+  }
+  const confNum = Number(rawConf);
+  if (!Number.isFinite(confNum) || confNum < 0 || confNum > 100) {
+    return { ok: false, error: "Confidence threshold must be between 0 and 100." };
   }
 
   // If a second reviewer was picked, verify they belong to this client.
@@ -60,12 +71,14 @@ export async function saveReviewSettings(
     }
   }
 
-  const { error: updErr } = await supabase
+  const admin = createAdminClient();
+  const { error: updErr } = await admin
     .from("clients")
     .update({
       second_reviewer_user_id: secondReviewer,
       sla_hours: Math.round(hoursNum),
       pass_threshold: Math.round(passNum),
+      review_confidence_threshold: Math.round(confNum),
     })
     .eq("id", me.client_id);
   if (updErr) return { ok: false, error: `Update failed: ${updErr.message}` };

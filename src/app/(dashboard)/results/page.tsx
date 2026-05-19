@@ -11,8 +11,10 @@ type ScoredRow = {
   confidence_score: number;
   status: ScoreStatus;
   coaching_note: string | null;
-  created_at: string;
+  /** When the conversation was QA-audited (qa_scores.created_at). */
+  audited_at: string;
   conversation_id: string;
+  /** When the conversation actually took place. */
   conversation_date: string;
   channel: ChannelType;
   external_id: string | null;
@@ -33,24 +35,64 @@ export default async function ResultsPage() {
 
   const clientId = appUser?.client_id;
 
-  const { count: totalConvs } = await supabase
-    .from("conversations")
-    .select("id", { count: "exact", head: true })
-    .eq("client_id", clientId!);
+  // Always restrict Results to the most recent upload batch. Old data
+  // remains in the database (Reports has access to it) but should never
+  // show up here — the user reviews each upload as a discrete session.
+  let latestBatchId: string | null = null;
+  if (clientId) {
+    const { data: clientRow } = await supabase
+      .from("clients")
+      .select("latest_upload_batch_id")
+      .eq("id", clientId)
+      .single();
+    latestBatchId = clientRow?.latest_upload_batch_id ?? null;
+  }
 
-  const { count: totalScored } = await supabase
-    .from("qa_scores")
-    .select("id", { count: "exact", head: true });
+  // Pre-compute the conversation ids that belong to the latest batch.
+  // No batch yet → empty Results, with an explanation.
+  let batchConvIds: string[] = [];
+  if (latestBatchId && clientId) {
+    const { data: batchConvs } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("upload_batch_id", latestBatchId);
+    batchConvIds = (batchConvs ?? []).map((c) => c.id);
+  }
 
-  const unscored = (totalConvs ?? 0) - (totalScored ?? 0);
+  const totalConvs = batchConvIds.length;
 
-  const { data: rawScores } = await supabase
-    .from("qa_scores")
-    .select(
-      "id, total_score, confidence_score, status, coaching_note, created_at, conversation_id",
-    )
-    .order("created_at", { ascending: false })
-    .limit(50);
+  let totalScored = 0;
+  if (batchConvIds.length > 0) {
+    const { count } = await supabase
+      .from("qa_scores")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", batchConvIds);
+    totalScored = count ?? 0;
+  }
+
+  const unscored = totalConvs - totalScored;
+
+  let rawScores: Array<{
+    id: string;
+    total_score: number;
+    confidence_score: number;
+    status: ScoreStatus;
+    coaching_note: string | null;
+    created_at: string;
+    conversation_id: string;
+  }> = [];
+  if (batchConvIds.length > 0) {
+    const { data } = await supabase
+      .from("qa_scores")
+      .select(
+        "id, total_score, confidence_score, status, coaching_note, created_at, conversation_id",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .in("conversation_id", batchConvIds);
+    rawScores = data ?? [];
+  }
 
   let rows: ScoredRow[] = [];
   if (rawScores && rawScores.length > 0) {
@@ -81,7 +123,7 @@ export default async function ResultsPage() {
           confidence_score: s.confidence_score,
           status: s.status,
           coaching_note: s.coaching_note,
-          created_at: s.created_at,
+          audited_at: s.created_at,
           conversation_id: s.conversation_id,
           conversation_date: c.conversation_date,
           channel: c.channel,
@@ -94,20 +136,37 @@ export default async function ResultsPage() {
 
   return (
     <div>
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Results</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            {totalScored ?? 0} scored \u00b7 {unscored > 0 ? `${unscored} pending` : "all caught up"}
+            {latestBatchId
+              ? `${totalScored} scored · ${unscored > 0 ? `${unscored} pending` : "all caught up"} · current upload`
+              : "No upload yet."}
+          </p>
+          <p className="mt-1 text-xs text-zinc-400">
+            Showing only conversations from your most recent upload. Older
+            data lives in <Link href="/reports" className="underline-offset-2 hover:underline">Reports</Link>.
           </p>
         </div>
-        <ScoreButton pendingCount={unscored} />
+        <div className="flex items-start gap-3">
+          <a
+            href="/api/export/results"
+            className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            title="Download these results as a CSV"
+          >
+            Download CSV
+          </a>
+          <ScoreButton pendingCount={unscored} totalConversations={totalConvs} />
+        </div>
       </div>
 
       {rows.length === 0 ? (
         <div className="mt-8 rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-sm text-zinc-500">
-            No scores yet. Upload conversations, then click \u201cScore pending\u201d.
+            {latestBatchId
+              ? "Nothing scored yet for this upload. Click “Score pending” to begin."
+              : "Nothing here yet. Upload a CSV to start an audit."}
           </p>
         </div>
       ) : (
@@ -115,7 +174,8 @@ export default async function ResultsPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
               <tr>
-                <th className="px-4 py-3">Date</th>
+                <th className="px-4 py-3">Conversation date</th>
+                <th className="px-4 py-3">Audited on</th>
                 <th className="px-4 py-3">Agent</th>
                 <th className="px-4 py-3">Channel</th>
                 <th className="px-4 py-3">Score</th>
@@ -132,6 +192,15 @@ export default async function ResultsPage() {
                 >
                   <LinkCell href={`/results/${r.id}`} className="px-4 py-3 text-zinc-500">
                     {r.conversation_date}
+                  </LinkCell>
+                  <LinkCell href={`/results/${r.id}`} className="px-4 py-3 text-zinc-500">
+                    {new Date(r.audited_at).toLocaleString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </LinkCell>
                   <LinkCell href={`/results/${r.id}`} className="px-4 py-3 font-medium">
                     {r.agent_name}
@@ -152,7 +221,7 @@ export default async function ResultsPage() {
                     href={`/results/${r.id}`}
                     className="px-4 py-3 font-mono text-xs text-zinc-500"
                   >
-                    {r.external_id ?? "\u2014"}
+                    {r.external_id ?? "—"}
                   </LinkCell>
                 </tr>
               ))}

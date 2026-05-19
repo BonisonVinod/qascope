@@ -8,7 +8,7 @@ export default function AuthLayout({
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">QAScope</h1>
-          <p className="text-sm text-zinc-500">AI QA Copilot for small BPOs</p>
+          <p className="text-sm text-zinc-500">QA Copilot for small BPOs</p>
         </div>
         {children}
       </div>

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "QAScope",
-  description: "AI QA Copilot for small BPOs",
+  description: "QA Copilot for small BPOs",
 };
 
 export default function RootLayout({

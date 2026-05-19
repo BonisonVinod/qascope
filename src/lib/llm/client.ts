@@ -46,12 +46,13 @@ const DEFAULT_MODEL: Record<LlmProvider, string> = {
 };
 
 /**
- * Resolve the LLM config for a workspace. If the workspace has any non-null
- * config columns, use their values (filling in defaults from the provider).
- * Otherwise, fall back to the hosted env (Pilot tier).
+ * Resolve the LLM config for a workspace. The workspace MUST have its own
+ * key configured in Settings — there is no env-var fallback in production.
+ * This forces every customer to bring their own API key, which is a
+ * deliberate product decision (cost ownership + data isolation).
  *
- * Returns null if no config is available (no workspace key AND no env key);
- * caller should surface a friendly error.
+ * Returns null if no workspace key is configured; the caller should
+ * surface a friendly "Configure your LLM key in Settings" error.
  */
 export async function resolveLlmConfig(
   supabase: SupabaseClient<Database>,
@@ -63,29 +64,17 @@ export async function resolveLlmConfig(
     .eq("id", clientId)
     .single();
 
-  // Workspace has a configured key → use it.
-  if (client?.llm_api_key) {
-    const provider = (client.llm_provider as LlmProvider) ?? "openai";
-    return {
-      provider,
-      apiKey: client.llm_api_key,
-      baseUrl: client.llm_base_url || DEFAULT_BASE_URL[provider] || "",
-      model: client.llm_model || DEFAULT_MODEL[provider] || "gpt-4o-mini",
-    };
+  if (!client?.llm_api_key) {
+    return null;
   }
 
-  // Fallback: hosted env (Pilot tier).
-  const envKey = process.env.OPENAI_API_KEY;
-  if (envKey) {
-    return {
-      provider: "openai",
-      apiKey: envKey,
-      baseUrl: DEFAULT_BASE_URL.openai,
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    };
-  }
-
-  return null;
+  const provider = (client.llm_provider as LlmProvider) ?? "openai";
+  return {
+    provider,
+    apiKey: client.llm_api_key,
+    baseUrl: client.llm_base_url || DEFAULT_BASE_URL[provider] || "",
+    model: client.llm_model || DEFAULT_MODEL[provider] || "gpt-4o-mini",
+  };
 }
 
 /**

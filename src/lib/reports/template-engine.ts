@@ -361,7 +361,7 @@ export function columnLabel(c: Column): string {
     case "appealed_count":
       return "Appealed";
     case "ai_vs_final_delta":
-      return "AI→Final Δ";
+      return "Original→Final Δ";
   }
 }
 

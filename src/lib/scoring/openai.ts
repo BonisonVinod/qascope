@@ -3,41 +3,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { estimateCostMicroInr } from "@/lib/billing/openai-cost";
 import { resolveLlmConfig } from "@/lib/llm/client";
-import { bedrockChat, bedrockChatAvailable, getBedrockChatModelId } from "@/lib/llm/bedrock-chat";
-
-let _hostedClient: OpenAI | null = null;
-
-/**
- * Hosted (env-key) OpenAI client. Used as a last-resort fallback when no
- * workspace LLM config is set and AWS Bedrock is not available either.
- */
-export function getOpenAI(): OpenAI {
-  if (!_hostedClient) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY is not set in environment.");
-    }
-    _hostedClient = new OpenAI({ apiKey });
-  }
-  return _hostedClient;
-}
-
-export function getModel(): string {
-  return process.env.OPENAI_MODEL || "gpt-4o-mini";
-}
 
 /** Categories of LLM calls — used in the per-feature breakdown on /billing. */
 export type UsageFeature = "scoring" | "coaching" | "report_template";
 
 /**
- * Run a chat completion. Provider resolution order:
+ * Run a chat completion using the WORKSPACE-CONFIGURED provider only.
  *
- *   1. Workspace-configured BYO provider (Settings → LLM provider) if set.
- *   2. AWS Bedrock Anthropic Claude — when AWS_BEARER_TOKEN_BEDROCK is set.
- *   3. Hosted env OpenAI key (Pilot tier) — last resort.
+ * Production policy: every workspace must bring its own API key in
+ * Settings → QA engine. There is no env-var fallback — that was removed
+ * deliberately so a customer's data never accidentally hits a key the
+ * vendor (us) controls. If the workspace key is not configured, we throw
+ * a clean error and the caller surfaces a "Configure your QA engine key"
+ * message.
  *
- * Usage is logged into openai_usage when supabase + clientId + feature are
- * provided. Logging failures are non-fatal.
+ * Usage is logged into openai_usage when supabase + clientId + feature
+ * are provided. Logging failures are non-fatal.
  */
 export async function chatText(args: {
   system: string;
@@ -48,67 +29,42 @@ export async function chatText(args: {
   clientId?: string;
   feature?: UsageFeature;
 }): Promise<string> {
-  // -------- Path 1: workspace-configured BYO provider --------
-  if (args.supabase && args.clientId) {
-    const wsConfig = await resolveLlmConfigForWorkspaceOnly(args.supabase, args.clientId);
-    if (wsConfig) {
-      const client = new OpenAI({
-        apiKey: wsConfig.apiKey,
-        baseURL: wsConfig.baseUrl || undefined,
-      });
-      const resp = await client.chat.completions.create({
-        model: wsConfig.model,
-        temperature: args.temperature ?? 0.2,
-        messages: [
-          { role: "system", content: args.system },
-          { role: "user", content: args.user },
-        ],
-        response_format: args.responseJson ? { type: "json_object" } : undefined,
-      });
-      const content = resp.choices[0]?.message?.content;
-      if (!content) throw new Error("Empty response from the LLM.");
-
-      await logUsage(args, wsConfig.model, resp.usage?.prompt_tokens ?? 0, resp.usage?.completion_tokens ?? 0);
-      return content;
-    }
+  if (!args.supabase || !args.clientId) {
+    throw new Error(
+      "chatText requires a workspace context (supabase + clientId).",
+    );
+  }
+  const wsConfig = await resolveLlmConfigForWorkspaceOnly(args.supabase, args.clientId);
+  if (!wsConfig) {
+    throw new Error(
+      "QA engine API key is not configured for this workspace. " +
+        "An admin must set it in Settings → QA engine provider.",
+    );
   }
 
-  // -------- Path 2: AWS Bedrock Anthropic Claude --------
-  if (bedrockChatAvailable()) {
-    const result = await bedrockChat({
-      system: args.system,
-      user: args.user,
-      temperature: args.temperature,
-      responseJson: args.responseJson,
-    });
-    await logUsage(args, result.model, result.promptTokens, result.completionTokens);
-    return result.text;
-  }
+  const client = new OpenAI({
+    apiKey: wsConfig.apiKey,
+    baseURL: wsConfig.baseUrl || undefined,
+  });
+  const resp = await client.chat.completions.create({
+    model: wsConfig.model,
+    temperature: args.temperature ?? 0.2,
+    messages: [
+      { role: "system", content: args.system },
+      { role: "user", content: args.user },
+    ],
+    response_format: args.responseJson ? { type: "json_object" } : undefined,
+  });
+  const content = resp.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response from the QA engine.");
 
-  // -------- Path 3: hosted env OpenAI key (legacy fallback) --------
-  if (process.env.OPENAI_API_KEY) {
-    const client = getOpenAI();
-    const model = getModel();
-    const resp = await client.chat.completions.create({
-      model,
-      temperature: args.temperature ?? 0.2,
-      messages: [
-        { role: "system", content: args.system },
-        { role: "user", content: args.user },
-      ],
-      response_format: args.responseJson ? { type: "json_object" } : undefined,
-    });
-    const content = resp.choices[0]?.message?.content;
-    if (!content) throw new Error("Empty response from the LLM.");
-    await logUsage(args, model, resp.usage?.prompt_tokens ?? 0, resp.usage?.completion_tokens ?? 0);
-    return content;
-  }
-
-  // No provider available at all.
-  throw new Error(
-    "No LLM configured. Either set up a provider in Settings → LLM provider, " +
-      "or set AWS_BEARER_TOKEN_BEDROCK + AWS_REGION in .env.local for Bedrock Claude.",
+  await logUsage(
+    args,
+    wsConfig.model,
+    resp.usage?.prompt_tokens ?? 0,
+    resp.usage?.completion_tokens ?? 0,
   );
+  return content;
 }
 
 /**
@@ -163,5 +119,3 @@ async function logUsage(
   }
 }
 
-// Re-export Bedrock helper for callers/tests that want to read the model id.
-export { getBedrockChatModelId };
