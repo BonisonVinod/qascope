@@ -17,6 +17,7 @@ import {
 } from "./scoring-math";
 import { computeSlaDeadline } from "./sla";
 import { maybeSendLowScoreAlert } from "./alert";
+import { runVerification } from "@/lib/verification/verify";
 
 type SB = SupabaseClient<Database>;
 
@@ -122,6 +123,14 @@ export async function scoreConversation(
     };
   }
 
+  // 3b. Run live verification in parallel with skip check.
+  //     Returns a context block to inject into scoring prompts, or "" if no
+  //     sources configured. Non-fatal — always resolves.
+  const [, verificationContext] = await Promise.all([
+    Promise.resolve(), // placeholder to keep array shape
+    runVerification(supabase, conv.client_id, conv.transcript_text),
+  ]);
+
   // 4. Run all criterion prompts in parallel.
   //    Match DB criterion to prompt by sort_order.
   const userMessage = buildCriterionUserMessage(
@@ -154,6 +163,11 @@ export async function scoreConversation(
         prompt.key === "compliance" && fatalRulesBlock
           ? prompt.systemInstruction + fatalRulesBlock
           : prompt.systemInstruction;
+
+      // Prepend live verification data so every criterion can use real facts.
+      if (verificationContext) {
+        systemInstruction = verificationContext + "\n\n" + systemInstruction;
+      }
 
       // Retrieve knowledge for this criterion and append to system instruction.
       const knowledge = await retrieveKnowledge(
