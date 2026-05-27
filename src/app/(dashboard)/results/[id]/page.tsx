@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { ScoreStatus } from "@/lib/database.types";
+import { AppealButton } from "./appeal-button";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,14 @@ export default async function ResultDetailPage(props: { params: Params }) {
     .eq("id", id)
     .maybeSingle();
   if (!score) notFound();
+
+  // Load any active review queue record for this score
+  const { data: activeReview } = await supabase
+    .from("review_queue")
+    .select("id, state, reason, first_reviewer_notes, second_reviewer_notes")
+    .eq("qa_score_id", score.id)
+    .neq("state", "closed")
+    .maybeSingle();
 
   const { data: conv } = await supabase
     .from("conversations")
@@ -85,6 +94,19 @@ export default async function ResultDetailPage(props: { params: Params }) {
                 {conv.external_conversation_id ?? conv.id.slice(0, 8)}
               </span>
             </p>
+            <div className="mt-2 flex items-center gap-3">
+              {activeReview ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950 dark:text-amber-300">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  </span>
+                  Under Appeal / Review ({activeReview.state === "pending_first" ? "Tier 1" : "Tier 2"})
+                </span>
+              ) : score.status === "final" ? (
+                <AppealButton scoreId={score.id} />
+              ) : null}
+            </div>
           </div>
           <ScoreHeader
             total={score.total_score}
@@ -93,6 +115,13 @@ export default async function ResultDetailPage(props: { params: Params }) {
           />
         </div>
       </div>
+
+      {activeReview && activeReview.first_reviewer_notes && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/30 p-4 text-sm text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/20 dark:text-amber-300">
+          <p className="font-medium text-xs uppercase tracking-wider text-amber-800 dark:text-amber-400">Active Appeal rationale</p>
+          <p className="mt-1 leading-relaxed italic">&ldquo;{activeReview.first_reviewer_notes}&rdquo;</p>
+        </div>
+      )}
 
       {score.coaching_note && (
         <section>

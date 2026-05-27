@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { estimateCostMicroInr } from "@/lib/billing/openai-cost";
 import { resolveLlmConfig } from "@/lib/llm/client";
+import { bedrockChat } from "@/lib/llm/bedrock-chat";
 
 /** Categories of LLM calls — used in the per-feature breakdown on /billing. */
 export type UsageFeature = "scoring" | "coaching" | "report_template";
@@ -16,6 +17,10 @@ export type UsageFeature = "scoring" | "coaching" | "report_template";
  * vendor (us) controls. If the workspace key is not configured, we throw
  * a clean error and the caller surfaces a "Configure your QA engine key"
  * message.
+ *
+ * Providers fall into two paths:
+ *   - Bedrock → custom REST call via bedrockChat() (region + bearer token)
+ *   - Everything else → OpenAI SDK with optional baseURL override
  *
  * Usage is logged into openai_usage when supabase + clientId + feature
  * are provided. Logging failures are non-fatal.
@@ -42,6 +47,28 @@ export async function chatText(args: {
     );
   }
 
+  // Bedrock path — wsConfig.baseUrl is the AWS region, wsConfig.apiKey is the
+  // Bearer token, wsConfig.model is the Bedrock model id.
+  if (wsConfig.provider === "bedrock") {
+    const result = await bedrockChat(
+      {
+        system: args.system,
+        user: args.user,
+        temperature: args.temperature,
+        responseJson: args.responseJson,
+      },
+      {
+        region: wsConfig.baseUrl,
+        token: wsConfig.apiKey,
+        modelId: wsConfig.model,
+      },
+    );
+    await logUsage(args, result.model, result.promptTokens, result.completionTokens);
+    return result.text;
+  }
+
+  // OpenAI-compatible path (covers openai, openrouter, together, groq, azure,
+  // anthropic-via-openai-compat, gemini-via-openai-compat, custom).
   const client = new OpenAI({
     apiKey: wsConfig.apiKey,
     baseURL: wsConfig.baseUrl || undefined,
@@ -68,25 +95,18 @@ export async function chatText(args: {
 }
 
 /**
- * Like resolveLlmConfig, but returns null if the workspace itself has no
- * configured key — does NOT fall back to env OpenAI. We want chatText to
- * decide between Bedrock vs env OpenAI explicitly.
+ * Thin wrapper around resolveLlmConfig that just returns null when nothing
+ * is configured. Kept as a separate function so future callers can layer
+ * in their own validation easily.
  */
 async function resolveLlmConfigForWorkspaceOnly(
   supabase: SupabaseClient<Database>,
   clientId: string,
-): Promise<{ apiKey: string; baseUrl: string; model: string } | null> {
+): Promise<{ provider: string; apiKey: string; baseUrl: string; model: string } | null> {
   const fullConfig = await resolveLlmConfig(supabase, clientId);
   if (!fullConfig) return null;
-  // resolveLlmConfig returns the env-OpenAI fallback when no workspace key is
-  // set. We can detect that case by re-querying the clients row.
-  const { data: client } = await supabase
-    .from("clients")
-    .select("llm_api_key")
-    .eq("id", clientId)
-    .single();
-  if (!client?.llm_api_key) return null; // workspace has no key of its own
   return {
+    provider: fullConfig.provider,
     apiKey: fullConfig.apiKey,
     baseUrl: fullConfig.baseUrl,
     model: fullConfig.model,

@@ -16,6 +16,7 @@ import {
   type ScoredCriterion,
 } from "./scoring-math";
 import { computeSlaDeadline } from "./sla";
+import { maybeSendLowScoreAlert } from "./alert";
 
 type SB = SupabaseClient<Database>;
 
@@ -62,11 +63,12 @@ export async function scoreConversation(
   // 2. Load the client's default rubric + criteria, plus SLA & pass threshold.
   const { data: client } = await supabase
     .from("clients")
-    .select("id, sla_hours, pass_threshold, review_confidence_threshold")
+    .select("id, name, sla_hours, pass_threshold, review_confidence_threshold")
     .eq("id", conv.client_id)
     .single();
   const slaHours = client?.sla_hours ?? 24;
   const passThreshold = client?.pass_threshold ?? 70;
+  const clientName = client?.name ?? "Unknown workspace";
   // Stored as percentage (0-100) for human readability; deriveStatus uses 0-1.
   const reviewConfidenceThreshold = (client?.review_confidence_threshold ?? 70) / 100;
 
@@ -173,7 +175,7 @@ export async function scoreConversation(
           feature: "scoring",
         });
         const parsed = parseCriterionJson(raw);
-        return { criterion: c, result: parsed, retrievedSources: knowledge?.sources || [] };
+        return { criterion: c, result: parsed, retrievedSources: knowledge?.sources || [], errored: false };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         return {
@@ -186,6 +188,7 @@ export async function scoreConversation(
             sources_used: [],
           } as CriterionScore,
           retrievedSources: [],
+          errored: true,
         };
       }
     }),
@@ -196,6 +199,7 @@ export async function scoreConversation(
     weight: r.criterion.weight,
     critical_fail_boolean: r.criterion.critical_fail_boolean,
     result: r.result,
+    errored: r.errored,
   }));
   const { totalScore, overallConfidence, criticalFail } = computeScoreTotals(scored);
   const status: ScoreStatus = deriveStatus(
@@ -234,6 +238,7 @@ export async function scoreConversation(
     explanation: r.result.explanation.slice(0, 2000),
     evidence_span: r.result.evidence.slice(0, 2000),
     sources_used: JSON.stringify(r.result.sources_used || []),
+    errored: r.errored,
   }));
   const { error: detailsErr } = await supabase.from("qa_score_details").insert(details);
   if (detailsErr) {
@@ -262,11 +267,30 @@ export async function scoreConversation(
     });
   }
 
+  // 8b. Fire low-score alert email (async/fire-and-forget — never blocks scoring)
+  void maybeSendLowScoreAlert({
+    supabase,
+    clientId: conv.client_id,
+    clientName,
+    qaScoreId: scoreRow.id,
+    agentId: conv.agent_id ?? null,
+    agentName,
+    totalScore: roundedTotal,
+    passThreshold,
+    conversationDate: new Date().toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "Asia/Kolkata",
+    }),
+  });
+
   // 9. Generate coaching note (best effort - non-fatal if it fails)
   try {
     const coachingNote = await chatText({
       system: COACHING_SYSTEM_INSTRUCTION,
       user: buildCoachingUserMessage({
+        agentName,
         transcript: conv.transcript_text,
         scoresTable: results.map((r) => ({
           criterion: r.criterion.name,

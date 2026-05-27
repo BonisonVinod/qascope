@@ -37,6 +37,8 @@ export function createUserClient(
   userId: string,
   clientId: string
 ): SupabaseClient<Database> {
+  void userId;
+  void clientId;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

@@ -88,7 +88,7 @@ test("rls-isolation: workspace A cannot read workspace B's document_chunks", asy
     );
     const docBId = docBResult.documentId;
 
-    const chunkBId = await createTestChunk(
+    await createTestChunk(
       serviceSb,
       docBId,
       0,

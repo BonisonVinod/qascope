@@ -18,6 +18,7 @@ export type ScoredCriterion = {
   weight: number;
   critical_fail_boolean: boolean;
   result: CriterionScore;
+  errored?: boolean;
 };
 
 export type ScoreTotals = {
@@ -84,6 +85,7 @@ export function computeScoreTotals(scored: ScoredCriterion[]): ScoreTotals {
   let criticalFail = false;
 
   for (const r of scored) {
+    if (r.errored) continue;
     totalWeight += r.weight;
     earnedPoints += (r.result.score / 2) * r.weight;
     confSum += r.result.confidence * r.weight;

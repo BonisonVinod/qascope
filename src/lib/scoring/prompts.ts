@@ -168,6 +168,7 @@ Avoid platitudes. Be direct but kind. Do NOT repeat the raw scores - the team le
 
 export function buildCoachingUserMessage(args: {
   agentName: string;
+  transcript: string;
   scoresTable: { criterion: string; score: number; explanation: string }[];
 }): string {
   const table = args.scoresTable

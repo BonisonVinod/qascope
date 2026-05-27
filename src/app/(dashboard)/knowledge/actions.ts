@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { chunkText } from "@/lib/ingest/chunking";
 import { getEmbedding } from "@/lib/llm/embedding";
+import type { Database } from "@/lib/database.types";
 
 export type DocumentUploadResult =
   | {
@@ -14,6 +15,11 @@ export type DocumentUploadResult =
       chunkCount: number;
     }
   | { ok: false; error: string };
+
+type ExistingDocument = Pick<
+  Database["public"]["Tables"]["workspace_documents"]["Row"],
+  "id" | "chunk_count"
+>;
 
 /**
  * Upload a knowledge document (markdown or text file).
@@ -71,7 +77,7 @@ export async function uploadDocumentAction(
   let content: string;
   try {
     content = await file.text();
-  } catch (err) {
+  } catch {
     return { ok: false, error: "Failed to read file." };
   }
 
@@ -83,12 +89,13 @@ export async function uploadDocumentAction(
   const hash = createHash("sha256").update(content).digest("hex");
 
   // Check if this hash already exists (idempotence)
-  const { data: existing } = await supabase
+  const { data: existingResult } = await supabase
     .from("workspace_documents")
     .select("id, chunk_count")
     .eq("workspace_id", workspaceId)
     .eq("content_hash", hash)
-    .single();
+    .maybeSingle();
+  const existing = existingResult as ExistingDocument | null;
 
   if (existing) {
     return {

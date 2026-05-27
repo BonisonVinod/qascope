@@ -42,7 +42,10 @@ export default async function DashboardLayout({
       <div className="flex flex-1">
         <aside className="sticky top-0 flex h-screen w-60 flex-col overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-8">
-          <h1 className="text-lg font-semibold tracking-tight">QAScope</h1>
+          <h1 className="text-lg font-semibold tracking-tight">
+            <span className="text-teal-700 dark:text-teal-400">QA</span>
+            <span className="text-zinc-900 dark:text-zinc-100">Scope</span>
+          </h1>
           <p className="text-xs text-zinc-500">{appUser?.name ?? user.email}</p>
           {appUser?.role && (
             <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-400">
@@ -56,7 +59,7 @@ export default async function DashboardLayout({
             <Link
               key={item.href}
               href={item.href}
-              className="block rounded-md px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="block rounded-md px-3 py-2 text-sm text-zinc-700 transition hover:bg-teal-50 hover:text-teal-800 dark:text-zinc-300 dark:hover:bg-teal-950/40 dark:hover:text-teal-300"
             >
               {item.label}
             </Link>

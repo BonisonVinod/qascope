@@ -13,6 +13,7 @@ export type LlmProvider =
   | "together"
   | "groq"
   | "azure"
+  | "bedrock"
   | "custom";
 
 export type LlmConfig = {
@@ -32,6 +33,7 @@ const DEFAULT_BASE_URL: Record<LlmProvider, string> = {
   together: "https://api.together.xyz/v1",
   groq: "https://api.groq.com/openai/v1",
   azure: "", // must be supplied by the customer
+  bedrock: "us-east-1", // for Bedrock this field stores the AWS region, not a URL
   custom: "", // must be supplied by the customer
 };
 
@@ -42,6 +44,7 @@ const DEFAULT_MODEL: Record<LlmProvider, string> = {
   together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
   groq: "llama-3.1-70b-versatile",
   azure: "gpt-4o-mini",
+  bedrock: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
   custom: "gpt-4o-mini",
 };
 
@@ -138,6 +141,13 @@ export const PROVIDER_INFO: Record<
     defaultBaseUrl: "",
     defaultModel: DEFAULT_MODEL.azure,
   },
+  bedrock: {
+    label: "AWS Bedrock",
+    description:
+      "AWS-hosted models via the Bedrock Converse API (Claude, Nova, Llama, Mistral). Use AWS region + Bearer token instead of an API key.",
+    defaultBaseUrl: "us-east-1",
+    defaultModel: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+  },
   custom: {
     label: "Custom",
     description: "Any OpenAI-API-compatible endpoint. You supply base URL + key + model.",
@@ -149,6 +159,7 @@ export const PROVIDER_INFO: Record<
 export const PROVIDER_ORDER: LlmProvider[] = [
   "openrouter",
   "openai",
+  "bedrock",
   "together",
   "groq",
   "azure",

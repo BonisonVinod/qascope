@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, startTransition } from "react";
 import { scoreUnscored, rescoreAll, type ScoreBatchState } from "./actions";
 
 /** Approx wall-clock minutes to score N conversations. */
@@ -51,7 +51,12 @@ export function ScoreButton({
     setConfirming(null);
     const fd = new FormData();
     fd.set("mode", mode);
-    formAction(fd);
+    // useActionState's dispatcher must run inside a transition under React 19
+    // (Next 16 / Turbopack). Without this wrapper the console logs
+    // "called outside of a transition" and isPending may not flip correctly.
+    startTransition(() => {
+      formAction(fd);
+    });
   }
 
   return (

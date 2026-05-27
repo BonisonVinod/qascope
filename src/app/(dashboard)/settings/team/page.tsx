@@ -58,7 +58,7 @@ export default async function TeamPage() {
     .is("accepted_at", null)
     .order("created_at", { ascending: false });
 
-  const now = Date.now();
+  const now = new Date();
 
   return (
     <div className="space-y-10">
@@ -186,7 +186,7 @@ export default async function TeamPage() {
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {invites.map((inv) => {
-                  const expired = new Date(inv.expires_at).getTime() <= now;
+                  const expired = new Date(inv.expires_at) <= now;
                   return (
                     <tr key={inv.id}>
                       <td className="px-4 py-2">{inv.email}</td>

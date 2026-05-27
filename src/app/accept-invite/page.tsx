@@ -40,7 +40,7 @@ export default async function AcceptInvitePage({
       </ErrorWrap>
     );
   }
-  if (new Date(invite.expires_at).getTime() <= Date.now()) {
+  if (new Date(invite.expires_at) <= new Date()) {
     return (
       <ErrorWrap>
         This invite has expired. Ask for a fresh one.

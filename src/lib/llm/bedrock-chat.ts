@@ -1,50 +1,35 @@
 /**
- * Bedrock chat — provider-agnostic, uses the Bedrock Converse API.
+ * Bedrock chat — uses the AWS Bedrock Converse API.
  *
  * The Converse API has a single request/response shape that works across
  * every Bedrock-hosted model family (Amazon Nova, Anthropic Claude, Meta
- * Llama, Mistral, Cohere, etc.). To swap the underlying model, change the
- * BEDROCK_CHAT_MODEL_ID env var — no code change required.
+ * Llama, Mistral, Cohere, etc.). To swap the underlying model, change
+ * cfg.modelId — no code change required.
  *
- * Required env vars:
- *   AWS_REGION                  — e.g. us-east-1
- *   AWS_BEARER_TOKEN_BEDROCK    — long-term Bedrock API key (Bearer token)
- * Optional:
- *   BEDROCK_CHAT_MODEL_ID       — defaults to us.amazon.nova-pro-v1:0
+ * Credentials are PASSED IN by the caller, not read from process.env. This
+ * lets us configure Bedrock per-workspace via Settings → QA engine provider:
+ *   - cfg.region = AWS region (e.g. "us-east-1")
+ *   - cfg.token  = long-term Bedrock Bearer token (AWS_BEARER_TOKEN_BEDROCK)
+ *   - cfg.modelId = Bedrock inference profile ID
  *
  * No SDK dep — calls the Bedrock REST endpoint directly with Bearer auth.
  *
- * Reference: https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
+ * Reference:
+ *   https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html
  */
 
-const DEFAULT_MODEL_ID = "us.amazon.nova-pro-v1:0";
 const MAX_RETRIES = 4;
 const INITIAL_BACKOFF_MS = 800;
 const MAX_BACKOFF_MS = 8000;
 
-function getEndpoint(): string {
-  const region = process.env.AWS_REGION;
-  if (!region) throw new Error("AWS_REGION is not set in environment.");
-  return `https://bedrock-runtime.${region}.amazonaws.com`;
-}
+export const DEFAULT_BEDROCK_MODEL_ID =
+  "us.anthropic.claude-3-5-sonnet-20241022-v2:0";
 
-function getBearerToken(): string {
-  const token = process.env.AWS_BEARER_TOKEN_BEDROCK;
-  if (!token) throw new Error("AWS_BEARER_TOKEN_BEDROCK is not set.");
-  return token;
-}
-
-export function getBedrockChatModelId(): string {
-  return (
-    process.env.BEDROCK_CHAT_MODEL_ID ||
-    process.env.LLM_MODEL ||
-    DEFAULT_MODEL_ID
-  );
-}
-
-export function bedrockChatAvailable(): boolean {
-  return Boolean(process.env.AWS_REGION && process.env.AWS_BEARER_TOKEN_BEDROCK);
-}
+export type BedrockConfig = {
+  region: string;
+  token: string;
+  modelId: string;
+};
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -74,37 +59,39 @@ interface ConverseResponse {
 }
 
 /**
- * Call Bedrock Converse API with a system + user message pair.
- * Returns the assistant text plus usage tokens.
- *
- * Works with any Converse-compatible Bedrock model (Nova, Claude, Llama,
- * Mistral, Cohere, etc.) — set BEDROCK_CHAT_MODEL_ID to pick one.
+ * Call Bedrock Converse API with a system + user message pair. Returns the
+ * assistant text plus usage tokens. Works with any Converse-compatible
+ * Bedrock model (Nova, Claude, Llama, Mistral, Cohere, etc.).
  */
-export async function bedrockChat(args: {
-  system: string;
-  user: string;
-  temperature?: number;
-  maxTokens?: number;
-  responseJson?: boolean;
-}): Promise<{ text: string; promptTokens: number; completionTokens: number; model: string }> {
-  const modelId = getBedrockChatModelId();
-  const endpoint = getEndpoint();
-  const token = getBearerToken();
-  const url = `${endpoint}/model/${encodeURIComponent(modelId)}/converse`;
+export async function bedrockChat(
+  args: {
+    system: string;
+    user: string;
+    temperature?: number;
+    maxTokens?: number;
+    responseJson?: boolean;
+  },
+  cfg: BedrockConfig,
+): Promise<{
+  text: string;
+  promptTokens: number;
+  completionTokens: number;
+  model: string;
+}> {
+  if (!cfg.region) throw new Error("Bedrock region is not configured.");
+  if (!cfg.token) throw new Error("Bedrock bearer token is not configured.");
+  if (!cfg.modelId) throw new Error("Bedrock model id is not configured.");
 
-  // Converse API doesn't have a hard json-response mode; nudge in the system
-  // prompt if the caller asked for JSON output.
+  const endpoint = `https://bedrock-runtime.${cfg.region}.amazonaws.com`;
+  const url = `${endpoint}/model/${encodeURIComponent(cfg.modelId)}/converse`;
+
   const systemPrompt = args.responseJson
-    ? args.system + "\n\nIMPORTANT: Respond with a single valid JSON object only, no surrounding prose, no markdown code fences."
+    ? args.system +
+      "\n\nIMPORTANT: Respond with a single valid JSON object only, no surrounding prose, no markdown code fences."
     : args.system;
 
   const body = {
-    messages: [
-      {
-        role: "user",
-        content: [{ text: args.user }],
-      },
-    ],
+    messages: [{ role: "user", content: [{ text: args.user }] }],
     system: [{ text: systemPrompt }],
     inferenceConfig: {
       maxTokens: args.maxTokens ?? 2048,
@@ -119,7 +106,7 @@ export async function bedrockChat(args: {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${cfg.token}`,
         "Content-Type": "application/json",
         Accept: "application/json",
       },
@@ -136,7 +123,6 @@ export async function bedrockChat(args: {
       if (!text) {
         throw new Error("Bedrock Converse returned empty content.");
       }
-      // If JSON mode, strip a possible code fence wrapper.
       if (args.responseJson) {
         text = stripJsonFence(text);
       }
@@ -144,14 +130,17 @@ export async function bedrockChat(args: {
         text,
         promptTokens: data.usage?.inputTokens ?? 0,
         completionTokens: data.usage?.outputTokens ?? 0,
-        model: modelId,
+        model: cfg.modelId,
       };
     }
 
-    if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
+    if (
+      response.status === 429 ||
+      (response.status >= 500 && response.status < 600)
+    ) {
       const errBody = await response.text().catch(() => "<no body>");
       lastErr = new Error(
-        `Bedrock chat call failed (${response.status} ${response.statusText}): ${errBody}`
+        `Bedrock chat call failed (${response.status} ${response.statusText}): ${errBody}`,
       );
       if (attempt < MAX_RETRIES - 1) {
         const jitter = Math.floor(Math.random() * 250);
@@ -162,7 +151,7 @@ export async function bedrockChat(args: {
     } else {
       const errBody = await response.text().catch(() => "<no body>");
       throw new Error(
-        `Bedrock chat call failed (${response.status} ${response.statusText}): ${errBody}`
+        `Bedrock chat call failed (${response.status} ${response.statusText}): ${errBody}`,
       );
     }
   }
@@ -172,7 +161,6 @@ export async function bedrockChat(args: {
 
 function stripJsonFence(text: string): string {
   const trimmed = text.trim();
-  // Match ```json ... ``` or ``` ... ```
   const fenceMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
   if (fenceMatch) return fenceMatch[1].trim();
   return trimmed;

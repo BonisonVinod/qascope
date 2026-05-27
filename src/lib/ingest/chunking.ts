@@ -64,7 +64,7 @@ export function chunkText(text: string, opts?: ChunkingOptions): string[] {
 
       // Build overlap: take the last ~overlapTokens worth of paragraphs.
       // This preserves context across chunk boundaries.
-      let overlapChunk: string[] = [];
+      const overlapChunk: string[] = [];
       let overlapTokensCount = 0;
       for (let i = currentChunk.length - 1; i >= 0; i--) {
         const tokens = estimateTokens(currentChunk[i]);

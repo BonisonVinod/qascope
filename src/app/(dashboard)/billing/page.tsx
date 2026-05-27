@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { PLANS, PLAN_ORDER, formatInr, getPlan } from "@/lib/billing/plans";
+import { PLANS, PLAN_ORDER, formatUsd, getPlan } from "@/lib/billing/plans";
 import { getUsage } from "@/lib/billing/usage";
 import { formatMicroInr, formatTokens } from "@/lib/billing/openai-cost";
 import { ChangePlanButton } from "./change-plan-button";
@@ -94,9 +94,8 @@ export default async function BillingPage() {
   );
 
   const currentPlan = getPlan(client?.active_plan ?? "pilot");
-  const seatsOver = Math.max(0, seatsUsed - currentPlan.seatsIncluded);
-  const additionalSeatCost =
-    seatsOver * (currentPlan.additionalSeatPriceInr ?? 0);
+  // Estimated monthly bill = seats × per-seat price (USD)
+  const estimatedMonthlyUsd = seatsUsed * currentPlan.pricePerSeatUsd;
 
   // Subscription history (last 5)
   const { data: history } = clientId
@@ -124,19 +123,26 @@ export default async function BillingPage() {
             Current plan
           </p>
           <p className="mt-1 text-2xl font-semibold">{currentPlan.label}</p>
-          <p className="mt-1 text-sm text-zinc-500">
-            {currentPlan.description}
-          </p>
-          <p className="mt-3 text-sm">
-            <strong>{formatInr(currentPlan.monthlyPriceInr)}</strong>
-            {currentPlan.monthlyPriceInr > 0 && (
-              <span className="text-zinc-500"> / month</span>
-            )}
-          </p>
-          {additionalSeatCost > 0 && (
-            <p className="mt-1 text-xs text-zinc-500">
-              + {formatInr(additionalSeatCost)} for {seatsOver} extra seat
-              {seatsOver === 1 ? "" : "s"}
+          <p className="mt-1 text-xs text-zinc-400">{currentPlan.seatRange}</p>
+          <p className="mt-1 text-sm text-zinc-500">{currentPlan.description}</p>
+          {currentPlan.pricePerSeatUsd > 0 ? (
+            <>
+              <p className="mt-3 text-sm">
+                <strong className="text-lg">
+                  {formatUsd(currentPlan.pricePerSeatUsd)}
+                </strong>
+                <span className="text-zinc-500"> / seat / month</span>
+              </p>
+              <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                ≈ {formatUsd(estimatedMonthlyUsd)} / month
+                <span className="ml-1 text-xs font-normal text-zinc-500">
+                  ({seatsUsed} seat{seatsUsed === 1 ? "" : "s"})
+                </span>
+              </p>
+            </>
+          ) : (
+            <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+              Free trial
             </p>
           )}
         </div>
@@ -185,12 +191,12 @@ export default async function BillingPage() {
             over={seatsUsed > currentPlan.seatsIncluded}
           />
           <p className="mt-2 text-xs text-zinc-500">
-            {seatsOver > 0 ? (
+            {seatsUsed > currentPlan.seatsIncluded ? (
               <span className="font-medium text-amber-700 dark:text-amber-400">
-                {seatsOver} over plan ·{" "}
-                {currentPlan.additionalSeatPriceInr > 0
-                  ? `+${formatInr(currentPlan.additionalSeatPriceInr)}/seat/month`
-                  : "free during beta"}
+                {seatsUsed - currentPlan.seatsIncluded} over included seats ·{" "}
+                {currentPlan.pricePerSeatUsd > 0
+                  ? `+${formatUsd(currentPlan.pricePerSeatUsd)}/seat/month`
+                  : "free during trial"}
               </span>
             ) : (
               <>
@@ -297,40 +303,80 @@ export default async function BillingPage() {
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
           Plans
         </h2>
-        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <p className="mt-1 max-w-2xl text-xs text-zinc-500">
+          Pricing is a <strong className="text-zinc-700 dark:text-zinc-300">retroactive volume discount</strong> — the
+          rate you qualify for applies to <em>every</em> seat from seat 1, not
+          just the extra ones. Upgrading to the next tier actually lowers your
+          total bill.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-4">
           {PLAN_ORDER.map((p) => {
             const plan = PLANS[p];
             const isCurrent = client?.active_plan === p;
+            // Highlight the tier that matches current seat count
+            const isRecommended =
+              !isCurrent &&
+              seatsUsed >= plan.minSeats &&
+              (plan.maxSeats === -1 || seatsUsed <= plan.maxSeats);
             return (
               <div
                 key={p}
-                className={`rounded-lg border p-5 transition ${
+                className={`relative rounded-lg border p-5 transition ${
                   isCurrent
                     ? "border-emerald-400 bg-emerald-50/40 dark:border-emerald-700 dark:bg-emerald-950/30"
-                    : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+                    : isRecommended
+                      ? "border-blue-400 bg-blue-50/40 dark:border-blue-700 dark:bg-blue-950/30"
+                      : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
                 }`}
               >
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-lg font-semibold">{plan.label}</h3>
-                  {isCurrent && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
-                      Current
-                    </span>
-                  )}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-lg font-semibold">{plan.label}</h3>
+                    <p className="text-[11px] text-zinc-400">{plan.seatRange}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {isCurrent && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
+                        Current
+                      </span>
+                    )}
+                    {isRecommended && (
+                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-800 dark:bg-blue-950 dark:text-blue-400">
+                        Recommended
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="mt-2 text-2xl font-bold">
-                  {formatInr(plan.monthlyPriceInr)}
-                  {plan.monthlyPriceInr > 0 && (
-                    <span className="ml-1 text-sm font-normal text-zinc-500">
-                      /mo
-                    </span>
+                <p className="mt-3 text-2xl font-bold">
+                  {plan.pricePerSeatUsd === 0 ? (
+                    "Free"
+                  ) : (
+                    <>
+                      {formatUsd(plan.pricePerSeatUsd)}
+                      <span className="ml-1 text-sm font-normal text-zinc-500">
+                        / seat / mo
+                      </span>
+                    </>
                   )}
                 </p>
+                {/* Savings callout: show how upgrading to this tier saves vs staying on the tier below */}
+                {plan.name === "team" && (
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+                    50 seats → <strong>$900/mo</strong>{" "}
+                    <span className="text-zinc-400">(vs $980 on Starter)</span>
+                  </p>
+                )}
+                {plan.name === "pro" && (
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
+                    100 seats → <strong>$1,600/mo</strong>{" "}
+                    <span className="text-zinc-400">(vs $1,782 on Growth)</span>
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-zinc-500">{plan.description}</p>
                 <ul className="mt-4 space-y-1.5 text-sm">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-1.5">
-                      <span className="mt-0.5 text-emerald-600 dark:text-emerald-400">
+                      <span className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400">
                         ✓
                       </span>
                       <span>{f}</span>
@@ -362,9 +408,8 @@ export default async function BillingPage() {
           })}
         </div>
         <p className="mt-3 text-xs text-zinc-500">
-          Razorpay checkout integration is staged — plan switches today are
-          recorded directly. Once Razorpay credentials are configured, upgrades
-          will route through Razorpay's hosted checkout.
+          Razorpay checkout integration coming soon — plan switches are recorded
+          directly today. Pricing shown in USD.
         </p>
       </section>
 

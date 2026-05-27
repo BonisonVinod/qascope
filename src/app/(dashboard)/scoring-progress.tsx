@@ -24,8 +24,9 @@ const STALL_WARN_MS = 30_000;
 
 export function ScoringProgress() {
   const [p, setP] = useState<Progress | null>(null);
-  const [lastChangeAt, setLastChangeAt] = useState<number>(Date.now());
+  const [lastChangeAt, setLastChangeAt] = useState<number>(0);
   const [lastScored, setLastScored] = useState<number>(0);
+  const [nowMs, setNowMs] = useState<number>(0);
   const [isStopping, startStop] = useTransition();
 
   useEffect(() => {
@@ -34,6 +35,8 @@ export function ScoringProgress() {
 
     const tick = async () => {
       try {
+        const tickStartedAt = Date.now();
+        if (mounted) setNowMs(tickStartedAt);
         const res = await fetch("/api/scoring-progress", { cache: "no-store" });
         if (!res.ok) {
           if (mounted) setP(null);
@@ -43,7 +46,7 @@ export function ScoringProgress() {
             setP(data);
             if (data.scored !== lastScored) {
               setLastScored(data.scored);
-              setLastChangeAt(Date.now());
+              setLastChangeAt(tickStartedAt);
             }
           }
         }
@@ -64,7 +67,7 @@ export function ScoringProgress() {
 
   if (!p || !p.isActive) return null;
 
-  const stalled = Date.now() - lastChangeAt > STALL_WARN_MS;
+  const stalled = nowMs > 0 && lastChangeAt > 0 && nowMs - lastChangeAt > STALL_WARN_MS;
   const stopping = p.stopRequested || isStopping;
 
   const dotClass = stopping

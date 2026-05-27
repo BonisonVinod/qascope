@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { PlanName } from "@/lib/database.types";
-import { PLANS, PLAN_ORDER, getPlan } from "@/lib/billing/plans";
+import { PLAN_ORDER, getPlan } from "@/lib/billing/plans";
 
 export type BillingActionState =
   | undefined

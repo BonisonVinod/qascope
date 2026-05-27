@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { saveLlmSettings, type LlmSettingsState } from "./llm-actions";
+import {
+  saveLlmSettings,
+  testLlmSettings,
+  type LlmSettingsState,
+} from "./llm-actions";
 import {
   PROVIDER_INFO,
   PROVIDER_ORDER,
@@ -13,10 +17,10 @@ export function LlmSettingsForm({
 }: {
   current: {
     provider: LlmProvider | null;
-    apiKey: string | null;
+    hasApiKey: boolean;
     baseUrl: string | null;
     model: string | null;
-    embeddingApiKey: string | null;
+    hasEmbeddingApiKey: boolean;
     embeddingBaseUrl: string | null;
   };
 }) {
@@ -24,31 +28,46 @@ export function LlmSettingsForm({
     LlmSettingsState,
     FormData
   >(saveLlmSettings, undefined);
+  const [testState, testAction, testPending] = useActionState<
+    LlmSettingsState,
+    FormData
+  >(testLlmSettings, undefined);
 
   const [provider, setProvider] = useState<LlmProvider>(
     current.provider ?? "openrouter",
   );
-  const [apiKey, setApiKey] = useState(current.apiKey ?? "");
+  const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState(current.baseUrl ?? "");
   const [model, setModel] = useState(current.model ?? "");
   const [useSeparateEmbedding, setUseSeparateEmbedding] = useState(
-    !!current.embeddingApiKey,
+    current.hasEmbeddingApiKey,
   );
-  const [embeddingApiKey, setEmbeddingApiKey] = useState(
-    current.embeddingApiKey ?? "",
-  );
+  const [embeddingApiKey, setEmbeddingApiKey] = useState("");
   const [embeddingBaseUrl, setEmbeddingBaseUrl] = useState(
     current.embeddingBaseUrl ?? "",
   );
 
   const info = PROVIDER_INFO[provider];
-
-  const maskedKey = current.apiKey
-    ? current.apiKey.slice(0, 6) + "…" + current.apiKey.slice(-4)
-    : null;
-  const maskedEmbeddingKey = current.embeddingApiKey
-    ? current.embeddingApiKey.slice(0, 6) + "…" + current.embeddingApiKey.slice(-4)
-    : null;
+  const isBedrock = provider === "bedrock";
+  const apiKeyLabel = isBedrock ? "AWS Bedrock Bearer token" : "API key";
+  const baseUrlLabel = isBedrock ? "AWS Region" : "Base URL";
+  const baseUrlOptional = !isBedrock;
+  const baseUrlPlaceholder = isBedrock
+    ? "us-east-1"
+    : info.defaultBaseUrl || "https://your-endpoint.example.com/v1";
+  const baseUrlHint = isBedrock
+    ? "Required for Bedrock. Use the AWS region where your inference profile lives, e.g. us-east-1."
+    : info.defaultBaseUrl
+      ? `Defaults to ${info.defaultBaseUrl} when blank.`
+      : "Required for this provider. Paste the endpoint URL from your dashboard.";
+  const modelPlaceholder = isBedrock
+    ? "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+    : info.defaultModel || "model-id";
+  const modelHint = isBedrock
+    ? "Bedrock inference profile ID. Default is Claude 3.5 Sonnet."
+    : info.defaultModel
+      ? `Defaults to ${info.defaultModel} when blank.`
+      : "Required for this provider. Copy the model id from your provider docs.";
 
   return (
     <form action={formAction} className="space-y-5">
@@ -80,7 +99,7 @@ export function LlmSettingsForm({
           htmlFor="apiKey"
           className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
         >
-          API key
+          {apiKeyLabel}
         </label>
         <input
           id="apiKey"
@@ -89,15 +108,13 @@ export function LlmSettingsForm({
           autoComplete="off"
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
-          placeholder={
-            maskedKey ?? "sk-or-v1-... (paste from your provider dashboard)"
-          }
+          placeholder="Paste a new key to replace the saved one"
           className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
         <p className="mt-1 text-xs text-zinc-500">
-          {maskedKey
-            ? `Currently saved: ${maskedKey}. Leave blank to keep the existing key, or paste a new one to replace it.`
-            : "Stored securely in your workspace. Only admins can read or update it."}
+          {current.hasApiKey
+            ? "A key is saved. Leave blank to keep it, or paste a new one to replace it."
+            : "Stored securely in your workspace. Only admins can update it."}
         </p>
       </div>
 
@@ -106,21 +123,18 @@ export function LlmSettingsForm({
           htmlFor="baseUrl"
           className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
         >
-          Base URL <span className="text-zinc-400">(optional)</span>
+          {baseUrlLabel}
+          {baseUrlOptional && <span className="text-zinc-400"> (optional)</span>}
         </label>
         <input
           id="baseUrl"
           name="baseUrl"
           value={baseUrl}
           onChange={(e) => setBaseUrl(e.target.value)}
-          placeholder={info.defaultBaseUrl || "https://your-endpoint.example.com/v1"}
+          placeholder={baseUrlPlaceholder}
           className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
-        <p className="mt-1 text-xs text-zinc-500">
-          {info.defaultBaseUrl
-            ? `Defaults to ${info.defaultBaseUrl} when blank.`
-            : "Required for this provider — paste the endpoint URL from your dashboard."}
-        </p>
+        <p className="mt-1 text-xs text-zinc-500">{baseUrlHint}</p>
       </div>
 
       <div>
@@ -135,14 +149,10 @@ export function LlmSettingsForm({
           name="model"
           value={model}
           onChange={(e) => setModel(e.target.value)}
-          placeholder={info.defaultModel || "model-id"}
+          placeholder={modelPlaceholder}
           className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
         />
-        <p className="mt-1 text-xs text-zinc-500">
-          {info.defaultModel
-            ? `Defaults to ${info.defaultModel} when blank.`
-            : "Required for this provider — copy the model id from your provider's docs."}
-        </p>
+        <p className="mt-1 text-xs text-zinc-500">{modelHint}</p>
       </div>
 
       <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
@@ -156,9 +166,8 @@ export function LlmSettingsForm({
           Use a separate API key for embeddings
         </label>
         <p className="ml-6 mt-1 text-xs text-zinc-500">
-          By default the same key powers scoring and embeddings. Tick this if
-          you want to use a different (often cheaper) provider for the
-          embeddings used in knowledge-base retrieval.
+          Tick this if your scoring provider does not expose an embeddings
+          endpoint, or if you want to use a cheaper embeddings provider.
         </p>
 
         {useSeparateEmbedding && (
@@ -177,13 +186,13 @@ export function LlmSettingsForm({
                 autoComplete="off"
                 value={embeddingApiKey}
                 onChange={(e) => setEmbeddingApiKey(e.target.value)}
-                placeholder={maskedEmbeddingKey ?? "sk-... (from your provider)"}
+                placeholder="Paste a new embedding key to replace the saved one"
                 className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
               />
               <p className="mt-1 text-xs text-zinc-500">
-                {maskedEmbeddingKey
-                  ? `Currently saved: ${maskedEmbeddingKey}. Leave blank to keep, or paste a new one to replace.`
-                  : "Used only for /embeddings calls. Stored securely in your workspace."}
+                {current.hasEmbeddingApiKey
+                  ? "An embedding key is saved. Leave blank to keep it, or paste a new one to replace it."
+                  : "Used only for embeddings. Stored securely in your workspace."}
               </p>
             </div>
             <div>
@@ -202,7 +211,7 @@ export function LlmSettingsForm({
                 className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
               />
               <p className="mt-1 text-xs text-zinc-500">
-                Defaults to OpenAI&rsquo;s embeddings endpoint when blank.
+                Defaults to OpenAI&apos;s embeddings endpoint when blank.
               </p>
             </div>
           </div>
@@ -212,13 +221,21 @@ export function LlmSettingsForm({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={pending}
           className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
         >
           {pending ? "Saving..." : "Save provider"}
+        </button>
+        <button
+          type="submit"
+          formAction={testAction}
+          disabled={testPending}
+          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          {testPending ? "Testing..." : "Test provider"}
         </button>
         {state?.ok === true && (
           <span className="text-xs text-emerald-600 dark:text-emerald-400">
@@ -230,12 +247,21 @@ export function LlmSettingsForm({
             {state.error}
           </span>
         )}
+        {testState?.ok === true && (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400">
+            {testState.message}
+          </span>
+        )}
+        {testState?.ok === false && (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {testState.error}
+          </span>
+        )}
       </div>
 
       <p className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
-        We don&rsquo;t store your data through any third party — every
-        QA-engine call goes directly from your QAScope server to the provider
-        you select. Your API key never leaves your workspace.
+        Every QA-engine call goes directly from your QAScope server to the
+        provider you select. Saved keys are never sent back to the browser.
       </p>
     </form>
   );

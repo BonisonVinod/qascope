@@ -3,8 +3,6 @@
  * Uses node:test mock.fn() and mock.module() to replace OpenAI API calls.
  */
 
-import { test } from "node:test";
-
 /**
  * Mock response for chatText() calls.
  * Returns a JSON-shaped scoring response that includes sources_used.
@@ -47,7 +45,8 @@ export function mockEmbeddingResponse(): number[] {
  *     mocks.chatTextMock.mock.calls[0]?.[0] // inspect the call
  *   });
  */
-export function setupOpenAIMocks(testContext: any) {
+export function setupOpenAIMocks(testContext: unknown) {
+  void testContext;
   // Since node:test doesn't have a built-in mock registry for modules,
   // we'll use a simpler approach: expose the mocks on a module that can
   // be imported and used by the code under test.

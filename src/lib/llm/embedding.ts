@@ -54,7 +54,7 @@ async function resolveEmbeddingCreds(
   const { data: c } = await supabase
     .from("clients")
     .select(
-      "llm_api_key, llm_base_url, llm_embedding_api_key, llm_embedding_base_url",
+      "llm_provider, llm_api_key, llm_base_url, llm_embedding_api_key, llm_embedding_base_url",
     )
     .eq("id", clientId)
     .single();
@@ -66,6 +66,11 @@ async function resolveEmbeddingCreds(
       source: "embedding-key",
     };
   }
+
+  if (c?.llm_provider === "bedrock") {
+    return null;
+  }
+
   if (c?.llm_api_key) {
     return {
       apiKey: c.llm_api_key,

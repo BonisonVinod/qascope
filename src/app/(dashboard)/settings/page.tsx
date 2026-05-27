@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { ReviewSettingsForm } from "./review-settings-form";
 import { LlmSettingsForm } from "./llm-settings-form";
+import { DangerZone } from "./danger-zone";
+import { WebhookPanel } from "./webhook-panel";
+import { DataSourcePanel } from "./datasource-panel";
 import type { LlmProvider } from "@/lib/llm/client";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +39,24 @@ export default async function SettingsPage() {
         .select("id, name, email, role")
         .eq("client_id", clientId)
         .order("name", { ascending: true })
+    : { data: [] };
+
+  const { data: webhookTokens } = clientId
+    ? await supabase
+        .from("webhook_tokens")
+        .select("id, name, is_active, created_at, last_used_at")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+
+  const { data: dataSources } = clientId
+    ? await supabase
+        .from("data_sources")
+        .select(
+          "id, name, type, url, endpoint_template, http_method, auth_header_name, entity_hints, is_active, created_at",
+        )
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
     : { data: [] };
 
   const reviewers = (teammates ?? []).map((t) => ({
@@ -117,10 +138,10 @@ export default async function SettingsPage() {
             <LlmSettingsForm
               current={{
                 provider: (client?.llm_provider as LlmProvider | null) ?? null,
-                apiKey: client?.llm_api_key ?? null,
+                hasApiKey: !!client?.llm_api_key,
                 baseUrl: client?.llm_base_url ?? null,
                 model: client?.llm_model ?? null,
-                embeddingApiKey: client?.llm_embedding_api_key ?? null,
+                hasEmbeddingApiKey: !!client?.llm_embedding_api_key,
                 embeddingBaseUrl: client?.llm_embedding_base_url ?? null,
               }}
             />
@@ -162,6 +183,56 @@ export default async function SettingsPage() {
           )}
         </div>
       </section>
+
+      {/* Webhooks section */}
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          Webhooks &amp; CRM ingest
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+          Connect your CRM, website, or telephony platform. Any system can POST
+          conversation transcripts directly to QAScope for automatic scoring.
+          Each token is scoped to this workspace.
+        </p>
+        <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <WebhookPanel
+            tokens={webhookTokens ?? []}
+            canEdit={canEdit}
+            appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
+          />
+        </div>
+      </section>
+      {/* Live Verification section */}
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          Live verification sources
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+          Configure the websites or APIs the AI agent queries in the background
+          to verify what your support agents told customers — order status,
+          delivery dates, return policies, and more.
+        </p>
+        <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <DataSourcePanel
+            sources={dataSources ?? []}
+            canEdit={canEdit}
+          />
+        </div>
+      </section>
+
+      {appUser?.role === "admin" && (
+        <section>
+          <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+            Workspace
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+            Operational controls for the workspace as a whole.
+          </p>
+          <div className="mt-3 max-w-2xl">
+            <DangerZone />
+          </div>
+        </section>
+      )}
     </div>
   );
 }

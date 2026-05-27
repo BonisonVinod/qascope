@@ -15,7 +15,6 @@ import {
   createTestDocument,
   createTestChunk,
 } from "./_helpers/supabase-test-client.ts";
-import { mockEmbeddingResponse, mockChatTextResponse } from "./_helpers/openai-mocks.ts";
 
 test("rag-citation: scoring with mocked knowledge base populates sources_used", async (t) => {
   // Skip if env vars not set
