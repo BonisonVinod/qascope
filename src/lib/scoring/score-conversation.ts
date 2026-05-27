@@ -8,6 +8,7 @@ import {
   buildCoachingUserMessage,
 } from "./prompts";
 import { chatText } from "./openai";
+import { retrieveKnowledge } from "./retrieval";
 import {
   parseCriterionJson,
   computeScoreTotals,
@@ -15,6 +16,7 @@ import {
   type ScoredCriterion,
 } from "./scoring-math";
 import { computeSlaDeadline } from "./sla";
+import { maybeSendLowScoreAlert } from "./alert";
 
 type SB = SupabaseClient<Database>;
 
@@ -61,11 +63,14 @@ export async function scoreConversation(
   // 2. Load the client's default rubric + criteria, plus SLA & pass threshold.
   const { data: client } = await supabase
     .from("clients")
-    .select("id, sla_hours, pass_threshold")
+    .select("id, name, sla_hours, pass_threshold, review_confidence_threshold")
     .eq("id", conv.client_id)
     .single();
   const slaHours = client?.sla_hours ?? 24;
   const passThreshold = client?.pass_threshold ?? 70;
+  const clientName = client?.name ?? "Unknown workspace";
+  // Stored as percentage (0-100) for human readability; deriveStatus uses 0-1.
+  const reviewConfidenceThreshold = (client?.review_confidence_threshold ?? 70) / 100;
 
   const { data: rubric, error: rubricErr } = await supabase
     .from("qa_rubrics")
@@ -140,14 +145,26 @@ export async function scoreConversation(
             confidence: 0,
             explanation: `No prompt configured for sort_order ${c.sort_order}`,
             evidence: "",
+            sources_used: [],
           } as CriterionScore,
         };
       }
       // Augment compliance (sortOrder 1) with project-specific fatal rules.
-      const systemInstruction =
+      let systemInstruction =
         prompt.key === "compliance" && fatalRulesBlock
           ? prompt.systemInstruction + fatalRulesBlock
           : prompt.systemInstruction;
+
+      // Retrieve knowledge for this criterion and append to system instruction.
+      const knowledge = await retrieveKnowledge(
+        supabase,
+        conv.client_id,
+        c.name
+      );
+      if (knowledge && knowledge.context) {
+        systemInstruction += `\n\n---\nKNOWLEDGE BASE CONTEXT:\n${knowledge.context}\n---`;
+      }
+
       try {
         const raw = await chatText({
           system: systemInstruction,
@@ -158,7 +175,7 @@ export async function scoreConversation(
           feature: "scoring",
         });
         const parsed = parseCriterionJson(raw);
-        return { criterion: c, result: parsed };
+        return { criterion: c, result: parsed, retrievedSources: knowledge?.sources || [], errored: false };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         return {
@@ -168,7 +185,10 @@ export async function scoreConversation(
             confidence: 0,
             explanation: `Scoring error: ${msg}`,
             evidence: "",
+            sources_used: [],
           } as CriterionScore,
+          retrievedSources: [],
+          errored: true,
         };
       }
     }),
@@ -179,9 +199,14 @@ export async function scoreConversation(
     weight: r.criterion.weight,
     critical_fail_boolean: r.criterion.critical_fail_boolean,
     result: r.result,
+    errored: r.errored,
   }));
   const { totalScore, overallConfidence, criticalFail } = computeScoreTotals(scored);
-  const status: ScoreStatus = deriveStatus(criticalFail, overallConfidence);
+  const status: ScoreStatus = deriveStatus(
+    criticalFail,
+    overallConfidence,
+    reviewConfidenceThreshold,
+  );
 
   const roundedTotal = Math.round(totalScore * 100) / 100;
   const roundedConfidence = Math.round(overallConfidence * 100) / 100;
@@ -204,7 +229,7 @@ export async function scoreConversation(
     return { ok: false, error: `qa_scores insert failed: ${scoreErr?.message}` };
   }
 
-  // 7. Insert qa_score_details
+  // 7. Insert qa_score_details (including sources_used from the scorer)
   const details = results.map((r) => ({
     qa_score_id: scoreRow.id,
     criterion_id: r.criterion.id,
@@ -212,6 +237,8 @@ export async function scoreConversation(
     confidence: Math.round(r.result.confidence * 100) / 100,
     explanation: r.result.explanation.slice(0, 2000),
     evidence_span: r.result.evidence.slice(0, 2000),
+    sources_used: JSON.stringify(r.result.sources_used || []),
+    errored: r.errored,
   }));
   const { error: detailsErr } = await supabase.from("qa_score_details").insert(details);
   if (detailsErr) {
@@ -239,6 +266,24 @@ export async function scoreConversation(
       sla_deadline: deadline,
     });
   }
+
+  // 8b. Fire low-score alert email (async/fire-and-forget — never blocks scoring)
+  void maybeSendLowScoreAlert({
+    supabase,
+    clientId: conv.client_id,
+    clientName,
+    qaScoreId: scoreRow.id,
+    agentId: conv.agent_id ?? null,
+    agentName,
+    totalScore: roundedTotal,
+    passThreshold,
+    conversationDate: new Date().toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "Asia/Kolkata",
+    }),
+  });
 
   // 9. Generate coaching note (best effort - non-fatal if it fails)
   try {

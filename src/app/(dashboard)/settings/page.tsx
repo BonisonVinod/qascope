@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { ReviewSettingsForm } from "./review-settings-form";
 import { LlmSettingsForm } from "./llm-settings-form";
+import { DangerZone } from "./danger-zone";
+import { WebhookPanel } from "./webhook-panel";
+import { DataSourcePanel } from "./datasource-panel";
 import type { LlmProvider } from "@/lib/llm/client";
 
 export const dynamic = "force-dynamic";
@@ -24,21 +27,36 @@ export default async function SettingsPage() {
     ? await supabase
         .from("clients")
         .select(
-          "name, second_reviewer_user_id, sla_hours, pass_threshold, llm_provider, llm_api_key, llm_base_url, llm_model",
+          "name, second_reviewer_user_id, sla_hours, pass_threshold, review_confidence_threshold, llm_provider, llm_api_key, llm_base_url, llm_model, llm_embedding_api_key, llm_embedding_base_url",
         )
         .eq("id", clientId)
         .single()
     : { data: null };
 
-  // Candidates for second reviewer = everyone in the same workspace.
-  // We'll let the picker include any role; in practice teams pick a
-  // QA manager or team lead.
   const { data: teammates } = clientId
     ? await supabase
         .from("users")
         .select("id, name, email, role")
         .eq("client_id", clientId)
         .order("name", { ascending: true })
+    : { data: [] };
+
+  const { data: webhookTokens } = clientId
+    ? await supabase
+        .from("webhook_tokens")
+        .select("id, name, is_active, created_at, last_used_at")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+
+  const { data: dataSources } = clientId
+    ? await supabase
+        .from("data_sources")
+        .select(
+          "id, name, type, url, endpoint_template, http_method, auth_header_name, entity_hints, is_active, created_at",
+        )
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
     : { data: [] };
 
   const reviewers = (teammates ?? []).map((t) => ({
@@ -60,11 +78,11 @@ export default async function SettingsPage() {
           Account
         </h2>
         <div className="mt-3 max-w-md space-y-4 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <Field label="Name" value={appUser?.name ?? "\u2014"} />
-          <Field label="Email" value={appUser?.email ?? user?.email ?? "\u2014"} />
+          <Field label="Name" value={appUser?.name ?? "—"} />
+          <Field label="Email" value={appUser?.email ?? user?.email ?? "—"} />
           <Field
             label="Role"
-            value={appUser?.role?.replace("_", " ") ?? "\u2014"}
+            value={appUser?.role?.replace("_", " ") ?? "—"}
           />
           {client?.name && <Field label="Workspace" value={client.name} />}
         </div>
@@ -82,7 +100,7 @@ export default async function SettingsPage() {
             href="/settings/team"
             className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
           >
-            Manage team members →
+            Manage team members &rarr;
           </a>
         </div>
       </section>
@@ -90,11 +108,11 @@ export default async function SettingsPage() {
       {appUser?.role === "admin" && (
         <section>
           <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
-            LLM provider
+            QA engine provider
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-            QAScope works with any LLM that speaks the OpenAI Chat Completions
-            API. We recommend{" "}
+            QAScope works with any provider that speaks the OpenAI Chat
+            Completions API. We recommend{" "}
             <a
               href="https://openrouter.ai"
               target="_blank"
@@ -104,17 +122,27 @@ export default async function SettingsPage() {
               OpenRouter
             </a>{" "}
             (one key, hundreds of models, pay-as-you-go), but OpenAI direct,
-            Together AI, Groq, Azure, or any custom endpoint also work. Leave
-            everything blank to fall back to the hosted Pilot key.
+            Together AI, Groq, Azure, or any custom endpoint also work. Every
+            workspace must supply its own key &mdash; we never bill your
+            scoring through ours.
+          </p>
+          <p className="mt-2 max-w-2xl text-xs text-zinc-500 dark:text-zinc-500">
+            One key powers scoring, coaching notes, and the embeddings used
+            for knowledge-base retrieval. Some providers (e.g. Groq) don&apos;t
+            expose an embeddings endpoint &mdash; in that case, tick &ldquo;Use a
+            separate API key for embeddings&rdquo; below and supply an OpenAI
+            (or compatible) key alongside.
           </p>
 
           <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <LlmSettingsForm
               current={{
                 provider: (client?.llm_provider as LlmProvider | null) ?? null,
-                apiKey: client?.llm_api_key ?? null,
+                hasApiKey: !!client?.llm_api_key,
                 baseUrl: client?.llm_base_url ?? null,
                 model: client?.llm_model ?? null,
+                hasEmbeddingApiKey: !!client?.llm_embedding_api_key,
+                embeddingBaseUrl: client?.llm_embedding_base_url ?? null,
               }}
             />
           </div>
@@ -137,6 +165,9 @@ export default async function SettingsPage() {
               currentSecondReviewer={client?.second_reviewer_user_id ?? null}
               currentSlaHours={client?.sla_hours ?? 24}
               currentPassThreshold={client?.pass_threshold ?? 70}
+              currentReviewConfidenceThreshold={
+                client?.review_confidence_threshold ?? 70
+              }
               reviewers={reviewers}
             />
           ) : (
@@ -144,11 +175,64 @@ export default async function SettingsPage() {
               currentSecondReviewer={client?.second_reviewer_user_id ?? null}
               currentSlaHours={client?.sla_hours ?? 24}
               currentPassThreshold={client?.pass_threshold ?? 70}
+              currentReviewConfidenceThreshold={
+                client?.review_confidence_threshold ?? 70
+              }
               reviewers={reviewers}
             />
           )}
         </div>
       </section>
+
+      {/* Webhooks section */}
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          Webhooks &amp; CRM ingest
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+          Connect your CRM, website, or telephony platform. Any system can POST
+          conversation transcripts directly to QAScope for automatic scoring.
+          Each token is scoped to this workspace.
+        </p>
+        <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <WebhookPanel
+            tokens={webhookTokens ?? []}
+            canEdit={canEdit}
+            appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
+          />
+        </div>
+      </section>
+      {/* Live Verification section */}
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          Live verification sources
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+          Configure the websites or APIs the AI agent queries in the background
+          to verify what your support agents told customers — order status,
+          delivery dates, return policies, and more.
+        </p>
+        <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <DataSourcePanel
+            sources={dataSources ?? []}
+            canEdit={canEdit}
+          />
+        </div>
+      </section>
+
+      {appUser?.role === "admin" && (
+        <section>
+          <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+            Workspace
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+            Operational controls for the workspace as a whole.
+          </p>
+          <div className="mt-3 max-w-2xl">
+            <DangerZone />
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -168,11 +252,13 @@ function ReadOnlyReviewSettings({
   currentSecondReviewer,
   currentSlaHours,
   currentPassThreshold,
+  currentReviewConfidenceThreshold,
   reviewers,
 }: {
   currentSecondReviewer: string | null;
   currentSlaHours: number;
   currentPassThreshold: number;
+  currentReviewConfidenceThreshold: number;
   reviewers: { id: string; label: string }[];
 }) {
   const reviewerLabel =
@@ -196,6 +282,12 @@ function ReadOnlyReviewSettings({
           Pass threshold
         </p>
         <p className="mt-1 text-sm">{currentPassThreshold}%</p>
+      </div>
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+          Send to review when confidence below
+        </p>
+        <p className="mt-1 text-sm">{currentReviewConfidenceThreshold}%</p>
       </div>
       <p className="rounded-md bg-zinc-50 px-3 py-2 text-xs text-zinc-500 dark:bg-zinc-950">
         Only admins and QA managers can change these settings.

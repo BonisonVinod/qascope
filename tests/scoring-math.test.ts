@@ -75,9 +75,11 @@ const mkCrit = (
   confidence: number,
   weight: number,
   critical = false,
+  errored = false,
 ): ScoredCriterion => ({
   weight,
   critical_fail_boolean: critical,
+  errored,
   result: { score, confidence, explanation: "", evidence: "" },
 });
 
@@ -129,6 +131,16 @@ test("computeScoreTotals: critical fail flag set when critical criterion gets 0"
 
 test("computeScoreTotals: critical criterion scoring 1 does NOT trigger critical fail", () => {
   const out = computeScoreTotals([mkCrit(1, 1, 50, true), mkCrit(2, 1, 50)]);
+  assert.equal(out.criticalFail, false);
+});
+
+test("computeScoreTotals: errored criteria are excluded from totals and critical fail", () => {
+  const out = computeScoreTotals([
+    mkCrit(0, 0, 20, true, true),
+    mkCrit(2, 0.9, 80),
+  ]);
+  assert.equal(out.totalScore, 100);
+  assert.equal(out.overallConfidence, 0.9);
   assert.equal(out.criticalFail, false);
 });
 

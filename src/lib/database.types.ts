@@ -19,6 +19,33 @@ export type PlanName = "pilot" | "starter" | "team" | "growth" | "pro";
 export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled";
 
 
+type WorkspaceDocumentsRow = {
+  id: string;
+  workspace_id: string;
+  source_type: string;
+  source_uri: string | null;
+  title: string;
+  content_hash: string;
+  version: number;
+  uploaded_by: string;
+  uploaded_at: string;
+  status: string;
+  error_message: string | null;
+  chunk_count: number | null;
+  created_at: string;
+};
+
+type DocumentChunksRow = {
+  id: string;
+  document_id: string;
+  chunk_index: number;
+  text: string;
+  text_length: number | null;
+  embedding: number[];
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
 type SubscriptionsRow = {
   id: string;
   client_id: string;
@@ -41,6 +68,11 @@ type ClientsRow = {
   llm_api_key: string | null;
   llm_base_url: string | null;
   llm_model: string | null;
+  scoring_stop_requested_at: string | null;
+  latest_upload_batch_id: string | null;
+  review_confidence_threshold: number;
+  llm_embedding_api_key: string | null;
+  llm_embedding_base_url: string | null;
   created_at: string;
 };
 
@@ -119,6 +151,7 @@ type ConversationsRow = {
   customer_id: string | null;
   metadata_json: Record<string, unknown> | null;
   external_conversation_id: string | null;
+  upload_batch_id: string | null;
   created_at: string;
 };
 
@@ -164,6 +197,8 @@ type QaScoreDetailsRow = {
   confidence: number;
   explanation: string | null;
   evidence_span: string | null;
+  sources_used: string | null;
+  errored: boolean;
   created_at: string;
 };
 
@@ -183,6 +218,7 @@ type ReviewQueueRow = {
   second_reviewer_decision: SecondReviewerDecision | null;
   second_reviewer_at: string | null;
   second_reviewer_notes: string | null;
+  adjusted_score: number | null;
 
   // Legacy columns, kept for backward compatibility
   assigned_to: string | null;
@@ -193,9 +229,94 @@ type ReviewQueueRow = {
   resolved_at: string | null;
 };
 
+type WebhookTokensRow = {
+  id: string;
+  client_id: string;
+  name: string;
+  token: string;
+  created_by: string | null;
+  created_at: string;
+  last_used_at: string | null;
+  is_active: boolean;
+};
+
+type DataSourcesRow = {
+  id: string;
+  client_id: string;
+  name: string;
+  type: "website_url" | "api_endpoint";
+  url: string | null;
+  endpoint_template: string | null;
+  http_method: "GET" | "POST";
+  auth_header_name: string | null;
+  auth_secret_id: string | null;
+  entity_hints: string[];
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
+      webhook_tokens: {
+        Row: WebhookTokensRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          name: string;
+          token: string;
+          created_by?: string | null;
+          created_at?: string;
+          last_used_at?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          name?: string;
+          token?: string;
+          created_by?: string | null;
+          last_used_at?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
+      data_sources: {
+        Row: DataSourcesRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          name: string;
+          type: "website_url" | "api_endpoint";
+          url?: string | null;
+          endpoint_template?: string | null;
+          http_method?: "GET" | "POST";
+          auth_header_name?: string | null;
+          auth_secret_id?: string | null;
+          entity_hints?: string[];
+          is_active?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          name?: string;
+          type?: "website_url" | "api_endpoint";
+          url?: string | null;
+          endpoint_template?: string | null;
+          http_method?: "GET" | "POST";
+          auth_header_name?: string | null;
+          auth_secret_id?: string | null;
+          entity_hints?: string[];
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       clients: {
         Row: ClientsRow;
         Insert: {
@@ -210,6 +331,11 @@ export type Database = {
           llm_api_key?: string | null;
           llm_base_url?: string | null;
           llm_model?: string | null;
+          scoring_stop_requested_at?: string | null;
+          latest_upload_batch_id?: string | null;
+          review_confidence_threshold?: number;
+          llm_embedding_api_key?: string | null;
+          llm_embedding_base_url?: string | null;
           created_at?: string;
         };
         Update: {
@@ -224,6 +350,11 @@ export type Database = {
           llm_api_key?: string | null;
           llm_base_url?: string | null;
           llm_model?: string | null;
+          scoring_stop_requested_at?: string | null;
+          latest_upload_batch_id?: string | null;
+          review_confidence_threshold?: number;
+          llm_embedding_api_key?: string | null;
+          llm_embedding_base_url?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -382,6 +513,7 @@ export type Database = {
           customer_id?: string | null;
           metadata_json?: Record<string, unknown> | null;
           external_conversation_id?: string | null;
+          upload_batch_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -394,6 +526,7 @@ export type Database = {
           customer_id?: string | null;
           metadata_json?: Record<string, unknown> | null;
           external_conversation_id?: string | null;
+          upload_batch_id?: string | null;
           created_at?: string;
         };
         Relationships: [];
@@ -454,6 +587,8 @@ export type Database = {
           confidence: number;
           explanation?: string | null;
           evidence_span?: string | null;
+          sources_used?: string | null;
+          errored?: boolean;
           created_at?: string;
         };
         Update: Partial<QaScoreDetailsRow>;
@@ -475,6 +610,7 @@ export type Database = {
           second_reviewer_decision?: SecondReviewerDecision | null;
           second_reviewer_at?: string | null;
           second_reviewer_notes?: string | null;
+          adjusted_score?: number | null;
           assigned_to?: string | null;
           decision?: ReviewDecision;
           notes?: string | null;
@@ -482,6 +618,41 @@ export type Database = {
           resolved_at?: string | null;
         };
         Update: Partial<ReviewQueueRow>;
+        Relationships: [];
+      };
+      workspace_documents: {
+        Row: WorkspaceDocumentsRow;
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          source_type: string;
+          source_uri?: string | null;
+          title: string;
+          content_hash: string;
+          version?: number;
+          uploaded_by: string;
+          uploaded_at?: string;
+          status?: string;
+          error_message?: string | null;
+          chunk_count?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<WorkspaceDocumentsRow>;
+        Relationships: [];
+      };
+      document_chunks: {
+        Row: DocumentChunksRow;
+        Insert: {
+          id?: string;
+          document_id: string;
+          chunk_index: number;
+          text: string;
+          text_length?: number | null;
+          embedding: number[];
+          metadata?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: Partial<DocumentChunksRow>;
         Relationships: [];
       };
       subscriptions: {
@@ -513,6 +684,23 @@ export type Database = {
       sweep_review_sla: {
         Args: Record<string, never>;
         Returns: void;
+      };
+      search_knowledge_chunks: {
+        Args: {
+          p_workspace_id: string;
+          p_embedding: number[];
+          p_limit?: number;
+          p_similarity_threshold?: number;
+        };
+        Returns: Array<{
+          chunk_id: string;
+          document_id: string;
+          document_title: string;
+          document_version: number;
+          chunk_index: number;
+          chunk_text: string;
+          similarity: number;
+        }>;
       };
     };
     Enums: {

@@ -1,16 +1,24 @@
 import type { ScoreStatus } from "@/lib/database.types";
 
+export type SourceCitation = {
+  document_id: string;
+  document_title: string;
+  chunk_id: string;
+};
+
 export type CriterionScore = {
   score: 0 | 1 | 2;
   confidence: number;
   explanation: string;
   evidence: string;
+  sources_used?: SourceCitation[];
 };
 
 export type ScoredCriterion = {
   weight: number;
   critical_fail_boolean: boolean;
   result: CriterionScore;
+  errored?: boolean;
 };
 
 export type ScoreTotals = {
@@ -50,7 +58,12 @@ export function parseCriterionJson(raw: string): CriterionScore {
   const explanation = typeof p.explanation === "string" ? p.explanation : "";
   const evidence = typeof p.evidence === "string" ? p.evidence : "";
 
-  return { score, confidence, explanation, evidence };
+  // Parse sources_used if present
+  const sources_used = Array.isArray(p.sources_used)
+    ? (p.sources_used as SourceCitation[])
+    : undefined;
+
+  return { score, confidence, explanation, evidence, sources_used };
 }
 
 /**
@@ -72,6 +85,7 @@ export function computeScoreTotals(scored: ScoredCriterion[]): ScoreTotals {
   let criticalFail = false;
 
   for (const r of scored) {
+    if (r.errored) continue;
     totalWeight += r.weight;
     earnedPoints += (r.result.score / 2) * r.weight;
     confSum += r.result.confidence * r.weight;
@@ -93,12 +107,16 @@ export function computeScoreTotals(scored: ScoredCriterion[]): ScoreTotals {
  *   - Any critical fail wins.
  *   - Below confidence threshold -> needs_review.
  *   - Otherwise final.
+ *
+ * The threshold is workspace-configurable (clients.review_confidence_threshold).
+ * Pass the workspace value as fraction 0-1; falls back to LOW_CONFIDENCE_THRESHOLD.
  */
 export function deriveStatus(
   criticalFail: boolean,
   overallConfidence: number,
+  threshold: number = LOW_CONFIDENCE_THRESHOLD,
 ): ScoreStatus {
   if (criticalFail) return "critical_fail";
-  if (overallConfidence < LOW_CONFIDENCE_THRESHOLD) return "needs_review";
+  if (overallConfidence < threshold) return "needs_review";
   return "final";
 }

@@ -1,12 +1,44 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { ScoreStatus } from "@/lib/database.types";
+import { DateRangePicker } from "./date-range-picker";
 
 export const dynamic = "force-dynamic";
 
-const ROLLING_DAYS = 30;
+const DEFAULT_DAYS = 30;
 
-export default async function DashboardPage() {
+/** Parse YYYY-MM-DD; return null if invalid. */
+function parseDate(s: string | undefined): Date | null {
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
+  const sp = await searchParams;
+
+  // Resolve [from, to). Defaults: last 30 days. Both inclusive on the calendar
+  // but exclusive on the upper bound at query time (we add a day to the
+  // user-picked "to" so the chosen day is included end-of-day).
+  const today = new Date();
+  const todayUtc = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+  );
+  const defaultFrom = new Date(todayUtc.getTime() - DEFAULT_DAYS * 86400 * 1000);
+  const fromDate = parseDate(sp.from) ?? defaultFrom;
+  const toDateRaw = parseDate(sp.to) ?? todayUtc;
+  const toDateExclusive = new Date(toDateRaw.getTime() + 86400 * 1000);
+  const windowDays = Math.max(
+    1,
+    Math.round((toDateExclusive.getTime() - fromDate.getTime()) / 86400000),
+  );
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,17 +58,15 @@ export default async function DashboardPage() {
     .eq("id", clientId)
     .single();
 
-  // Window: last 30 days
-  const since = new Date(Date.now() - ROLLING_DAYS * 86400 * 1000).toISOString();
-
   // Pull all scored items from the window — RLS keeps it client-scoped.
   const { data: scores } = await supabase
     .from("qa_scores")
     .select(
       "id, total_score, original_total_score, appealed_at, status, created_at, conversation_id",
     )
-    .gte("created_at", since)
-    .limit(2000);
+    .gte("created_at", fromDate.toISOString())
+    .lt("created_at", toDateExclusive.toISOString())
+    .limit(5000);
 
   const scoreList = scores ?? [];
 
@@ -168,23 +198,29 @@ export default async function DashboardPage() {
   };
   for (const s of scoreList) statusCounts[s.status] = (statusCounts[s.status] ?? 0) + 1;
 
+  const fromIso = fromDate.toISOString().slice(0, 10);
+  const toIso = toDateRaw.toISOString().slice(0, 10);
+
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          Welcome back, {appUser?.name ?? "there"}.
-          {client?.name && (
-            <> Workspace: <strong>{client.name}</strong>.</>
-          )}{" "}
-          Last {ROLLING_DAYS} days.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="mt-2 text-sm text-zinc-500">
+            Welcome back, {appUser?.name ?? "there"}.
+            {client?.name && (
+              <> Workspace: <strong>{client.name}</strong>.</>
+            )}{" "}
+            Showing {windowDays} day{windowDays === 1 ? "" : "s"}: {fromIso} &rarr; {toIso}.
+          </p>
+        </div>
+        <DateRangePicker from={fromIso} to={toIso} />
       </div>
 
       {total === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-sm text-zinc-500">
-            No scored conversations in the last {ROLLING_DAYS} days.{" "}
+            No scored conversations in this date range.{" "}
             <Link href="/upload" className="font-medium underline-offset-2 hover:underline">
               Upload a batch
             </Link>{" "}
@@ -198,15 +234,15 @@ export default async function DashboardPage() {
             <Kpi
               label="Conversations scored"
               value={total.toLocaleString()}
-              hint={`${ROLLING_DAYS}d window`}
+              hint={`${windowDays}d window`}
             />
             <Kpi
               label="Average score"
               value={avgCurrent.toFixed(1)}
               hint={
                 Math.abs(avgCurrent - avgOriginal) > 0.05
-                  ? `AI baseline ${avgOriginal.toFixed(1)}`
-                  : "matches AI baseline"
+                  ? `Original QA score ${avgOriginal.toFixed(1)}`
+                  : "matches original QA score"
               }
             />
             <Kpi

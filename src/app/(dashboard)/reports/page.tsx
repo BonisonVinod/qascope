@@ -1,17 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "./print-button";
 import { isoWeekRange as computeIsoWeekRange } from "@/lib/reports/iso-week";
+import { DateRangePicker } from "../dashboard/date-range-picker";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ week?: string }>;
+type SearchParams = Promise<{ week?: string; from?: string; to?: string }>;
+
+/** Parse YYYY-MM-DD; return null if invalid. */
+function parseDate(s: string | undefined): Date | null {
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 /**
  * Weekly report. Defaults to the current ISO week (Mon..Sun) but accepts
  * ?week=YYYY-MM-DD pointing to any day in the target week.
  *
  * Per the product brief, the report shows:
- *   - Volume and average AI score
+ *   - Volume and average QA score
  *   - Original vs post-appeal score (appeal correction is the headline KPI)
  *   - Number of cases appealed
  *   - Status mix (final / needs review / compliance fail)
@@ -24,18 +34,57 @@ export default async function ReportsPage({
   searchParams: SearchParams;
 }) {
   const supabase = await createClient();
-  const { week } = await searchParams;
+  const sp = await searchParams;
 
-  const reference = week ? new Date(week) : new Date();
-  if (Number.isNaN(reference.getTime())) {
-    return (
-      <ErrorWrap>
-        <p>Invalid <code>week</code> param. Try YYYY-MM-DD.</p>
-      </ErrorWrap>
-    );
+  // Three modes:
+  //   1) ?from=&to=     → custom range (calendar picker mode)
+  //   2) ?week=YYYY-MM-DD → ISO week of that day (back-compat with old links)
+  //   3) (nothing)      → current ISO week (default keeps the existing report shape)
+  const fromCustom = parseDate(sp.from);
+  const toCustom = parseDate(sp.to);
+  const customMode = fromCustom !== null && toCustom !== null;
+
+  let start: Date;
+  let end: Date;
+  let label: string;
+  let prevHref: string;
+  let nextHref: string;
+  let isCurrent: boolean;
+
+  if (customMode) {
+    start = fromCustom!;
+    // "to" is inclusive on the calendar; query upper-bound is exclusive.
+    end = new Date(toCustom!.getTime() + 86400 * 1000);
+    const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000));
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    label = `${fmt(start)} → ${fmt(toCustom!)} (${days} day${days === 1 ? "" : "s"})`;
+    // Shift the window by its own size for the prev/next nav.
+    const span = end.getTime() - start.getTime();
+    const prevStart = new Date(start.getTime() - span);
+    const prevEnd = new Date(end.getTime() - span - 86400 * 1000);
+    const nextStart = new Date(start.getTime() + span);
+    const nextEnd = new Date(end.getTime() + span - 86400 * 1000);
+    prevHref = `/reports?from=${fmt(prevStart)}&to=${fmt(prevEnd)}`;
+    nextHref = `/reports?from=${fmt(nextStart)}&to=${fmt(nextEnd)}`;
+    isCurrent = false;
+  } else {
+    const week = sp.week;
+    const reference = week ? new Date(week) : new Date();
+    if (Number.isNaN(reference.getTime())) {
+      return (
+        <ErrorWrap>
+          <p>Invalid <code>week</code> param. Try YYYY-MM-DD.</p>
+        </ErrorWrap>
+      );
+    }
+    const weekRange = isoWeekRange(reference);
+    start = weekRange.start;
+    end = weekRange.end;
+    label = weekRange.label;
+    prevHref = weekRange.prevHref;
+    nextHref = weekRange.nextHref;
+    isCurrent = weekRange.isCurrent;
   }
-  const { start, end, label, prevHref, nextHref, isCurrent } =
-    isoWeekRange(reference);
 
   const { data: scores } = await supabase
     .from("qa_scores")
@@ -158,7 +207,7 @@ export default async function ReportsPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-6 print:block">
         <div>
-          <h1 className="text-2xl font-semibold">Weekly report</h1>
+          <h1 className="text-2xl font-semibold">QA report</h1>
           <p className="mt-1 text-sm text-zinc-500">
             {label}
             {isCurrent && (
@@ -168,33 +217,47 @@ export default async function ReportsPage({
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2 print:hidden">
-          <a
-            href="/reports/templates"
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
-          >
-            Saved templates
-          </a>
-          <a
-            href={prevHref}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            \u2190 Previous
-          </a>
-          <a
-            href={nextHref}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-          >
-            Next \u2192
-          </a>
-          <PrintButton />
+        <div className="flex flex-col items-end gap-2 print:hidden">
+          <div className="flex items-center gap-2">
+            <a
+              href="/reports/templates"
+              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              Saved templates
+            </a>
+            <a
+              href={prevHref}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              \u2190 Previous
+            </a>
+            <a
+              href={nextHref}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            >
+              Next \u2192
+            </a>
+            <a
+              href={`/api/export/reports?from=${start.toISOString().slice(0, 10)}&to=${new Date(end.getTime() - 86400 * 1000).toISOString().slice(0, 10)}`}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              title="Download this report as CSV"
+            >
+              Download CSV
+            </a>
+            <PrintButton />
+          </div>
+          <DateRangePicker
+            basePath="/reports"
+            from={start.toISOString().slice(0, 10)}
+            to={new Date(end.getTime() - 86400 * 1000).toISOString().slice(0, 10)}
+          />
         </div>
       </div>
 
       {total === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-sm text-zinc-500">
-            No conversations scored in this week.
+            No conversations scored in this range.
           </p>
         </div>
       ) : (
@@ -205,7 +268,7 @@ export default async function ReportsPage({
             <Stat
               label="Average score"
               value={avgCurrent.toFixed(1)}
-              hint={`AI baseline ${avgOriginal.toFixed(1)} \u00b7 ${
+              hint={`Original QA score ${avgOriginal.toFixed(1)} \u00b7 ${
                 delta >= 0 ? "+" : ""
               }${delta.toFixed(2)}`}
             />
@@ -259,7 +322,7 @@ export default async function ReportsPage({
                   <tr>
                     <th className="px-4 py-2">Channel</th>
                     <th className="px-4 py-2 text-right">Volume</th>
-                    <th className="px-4 py-2 text-right">AI baseline</th>
+                    <th className="px-4 py-2 text-right">Original QA</th>
                     <th className="px-4 py-2 text-right">Final score</th>
                     <th className="px-4 py-2 text-right">Delta</th>
                   </tr>
@@ -302,7 +365,7 @@ export default async function ReportsPage({
                   <tr>
                     <th className="px-4 py-2">Agent</th>
                     <th className="px-4 py-2 text-right">Scored</th>
-                    <th className="px-4 py-2 text-right">AI baseline</th>
+                    <th className="px-4 py-2 text-right">Original QA</th>
                     <th className="px-4 py-2 text-right">Final</th>
                     <th className="px-4 py-2 text-right">Delta</th>
                     <th className="px-4 py-2 text-right">Comp. fails</th>
@@ -350,9 +413,9 @@ export default async function ReportsPage({
               </table>
             </div>
             <p className="mt-2 text-xs text-zinc-500">
-              <strong>AI baseline</strong> is the score the AI initially produced.{" "}
+              <strong>Original QA</strong> is the score the QA engine initially produced.{" "}
               <strong>Final</strong> reflects any confirmed overrides from the appeal
-              process. Positive delta = humans graded higher than AI.
+              process. Positive delta = humans graded higher than the QA engine.
             </p>
           </section>
         </>

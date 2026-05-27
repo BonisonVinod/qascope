@@ -1,0 +1,116 @@
+"use client";
+
+import { useActionState, useRef, useState } from "react";
+import { uploadDocumentAction } from "./actions";
+
+export type DocumentUploadState =
+  | undefined
+  | {
+      ok: true;
+      documentId: string;
+      isNewUpload: boolean;
+      chunkCount: number;
+    }
+  | { ok: false; error: string };
+
+export function UploadForm() {
+  const [state, formAction, pending] = useActionState(
+    uploadDocumentAction,
+    undefined as DocumentUploadState
+  );
+
+  const formRef = useRef<HTMLFormElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+
+  const reset = () => {
+    formRef.current?.reset();
+    setFile(null);
+  };
+
+  return (
+    <div className="space-y-6">
+      <form
+        ref={formRef}
+        action={formAction}
+        className="space-y-4 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <div>
+          <label className="block text-xs font-medium uppercase tracking-wider text-zinc-500">
+            File
+          </label>
+          <label
+            htmlFor="file"
+            className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center transition hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            <p className="text-sm font-medium">
+              {file?.name ?? "Click to choose a file"}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              .md or .txt only, max 10 MB
+            </p>
+            <input
+              id="file"
+              name="file"
+              type="file"
+              accept=".md,.markdown,.txt,.text"
+              required
+              className="sr-only"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        </div>
+
+        <div>
+          <label htmlFor="title" className="block text-xs font-medium uppercase tracking-wider text-zinc-500">
+            Title (optional)
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            placeholder="Document title — auto-filled from filename if blank"
+            className="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        </div>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            type="submit"
+            disabled={pending || !file}
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+          >
+            {pending ? "Uploading..." : "Upload"}
+          </button>
+          {file && !pending && (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </form>
+
+      {state && <ResultPanel state={state} />}
+    </div>
+  );
+}
+
+function ResultPanel({ state }: { state: NonNullable<DocumentUploadState> }) {
+  if (state.ok === false) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400">
+        {state.error}
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400">
+      {state.isNewUpload
+        ? `Document uploaded successfully. ${state.chunkCount} chunks created and queued for embedding.`
+        : `This document was already uploaded. ${state.chunkCount} chunks in the knowledge base.`}
+    </div>
+  );
+}

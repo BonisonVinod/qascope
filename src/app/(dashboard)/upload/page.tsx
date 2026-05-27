@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import Papa from "papaparse";
 import { uploadConversations, type UploadState } from "./actions";
 import {
@@ -352,9 +353,9 @@ function ResultPanel({ state }: { state: NonNullable<UploadState> }) {
       {state.successCount > 0 && (
         <p className="text-sm text-zinc-500">
           Imported conversations are now queued for scoring. View them in{" "}
-          <a href="/results" className="underline hover:text-zinc-900 dark:hover:text-zinc-100">
+          <Link href="/results" className="underline hover:text-zinc-900 dark:hover:text-zinc-100">
             Results
-          </a>
+          </Link>
           .
         </p>
       )}

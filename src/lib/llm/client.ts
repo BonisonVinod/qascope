@@ -13,6 +13,7 @@ export type LlmProvider =
   | "together"
   | "groq"
   | "azure"
+  | "bedrock"
   | "custom";
 
 export type LlmConfig = {
@@ -32,6 +33,7 @@ const DEFAULT_BASE_URL: Record<LlmProvider, string> = {
   together: "https://api.together.xyz/v1",
   groq: "https://api.groq.com/openai/v1",
   azure: "", // must be supplied by the customer
+  bedrock: "us-east-1", // for Bedrock this field stores the AWS region, not a URL
   custom: "", // must be supplied by the customer
 };
 
@@ -42,16 +44,18 @@ const DEFAULT_MODEL: Record<LlmProvider, string> = {
   together: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
   groq: "llama-3.1-70b-versatile",
   azure: "gpt-4o-mini",
+  bedrock: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
   custom: "gpt-4o-mini",
 };
 
 /**
- * Resolve the LLM config for a workspace. If the workspace has any non-null
- * config columns, use their values (filling in defaults from the provider).
- * Otherwise, fall back to the hosted env (Pilot tier).
+ * Resolve the LLM config for a workspace. The workspace MUST have its own
+ * key configured in Settings — there is no env-var fallback in production.
+ * This forces every customer to bring their own API key, which is a
+ * deliberate product decision (cost ownership + data isolation).
  *
- * Returns null if no config is available (no workspace key AND no env key);
- * caller should surface a friendly error.
+ * Returns null if no workspace key is configured; the caller should
+ * surface a friendly "Configure your LLM key in Settings" error.
  */
 export async function resolveLlmConfig(
   supabase: SupabaseClient<Database>,
@@ -63,29 +67,17 @@ export async function resolveLlmConfig(
     .eq("id", clientId)
     .single();
 
-  // Workspace has a configured key → use it.
-  if (client?.llm_api_key) {
-    const provider = (client.llm_provider as LlmProvider) ?? "openai";
-    return {
-      provider,
-      apiKey: client.llm_api_key,
-      baseUrl: client.llm_base_url || DEFAULT_BASE_URL[provider] || "",
-      model: client.llm_model || DEFAULT_MODEL[provider] || "gpt-4o-mini",
-    };
+  if (!client?.llm_api_key) {
+    return null;
   }
 
-  // Fallback: hosted env (Pilot tier).
-  const envKey = process.env.OPENAI_API_KEY;
-  if (envKey) {
-    return {
-      provider: "openai",
-      apiKey: envKey,
-      baseUrl: DEFAULT_BASE_URL.openai,
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-    };
-  }
-
-  return null;
+  const provider = (client.llm_provider as LlmProvider) ?? "openai";
+  return {
+    provider,
+    apiKey: client.llm_api_key,
+    baseUrl: client.llm_base_url || DEFAULT_BASE_URL[provider] || "",
+    model: client.llm_model || DEFAULT_MODEL[provider] || "gpt-4o-mini",
+  };
 }
 
 /**
@@ -149,6 +141,13 @@ export const PROVIDER_INFO: Record<
     defaultBaseUrl: "",
     defaultModel: DEFAULT_MODEL.azure,
   },
+  bedrock: {
+    label: "AWS Bedrock",
+    description:
+      "AWS-hosted models via the Bedrock Converse API (Claude, Nova, Llama, Mistral). Use AWS region + Bearer token instead of an API key.",
+    defaultBaseUrl: "us-east-1",
+    defaultModel: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+  },
   custom: {
     label: "Custom",
     description: "Any OpenAI-API-compatible endpoint. You supply base URL + key + model.",
@@ -160,6 +159,7 @@ export const PROVIDER_INFO: Record<
 export const PROVIDER_ORDER: LlmProvider[] = [
   "openrouter",
   "openai",
+  "bedrock",
   "together",
   "groq",
   "azure",

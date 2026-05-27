@@ -19,7 +19,7 @@ export type CriterionPrompt = {
 };
 
 const JSON_TAIL =
-  'Return ONLY a JSON object with keys: score (0|1|2), confidence (0.00-1.00), explanation (short rationale), evidence (direct quote from transcript or "" if none).';
+  'Return ONLY a JSON object with keys: score (0|1|2), confidence (0.00-1.00), explanation (short rationale), evidence (direct quote from transcript or "" if none), sources_used (array of {document_id, document_title, chunk_id} for any knowledge docs you relied on, or empty array if none).';
 
 export const CRITERION_PROMPTS: CriterionPrompt[] = [
   {
@@ -143,11 +143,18 @@ ${transcript}
 ---`;
 }
 
+export type SourceCitation = {
+  document_id: string;
+  document_title: string;
+  chunk_id: string;
+};
+
 export type CriterionScore = {
   score: 0 | 1 | 2;
   confidence: number;
   explanation: string;
   evidence: string;
+  sources_used?: SourceCitation[];
 };
 
 export const COACHING_SYSTEM_INSTRUCTION = `You are writing a short coaching note for a support agent's team lead based on their QA scores.

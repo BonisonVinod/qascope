@@ -32,6 +32,7 @@ async function resolveTier1(
   reviewId: string,
   decision: "agree" | "disagree",
   notes: string | null,
+  adjustedScore?: number | null,
 ): Promise<ReviewActionState> {
   if (!reviewId) return { ok: false, error: "Missing review id." };
   if (decision === "disagree" && (!notes || notes.length === 0)) {
@@ -79,6 +80,10 @@ async function resolveTier1(
     if (updErr) return { ok: false, error: `Update failed: ${updErr.message}` };
   } else {
     // Tier 1 disagree -> escalate to tier 2. Compute a fresh deadline from client's sla_hours.
+    if (adjustedScore === undefined || adjustedScore === null || isNaN(adjustedScore) || adjustedScore < 0 || adjustedScore > 100) {
+      return { ok: false, error: "A valid adjusted score (0-100) is required when disagreeing." };
+    }
+
     const slaHours = await getSlaHoursForScore(supabase, existing.qa_score_id);
     const newDeadline = computeSlaDeadline(slaHours).toISOString();
 
@@ -91,6 +96,7 @@ async function resolveTier1(
         first_reviewer_at: now,
         first_reviewer_notes: notes,
         sla_deadline: newDeadline,
+        adjusted_score: adjustedScore,
         // Legacy field: keep legacy decision as 'pending' since it's still open.
         notes,
       })
@@ -143,10 +149,26 @@ async function resolveTier2(
   const now = new Date().toISOString();
 
   if (decision === "confirm_override") {
-    // Appeal upheld: flip the score's status to final AND mark it appealed.
+    // Fetch the proposed adjusted score from the review queue.
+    const { data: queueRow } = await supabase
+      .from("review_queue")
+      .select("adjusted_score")
+      .eq("id", reviewId)
+      .single();
+
+    const newScore = queueRow?.adjusted_score;
+    if (newScore === null || newScore === undefined) {
+      return {
+        ok: false,
+        error: "Cannot confirm override because no adjusted score was proposed.",
+      };
+    }
+
+    // Appeal upheld: apply the proposed score, flip status to final, and mark appealed.
     const { error: scoreErr } = await supabase
       .from("qa_scores")
       .update({
+        total_score: newScore,
         status: "final",
         appealed_at: now,
       })
@@ -183,7 +205,7 @@ async function resolveTier2(
     message:
       decision === "confirm_override"
         ? "Override confirmed — score updated to final."
-        : "Override denied — original AI score stands.",
+        : "Override denied — original QA score stands.",
   };
 }
 
@@ -203,7 +225,9 @@ export async function firstReviewerDisagree(
 ): Promise<ReviewActionState> {
   const reviewId = String(formData.get("reviewId") ?? "");
   const notes = String(formData.get("notes") ?? "").trim() || null;
-  return resolveTier1(reviewId, "disagree", notes);
+  const scoreVal = formData.get("adjustedScore");
+  const adjustedScore = scoreVal ? Number(scoreVal) : null;
+  return resolveTier1(reviewId, "disagree", notes, adjustedScore);
 }
 
 export async function secondReviewerConfirm(
@@ -281,6 +305,17 @@ async function isSecondReviewerFor(
     .eq("id", score.conversation_id)
     .single();
   if (!conv) return false;
+
+  // Load the current user's role to see if they are an admin or qa_manager
+  const { data: userRow } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  if (userRow?.role === "admin" || userRow?.role === "qa_manager") {
+    return true;
+  }
+
   const { data: client } = await supabase
     .from("clients")
     .select("second_reviewer_user_id")
@@ -288,4 +323,3 @@ async function isSecondReviewerFor(
     .single();
   return client?.second_reviewer_user_id === userId;
 }
-

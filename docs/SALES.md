@@ -6,35 +6,98 @@ How to turn pilot conversations into paying customers. Written for the stage QAS
 
 ---
 
-## Ideal Customer Profile (ICP) — for now
+## Ideal Customer Profile (ICP) — two playbooks side by side
 
-We don't know yet. The honest truth is the first three pilots are how we *find* the ICP. But here's our starting hypothesis:
+QAScope can be sold into two completely different segments, and the playbooks are almost nothing alike. **Pick the one that matches your network.**
 
-**Probably yes:**
+### Playbook A — Standalone SMB BPO (the textbook ICP)
 
-- **Indian SMB BPO**, 20–200 agents, 1–5 active campaigns
-- Domestic BFSI / telecom / e-commerce / D2C support work (not US/UK, where compliance is heavier and procurement slower)
-- Already has a QA function (1+ dedicated QA managers), but is struggling to keep up with volume
-- Owner-operator or single-decision-maker (not a 5-person procurement committee)
+**Who:** the founder or owner-operator of a 20–200 agent BPO.
+
+- Indian SMB BPO, 20–200 agents, 1–5 active campaigns
+- Domestic BFSI / telecom / e-commerce / D2C support work
+- Already has a QA function (1+ dedicated QA managers)
+- Owner-operator or single-decision-maker
 - Annual revenue ₹2–20 crore — big enough to afford a tool, small enough to decide fast
 
-**Probably no:**
+**Buyer:** the person who signs the QAScope invoice owns the company, the P&L, and the QA budget. One conversation, one decision. Sales cycle ~4 weeks.
 
-- BPO < 20 agents — they review every call by hand and don't feel the pain
-- BPO > 500 agents — they have a custom-built QA tool already and procurement is a 6-month grind
-- Captive / in-house team — IT and procurement are different, slower, more political
-- Any voice-only BPO whose audio is locked inside an on-prem PBX without an export path
+**Where to find them:**
 
-**Reverse-engineer the ICP from your pilots:** after each call, write down 2 attributes of the buyer that match this profile, and 2 that don't. After 5 calls, the pattern crystalizes.
+- **Founder communities** — Headstart, TiE, HysterX, regional BPO operator WhatsApp groups
+- **Cold outbound** — Apollo / Lusha lookups for "BPO" + "Founder/CEO" titles at 20–200-employee companies
+- **Boutique consultancy referrals** — call-center setup consultants, telecom resellers, CRM resellers — they all know the small operators and earn intro fees
+
+**Caveat:** if your warm network is in big BPOs (most ex-BPO operators), you don't have intros into this segment. Cold outbound or community-led entry are the only paths. **Plan for a 6–8-week ramp before pipeline builds.**
+
+### Playbook B — Enterprise BPO LOB head (the network-arbitrage move)
+
+**Who:** the operations manager / AVP / VP running a single client account inside a large BPO (Genpact, WNS, Concentrix, Tech Mahindra, Teleperformance, EXL, etc.). They run 30–500 agents on one campaign.
+
+**Reality check:** this person **cannot buy enterprise software** for the corporate org. Tool decisions like that go through corporate IT / vendor management / procurement and take 6–12 months. **But they often have discretionary budget under ₹50,000/month** for "innovation," training, or vendor experiments — and that's where QAScope fits as a "shadow IT" tool they personally subscribe to.
+
+This is a **different sales motion** from Playbook A. Don't conflate them.
+
+**Buyer titles to target:**
+
+- Operations Manager / Senior OM running a specific account
+- AVP / VP — [Client Name] Account
+- Head of QA — [Account/Vertical]
+- Process Excellence Lead
+- Transition Manager (they pilot new tools as part of new-account ramp)
+
+**The qualifying question:** *"Does your campaign have its own QA team and rubric, or do you use a corporate one?"*
+
+- "Our own" = perfect Playbook B target, they have autonomy
+- "Corporate" = wrong target; you're now selling to corporate (Playbook C, which you can't run yet)
+
+**Pricing reality:** Starter (₹6,999/mo) or Team (₹14,999/mo) maximum. Above ₹50K/month it triggers procurement and the tool gets killed.
+
+**Sales cycle:** 2–4 weeks. Often faster than Playbook A because the buyer trusts your warm intro and has a quarterly OKR to "improve QA."
+
+**The hidden risk:** corporate IT can ban the tool 3–9 months later when they discover it. You churn that customer. Plan for **30–40% annual churn** in Playbook B until you build the corporate motion.
+
+**Where to find them:** **your own network.** Ex-colleagues from big BPOs are 90% of this segment. LinkedIn search past employers + current LOB-head titles.
+
+### Playbook C — Enterprise corporate buyer (don't try yet)
+
+**Who:** Director/VP of Quality, Head of Process Excellence, Chief Operations Officer, IT / Procurement at large BPOs.
+
+**Why you're not ready:**
+
+- 6–12 month sales cycle minimum
+- Requires SSO, SOC 2 certification (~₹5L + 6 months), audit logs, on-prem/VPC deployment option, security questionnaires
+- Procurement processes designed to favor incumbents (Observe.AI, Level AI, NICE, Verint, CallMiner)
+- Pricing in ₹5–50L/year range, but you spend ₹3–10L getting the contract signed
+- Dedicated enterprise sales rep + sales engineer required
+- Without ₹2–5 crore of funding behind you, you can't credibly close one of these
+
+**When you're ready (later):** revisit after you have 5+ Playbook A or B customers, ~₹2L MRR, and either funding or a co-founder with enterprise SaaS sales experience.
+
+### Reverse-engineer the ICP from your pilots
+
+After each call, write down 2 attributes that match the playbook you're running, and 2 that don't. After 5 calls per playbook, the pattern crystallizes. Don't run more than 2 playbooks in parallel; you'll learn nothing from any of them.
+
+### "Which playbook do I run if I only know enterprise people?"
+
+Run **B + cold outbound A**, in parallel.
+
+- **B for revenue this quarter** — your network closes shadow-IT deals fast.
+- **A via cold outbound for sustainable revenue next quarter** — start now even though it won't pay back for 6–8 weeks.
+- **B-customer LOB heads also unlock learning for C** — every conversation teaches you what enterprise QA tools must do, even if you can't sell at corporate level yet.
+
+Track conversion rates separately for each motion. Don't pretend they're the same.
 
 ---
 
-## The sales motion
+## The sales motion (varies by playbook)
 
-For now, **one motion only:** founder-led, warm intro, free pilot, paid conversion after 4 weeks.
+### Motion for Playbook A (SMB BPO founder)
+
+Founder-led, warm intro or cold outbound, free pilot, paid conversion after 4 weeks.
 
 ```
-Week 0: Warm intro (LinkedIn / WhatsApp from a mutual contact)
+Week 0: Warm intro (LinkedIn / WhatsApp from a mutual contact) OR cold email
 Week 1: 30-min discovery call (you do most of the listening)
 Week 1: Send PITCH.md + Vercel URL with their workspace pre-set up
 Week 2: 30-min pilot kickoff (sit beside them while they upload first CSV)
@@ -42,7 +105,31 @@ Week 3: Async — ask "what surprised you?"
 Week 4: Closing call. Either they pay for Starter/Team or you part on good terms with feedback.
 ```
 
+### Motion for Playbook B (enterprise LOB head — shadow IT)
+
+Faster, warmer, riskier. Discretionary-budget signup with no procurement involvement.
+
+```
+Week 0: Warm intro from your ex-BPO network ("you should talk to [X]")
+Week 1: 30-min "I just want to learn about your QA setup" call.
+        Important framing: research-first, not sales-first. They open up.
+Week 1 (later): "Here's the tool I've been building — want to play with it on
+        your own, no corporate involvement?"
+Week 2: They upload a small batch (50 redacted conversations).
+        Score it. Show them on a screenshare.
+Week 3: They subscribe to Starter (₹6,999) on personal credit card or simple
+        invoice. No procurement.
+Week 6+: If it sticks, ask: "Who at corporate should know about this?" That
+        introduces you to Playbook C — but as someone with an internal champion.
+```
+
+**Critical:** in Playbook B, don't pitch to corporate before you have an LOB-head champion who's used the tool for 4+ weeks. Cold-pitching corporate IT goes nowhere.
+
+### What's the same in both motions
+
 **The whole pitch is the demo.** Don't write a deck. Don't send a brochure. Open a screen-share, log them in, score 5 of their conversations live. Their reaction is the entire conversation.
+
+The two motions only diverge on (a) where the warm intro comes from, (b) how big the deal is, and (c) what you do AFTER the close (push toward corporate vs. expand to peers).
 
 ---
 
@@ -131,6 +218,16 @@ The "who else" question is the qualifying question. Single answer = single decis
 
 > Decoder: they're not the decision-maker, or they're not convinced. Don't send a proposal — send a 1-paragraph summary email and ask: *"Who else needs to see this for you to decide?"* If they refuse to name someone, this deal is closed-lost.
 
+**"I'd love to use this but I can't buy software — that goes through corporate procurement"** (Playbook B)
+
+> "Totally understand. Let me ask — do you have any discretionary budget for tools or training under, say, ₹50K/month? A lot of LOB heads do. ₹6,999/month is well below most discretionary thresholds, doesn't show up on the corporate IT radar, and gives you 4 weeks of data to take to corporate when you eventually want to expand. We can also do an annual invoice if that's easier for your finance team."
+
+> If they say no even at that level, they genuinely have zero autonomy — switch motion: "Then can you intro me to whoever owns the corporate QA tooling decision? I'd rather talk to them directly than waste your time."
+
+**"My company's IT will never approve another vendor"** (Playbook B)
+
+> "Got it. So instead of fighting that, want to use it personally for 30 days? Generate the data showing it works on your campaign. Then either (a) you have an internal case to take to IT, or (b) we both learn it doesn't work for you and you've lost nothing. It's a personal subscription, not a corporate one — IT's fine with that until it gets to the corporate procurement stage."
+
 ---
 
 ## Pipeline tracking (no CRM needed at this stage)
@@ -154,18 +251,38 @@ Update after every call. Look at it once a week. **If a row hasn't moved in 14 d
 
 ## What "good" looks like 8 weeks from now
 
-- 3 paying customers at Starter tier (~₹21,000 MRR)
-- 1 customer at Team tier (₹14,999 MRR) — proves the upsell motion works
-- 5 closed-lost deals with documented reasons (helps refine ICP)
-- 1 referral that came in unprompted (proves customers find it valuable)
-- 0 customers downgraded to Pilot (or churned) — signals product-market fit fragility if not zero
+Track these per playbook so you can see which motion is working.
 
-If after 8 weeks you have **zero paying customers**, the problem is one of:
+### If running Playbook A (SMB founder, mostly cold outbound)
 
-1. ICP is wrong — you're talking to the wrong segment
-2. Pricing is wrong — try lower or higher (both can fix it)
-3. Product is missing something — listen to the closed-lost reasons
-4. You aren't asking for the close — common founder failure; you're being too "soft sell"
+- 200 cold outbound emails sent total (10/day × 5 days × 4 weeks)
+- 8–12 discovery calls booked (4–6% reply rate is healthy)
+- 2 active pilots
+- 0–1 paying customers — be patient; SMB cold cycles are slow
+
+### If running Playbook B (enterprise LOB head, warm intros)
+
+- 8–10 discovery calls completed via warm intro
+- 4–6 pilots active simultaneously
+- 2–3 paying customers at Starter or Team tier (₹15–45K MRR)
+- 1 introduction made to a corporate-level contact (the "expand" motion seedling)
+
+### If running both A and B in parallel
+
+- 2–3 paid Playbook B customers + 0–1 paid Playbook A customers = ~₹25–50K MRR
+- 5+ closed-lost deals with documented reasons (huge value — helps refine ICP)
+- 1 unprompted referral (signals real value)
+
+### Red flags after 8 weeks
+
+If you have **zero paying customers across both playbooks**, the problem is one of:
+
+1. **ICP wrong for your network** — Playbook A may need a different network than yours
+2. **Pricing wrong** — try lower (₹4,999 first month) or higher (annual prepay)
+3. **Product missing something obvious** — every closed-lost call should reveal it
+4. **You aren't asking for the close** — common founder failure; the "soft sell" doesn't work in BPO
+
+**One specific Playbook B red flag:** if every LOB head you talk to says "I love this but I can't buy it," you're hitting the discretionary-budget ceiling — try the personal-credit-card framing aggressively, or accept that Playbook B is a research motion only and double down on cold outbound A.
 
 ---
 

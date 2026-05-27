@@ -5,6 +5,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { ChannelType } from "@/lib/database.types";
 import {
   normalizeChannel,
@@ -134,20 +135,10 @@ export async function uploadConversations(
   }
   const clientId = appUser.client_id;
 
-  // Plan-limit guard — block upload if the workspace is already over its
-  // monthly conversation cap. We do a light pre-check here; final accuracy
-  // comes from row-count after dedupe (a partial overflow still gets blocked
-  // at insert time by surfacing the error to the user).
-  {
-    const { getUsage } = await import("@/lib/billing/usage");
-    const usage = await getUsage(supabase, clientId);
-    if (usage.isOverLimit) {
-      return {
-        ok: false,
-        error: `You've used ${usage.conversationsThisMonth.toLocaleString()} of ${usage.monthlyLimit.toLocaleString()} conversations this month. Upgrade your plan in Billing to continue.`,
-      };
-    }
-  }
+  // No conversation cap. Plans differ on features, not volume — see
+  // /billing for the active feature matrix. We still log every upload's
+  // size in openai_usage so admins can see throughput, but uploads are
+  // never blocked on volume here.
 
   // Parse CSV
   const text = await file.text();
@@ -297,6 +288,11 @@ export async function uploadConversations(
     }
   }
 
+  // Tag every row in this upload with a single batch id. Used by the
+  // "Latest upload only" filter on Results / Review queue so the user can
+  // hide everything they've already audited from earlier uploads.
+  const uploadBatchId = randomUUID();
+
   // Build conversation inserts
   const conversationInserts = toInsertRows
     .map((r) => {
@@ -317,6 +313,7 @@ export async function uploadConversations(
         conversation_date: r.data.conversation_date,
         customer_id: r.data.customer_id === "" ? null : r.data.customer_id,
         external_conversation_id: r.data.conversation_id,
+        upload_batch_id: uploadBatchId,
       };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
@@ -345,8 +342,20 @@ export async function uploadConversations(
     }
   }
 
+  // Bump the workspace's "latest upload batch" pointer if at least one row
+  // was actually inserted. clients has SELECT-only RLS for tenant users, so
+  // we use the admin client (same pattern as the Stop flag).
+  if (successCount > 0) {
+    const admin = createAdminClient();
+    await admin
+      .from("clients")
+      .update({ latest_upload_batch_id: uploadBatchId })
+      .eq("id", clientId);
+  }
+
   revalidatePath("/upload");
   revalidatePath("/results");
+  revalidatePath("/review-queue");
 
   return {
     ok: true,

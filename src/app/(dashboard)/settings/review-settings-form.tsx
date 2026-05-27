@@ -7,11 +7,13 @@ export function ReviewSettingsForm({
   currentSecondReviewer,
   currentSlaHours,
   currentPassThreshold,
+  currentReviewConfidenceThreshold,
   reviewers,
 }: {
   currentSecondReviewer: string | null;
   currentSlaHours: number;
   currentPassThreshold: number;
+  currentReviewConfidenceThreshold: number;
   reviewers: { id: string; label: string }[];
 }) {
   const [state, formAction, pending] = useActionState<SettingsActionState, FormData>(
@@ -88,7 +90,31 @@ export function ReviewSettingsForm({
         />
         <p className="mt-1 text-xs text-zinc-500">
           Conversations scoring below this land in the review queue with reason
-          &ldquo;low score&rdquo;, even when AI confidence is high. Default 70%.
+          &ldquo;low score&rdquo;, even when QA confidence is high. Default 70%.
+        </p>
+      </div>
+
+      <div>
+        <label
+          htmlFor="reviewConfidenceThreshold"
+          className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
+        >
+          Send to review when confidence below (%)
+        </label>
+        <input
+          id="reviewConfidenceThreshold"
+          name="reviewConfidenceThreshold"
+          type="number"
+          min={0}
+          max={100}
+          step={1}
+          defaultValue={currentReviewConfidenceThreshold}
+          className="mt-1 block w-32 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-zinc-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        <p className="mt-1 text-xs text-zinc-500">
+          Confidence is the QA engine&rsquo;s self-rated certainty. Conversations
+          below this threshold get flagged for human review. Default 70%. Stricter
+          projects use 80&ndash;90; lighter projects 50&ndash;60.
         </p>
       </div>
 

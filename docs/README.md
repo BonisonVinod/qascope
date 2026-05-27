@@ -7,6 +7,9 @@ Three documents organize what comes after the MVP.
 | [`ROADMAP.md`](./ROADMAP.md) | Engineering work streams (V2 / V3 themes), deliverables in dependency order, infrastructure debt | When planning a week of building |
 | [`SALES.md`](./SALES.md) | ICP, sales motion, pricing experiments, discovery script, common objections, pipeline tracking | Before every sales call; weekly pipeline review |
 | [`MARKETING.md`](./MARKETING.md) | Channels, brand positioning, content backlog, lead magnets, weekly metrics | Once a week to check what to ship next |
+| [`OUTBOUND.md`](./OUTBOUND.md) | Cold outreach playbook: tool stack (Apollo + Smartlead + Claude), 60-min daily routine, prompt templates for emails and LinkedIn posts | Daily — this becomes your morning routine |
+| [`HIRING-OUTBOUND.md`](./HIRING-OUTBOUND.md) | Trigger-based outbound: target BPOs that just posted a QA job. Specific email template, sequencing, automation roadmap (n8n) | When job-board scraping is your weekly source |
+| [`ONE-PAGER.md`](./ONE-PAGER.md) | Content for the leave-behind / email attachment. Paste sections into Canva or Google Docs to design | Before sending your first cold email |
 
 The product-level docs live one level up:
 

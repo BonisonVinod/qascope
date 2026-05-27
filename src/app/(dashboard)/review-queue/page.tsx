@@ -28,6 +28,7 @@ type QueueRow = {
   totalScore: number;
   originalTotalScore: number;
   appealedAt: string | null;
+  adjustedScore: number | null;
   confidenceScore: number;
   status: ScoreStatus;
   conversationDate: string;
@@ -48,7 +49,7 @@ export default async function ReviewQueuePage() {
 
   const { data: appUser } = await supabase
     .from("users")
-    .select("client_id")
+    .select("client_id, role")
     .eq("id", user!.id)
     .single();
   const clientId = appUser?.client_id;
@@ -56,46 +57,95 @@ export default async function ReviewQueuePage() {
   const { data: client } = clientId
     ? await supabase
         .from("clients")
-        .select("second_reviewer_user_id, sla_hours")
+        .select("second_reviewer_user_id, sla_hours, latest_upload_batch_id")
         .eq("id", clientId)
         .single()
     : { data: null };
 
   const isSecondReviewer =
-    !!client?.second_reviewer_user_id && client.second_reviewer_user_id === user!.id;
+    (!!client?.second_reviewer_user_id && client.second_reviewer_user_id === user!.id) ||
+    appUser?.role === "admin" ||
+    appUser?.role === "qa_manager";
+  const renderedAt = new Date().toISOString();
 
-  // Pull review queue items. RLS scopes these to this client's qa_scores.
-  const { data: queue } = await supabase
-    .from("review_queue")
-    .select(
-      "id, qa_score_id, reason, state, sla_deadline, created_at, first_reviewer_decision, first_reviewer_notes, first_reviewer_at, second_reviewer_decision, second_reviewer_notes, second_reviewer_at",
-    )
-    .order("created_at", { ascending: false })
-    .limit(200);
+  // Always restrict the review queue to the latest upload batch. Old
+  // queue items still exist in the DB (Reports has access) but should not
+  // clutter the active review surface.
+  const latestBatchId = client?.latest_upload_batch_id ?? null;
 
-  const rows = await hydrateRows(supabase, queue ?? []);
+  let batchScoreIds: string[] = [];
+  if (latestBatchId && clientId) {
+    const { data: batchConvs } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("client_id", clientId)
+      .eq("upload_batch_id", latestBatchId);
+    const convIds = (batchConvs ?? []).map((c) => c.id);
+    if (convIds.length > 0) {
+      const { data: scores } = await supabase
+        .from("qa_scores")
+        .select("id")
+        .in("conversation_id", convIds);
+      batchScoreIds = (scores ?? []).map((s) => s.id);
+    }
+  }
+
+  let queue: Array<{
+    id: string;
+    qa_score_id: string;
+    reason: string;
+    state: ReviewState;
+    sla_deadline: string | null;
+    created_at: string;
+    first_reviewer_decision: FirstReviewerDecision | null;
+    first_reviewer_notes: string | null;
+    first_reviewer_at: string | null;
+    second_reviewer_decision: SecondReviewerDecision | null;
+    second_reviewer_notes: string | null;
+    second_reviewer_at: string | null;
+    adjusted_score: number | null;
+  }> = [];
+  if (batchScoreIds.length > 0) {
+    const { data } = await supabase
+      .from("review_queue")
+      .select(
+        "id, qa_score_id, reason, state, sla_deadline, created_at, first_reviewer_decision, first_reviewer_notes, first_reviewer_at, second_reviewer_decision, second_reviewer_notes, second_reviewer_at, adjusted_score",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .in("qa_score_id", batchScoreIds);
+    queue = data ?? [];
+  }
+
+  const rows = await hydrateRows(supabase, queue);
   const pendingFirst = rows.filter((r) => r.state === "pending_first");
   const pendingSecond = rows.filter((r) => r.state === "pending_second");
   const resolved = rows.filter((r) => r.state === "closed");
 
-  const { count: totalConvs } = await supabase
-    .from("conversations")
-    .select("id", { count: "exact", head: true })
-    .eq("client_id", clientId!);
+  let totalConvs: number | null = null;
+  if (latestBatchId && clientId) {
+    const { count } = await supabase
+      .from("conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", clientId)
+      .eq("upload_batch_id", latestBatchId);
+    totalConvs = count ?? null;
+  }
 
   return (
     <div>
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Review queue</h1>
           <p className="mt-2 text-sm text-zinc-500">
             {pendingFirst.length} awaiting first review &middot; {pendingSecond.length}{" "}
             awaiting second review &middot; {resolved.length} resolved
             {typeof totalConvs === "number" ? ` of ${totalConvs} total` : ""}
+            {latestBatchId ? " · current upload" : ""}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             SLA: {client?.sla_hours ?? 24}h per tier &middot; items auto-approve after
-            deadline.
+            deadline. Showing only the most recent upload.
           </p>
         </div>
       </div>
@@ -110,7 +160,7 @@ export default async function ReviewQueuePage() {
             <p className="text-sm text-zinc-500">Nothing awaiting first review.</p>
           </div>
         ) : (
-          <QueueTable rows={pendingFirst} tier="first" canAct={true} />
+          <QueueTable rows={pendingFirst} tier="first" canAct={true} renderedAt={renderedAt} />
         )}
       </section>
 
@@ -120,7 +170,7 @@ export default async function ReviewQueuePage() {
           Pending second review
           {!isSecondReviewer && pendingSecond.length > 0 && (
             <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium normal-case text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-              view-only &mdash; assigned to client's second reviewer
+              view-only &mdash; assigned to second reviewer
             </span>
           )}
         </h2>
@@ -133,6 +183,7 @@ export default async function ReviewQueuePage() {
             rows={pendingSecond}
             tier="second"
             canAct={isSecondReviewer}
+            renderedAt={renderedAt}
           />
         )}
       </section>
@@ -143,7 +194,7 @@ export default async function ReviewQueuePage() {
           <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800">
             Resolved ({resolved.length})
           </summary>
-          <QueueTable rows={resolved} tier="resolved" canAct={false} />
+          <QueueTable rows={resolved} tier="resolved" canAct={false} renderedAt={renderedAt} />
         </details>
       )}
     </div>
@@ -165,6 +216,7 @@ async function hydrateRows(
     second_reviewer_decision: SecondReviewerDecision | null;
     second_reviewer_notes: string | null;
     second_reviewer_at: string | null;
+    adjusted_score: number | null;
   }[],
 ): Promise<QueueRow[]> {
   if (queue.length === 0) return [];
@@ -224,6 +276,7 @@ async function hydrateRows(
         totalScore: score.total_score,
         originalTotalScore: score.original_total_score,
         appealedAt: score.appealed_at,
+        adjustedScore: q.adjusted_score,
         confidenceScore: score.confidence_score,
         status: score.status,
         conversationDate: conv.conversation_date,
@@ -243,10 +296,12 @@ function QueueTable({
   rows,
   tier,
   canAct,
+  renderedAt,
 }: {
   rows: QueueRow[];
   tier: Tier;
   canAct: boolean;
+  renderedAt: string;
 }) {
   return (
     <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
@@ -295,18 +350,30 @@ function QueueTable({
                   original={r.originalTotalScore}
                   confidence={r.confidenceScore}
                   appealedAt={r.appealedAt}
+                  adjustedScore={r.adjustedScore}
                 />
               </td>
               <td className="px-4 py-3">
                 <ReasonBadge reason={r.reason} status={r.status} />
               </td>
               <td className="px-4 py-3 text-xs text-zinc-500">
-                {tier === "first" && r.slaDeadline && (
-                  <SlaCountdown deadline={r.slaDeadline} />
+                {tier === "first" && (
+                  <div className="space-y-1">
+                    {r.slaDeadline && (
+                      <SlaCountdown deadline={r.slaDeadline} renderedAt={renderedAt} />
+                    )}
+                    {r.firstReviewerNotes && (
+                      <p className="italic text-zinc-600 dark:text-zinc-400">
+                        Appeal note: &ldquo;{r.firstReviewerNotes}&rdquo;
+                      </p>
+                    )}
+                  </div>
                 )}
                 {tier === "second" && (
                   <div className="space-y-1">
-                    {r.slaDeadline && <SlaCountdown deadline={r.slaDeadline} />}
+                    {r.slaDeadline && (
+                      <SlaCountdown deadline={r.slaDeadline} renderedAt={renderedAt} />
+                    )}
                     {r.firstReviewerNotes && (
                       <p className="italic text-zinc-600 dark:text-zinc-400">
                         First reviewer: &ldquo;{r.firstReviewerNotes}&rdquo;
@@ -344,19 +411,28 @@ function ScoreCell({
   original,
   confidence,
   appealedAt,
+  adjustedScore,
 }: {
   current: number;
   original: number;
   confidence: number;
   appealedAt: string | null;
+  adjustedScore: number | null;
 }) {
   const changed = appealedAt !== null && current !== original;
+  const hasProposed = appealedAt === null && adjustedScore !== null && adjustedScore !== undefined;
+
   return (
     <div>
       <span className="font-semibold">{current.toFixed(1)}</span>
       {changed && (
         <span className="ml-1.5 text-[11px] text-zinc-400 line-through">
           {original.toFixed(1)}
+        </span>
+      )}
+      {hasProposed && (
+        <span className="ml-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+          &rarr; {adjustedScore.toFixed(1)} (Proposed)
         </span>
       )}
       <span className="ml-1 text-xs font-normal text-zinc-500">
@@ -398,9 +474,15 @@ function ReasonBadge({
   );
 }
 
-function SlaCountdown({ deadline }: { deadline: string }) {
+function SlaCountdown({
+  deadline,
+  renderedAt,
+}: {
+  deadline: string;
+  renderedAt: string;
+}) {
   const d = new Date(deadline).getTime();
-  const now = Date.now();
+  const now = new Date(renderedAt).getTime();
   const msLeft = d - now;
 
   if (msLeft <= 0) {
