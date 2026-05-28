@@ -74,14 +74,24 @@ export default async function DashboardLayout({
           )}
         </nav>
 
-        <form action={signout} className="mt-4">
-          <button
-            type="submit"
-            className="w-full rounded-md px-3 py-2 text-left text-sm text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-          >
-            Sign out
-          </button>
-        </form>
+        <div className="mt-auto pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex gap-4 px-3 mb-4 text-[11px] font-medium text-zinc-400">
+            <Link href="/terms" className="hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline">
+              Privacy
+            </Link>
+          </div>
+          <form action={signout}>
+            <button
+              type="submit"
+              className="w-full rounded-md px-3 py-2 text-left text-sm text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </aside>
 
         <main className="flex-1 p-8">{children}</main>
