@@ -32,7 +32,7 @@ export default async function DashboardLayout({
 
   const { data: appUser } = await supabase
     .from("users")
-    .select("name, email, role, client_id")
+    .select("name, email, role, client_id, is_super_admin")
     .eq("id", user.id)
     .single();
 
@@ -64,6 +64,14 @@ export default async function DashboardLayout({
               {item.label}
             </Link>
           ))}
+          {appUser?.is_super_admin && (
+            <Link
+              href="/admin"
+              className="mt-2 block rounded-md px-3 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/30"
+            >
+              ⚙ Admin Console
+            </Link>
+          )}
         </nav>
 
         <form action={signout} className="mt-4">

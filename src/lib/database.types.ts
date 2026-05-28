@@ -83,6 +83,7 @@ type UsersRow = {
   email: string;
   role: UserRole;
   team_name: string | null;
+  is_super_admin: boolean;
   created_at: string;
 };
 
