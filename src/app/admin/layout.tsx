@@ -47,8 +47,8 @@ export default async function AdminLayout({
         <div className="mx-auto flex max-w-7xl gap-1 px-6 pb-2">
           {[
             { href: "/admin", label: "Overview" },
-            { href: "/admin/clients", label: "All Clients" },
-            { href: "/admin/revenue", label: "Revenue" },
+            { href: "/admin#clients", label: "All Clients" },
+            { href: "/admin#revenue", label: "Revenue" },
           ].map((item) => (
             <Link
               key={item.href}

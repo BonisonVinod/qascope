@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { InviteForm } from "./invite-form";
-import { revokeInvite, changeMemberRole, changeMemberTeam } from "./actions";
+import { revokeInvite, changeMemberRole, changeMemberTeam, removeMember } from "./actions";
 import type { UserRole } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -101,6 +101,7 @@ export default async function TeamPage() {
                 <th className="px-4 py-2 font-medium">Email</th>
                 <th className="px-4 py-2 font-medium">Role</th>
                 <th className="px-4 py-2 font-medium">Team</th>
+                <th className="px-4 py-2 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -159,6 +160,25 @@ export default async function TeamPage() {
                         Save
                       </button>
                     </form>
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    {canChangeRoles && m.id !== me!.id ? (
+                      <form action={removeMember} onSubmit={(e) => {
+                        if (!confirm("Are you sure you want to permanently remove this user? This cannot be undone.")) {
+                          e.preventDefault();
+                        }
+                      }}>
+                        <input type="hidden" name="id" value={m.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-100 dark:border-red-950 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="text-xs text-zinc-400">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

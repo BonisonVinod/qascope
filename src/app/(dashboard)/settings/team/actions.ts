@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/lib/database.types";
 
 export type InviteActionState =
@@ -169,5 +170,40 @@ export async function changeMemberTeam(formData: FormData): Promise<void> {
     .update({ team_name: teamName.length > 0 ? teamName : null })
     .eq("id", id)
     .eq("client_id", me.client_id);
+  revalidatePath("/settings/team");
+}
+
+/** Remove a team member. Only admin can do this. */
+export async function removeMember(formData: FormData): Promise<void> {
+  const ctx = await requireAdminContext();
+  if (!ctx.ok) return;
+  const { supabase, me } = ctx;
+  if (me.role !== "admin") return;
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+
+  // Prevent admin from deleting themselves
+  if (id === me.id) return;
+
+  // 1. Delete from public.users table (RLS requires it to be their client)
+  const { error: deleteErr } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", id)
+    .eq("client_id", me.client_id);
+
+  if (deleteErr) {
+    console.error("Error deleting public user profile:", deleteErr);
+    return;
+  }
+
+  // 2. Delete from auth.users using the admin (service-role) client
+  const admin = createAdminClient();
+  const { error: authErr } = await admin.auth.admin.deleteUser(id);
+  if (authErr) {
+    console.error("Error deleting auth user:", authErr);
+  }
+
   revalidatePath("/settings/team");
 }

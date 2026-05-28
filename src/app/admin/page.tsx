@@ -70,7 +70,7 @@ export default async function AdminPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div id="revenue" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[
           { label: "Total clients", value: fmt(stats.total_clients) },
           { label: "Monthly MRR", value: fmtUsd(stats.total_mrr_usd), highlight: true },
@@ -119,7 +119,7 @@ export default async function AdminPage() {
       )}
 
       {/* Client table */}
-      <section>
+      <section id="clients">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
           All Clients ({clients.length})
         </h2>
