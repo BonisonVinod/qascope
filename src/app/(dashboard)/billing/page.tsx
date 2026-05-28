@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PLANS, PLAN_ORDER, formatUsd, getPlan } from "@/lib/billing/plans";
 import { getUsage } from "@/lib/billing/usage";
 import { formatMicroInr, formatTokens } from "@/lib/billing/openai-cost";
-import { ChangePlanButton } from "./change-plan-button";
+import { CheckoutButton } from "./checkout-button";
 
 export const dynamic = "force-dynamic";
 
@@ -384,33 +384,19 @@ export default async function BillingPage() {
                   ))}
                 </ul>
                 <div className="mt-5">
-                  {isCurrent ? (
-                    <button
-                      disabled
-                      className="w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800"
-                    >
-                      Current plan
-                    </button>
-                  ) : isAdmin ? (
-                    <ChangePlanButton plan={p} label={plan.label} />
-                  ) : (
-                    <button
-                      disabled
-                      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
-                      title="Only workspace admins can change the plan"
-                    >
-                      Admin only
-                    </button>
-                  )}
+                  <CheckoutButton
+                    planName={p}
+                    planLabel={plan.label}
+                    pricePerSeat={plan.pricePerSeatUsd}
+                    currentPlan={client?.active_plan ?? "pilot"}
+                    seatCount={seatsUsed}
+                    isAdmin={isAdmin}
+                  />
                 </div>
               </div>
             );
           })}
         </div>
-        <p className="mt-3 text-xs text-zinc-500">
-          Razorpay checkout integration coming soon — plan switches are recorded
-          directly today. Pricing shown in USD.
-        </p>
       </section>
 
       {/* History */}
