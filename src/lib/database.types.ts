@@ -84,6 +84,8 @@ type UsersRow = {
   role: UserRole;
   team_name: string | null;
   is_super_admin: boolean;
+  agreed_to_terms_at: string | null;
+  terms_version_agreed: number;
   created_at: string;
 };
 
@@ -369,6 +371,8 @@ export type Database = {
           email: string;
           role?: UserRole;
           team_name?: string | null;
+          agreed_to_terms_at?: string | null;
+          terms_version_agreed?: number;
           created_at?: string;
         };
         Update: {
@@ -378,6 +382,8 @@ export type Database = {
           email?: string;
           role?: UserRole;
           team_name?: string | null;
+          agreed_to_terms_at?: string | null;
+          terms_version_agreed?: number;
           created_at?: string;
         };
         Relationships: [];

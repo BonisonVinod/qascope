@@ -72,6 +72,26 @@ export default function SignupPage() {
           />
         </div>
 
+        <div className="flex items-start gap-2.5 pt-1">
+          <input
+            id="agreeToTerms"
+            name="agreeToTerms"
+            type="checkbox"
+            required
+            className="mt-0.5 rounded border-zinc-300 bg-white text-teal-600 focus:ring-teal-500 dark:border-zinc-700 dark:bg-zinc-950"
+          />
+          <label htmlFor="agreeToTerms" className="text-xs text-zinc-500 dark:text-zinc-400 leading-normal">
+            I agree to the{" "}
+            <Link href="/terms" target="_blank" className="font-semibold text-zinc-800 dark:text-zinc-200 hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" target="_blank" className="font-semibold text-zinc-800 dark:text-zinc-200 hover:underline">
+              Privacy Policy
+            </Link>.
+          </label>
+        </div>
+
         {state?.error && (
           <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
         )}

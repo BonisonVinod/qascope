@@ -17,6 +17,9 @@ const signupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   name: z.string().min(1, "Name is required"),
   clientName: z.string().min(1, "Company name is required"),
+  agreeToTerms: z.literal("on", {
+    message: "You must agree to the Terms and Privacy Policy.",
+  }),
 });
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
@@ -52,6 +55,7 @@ export async function signup(
     password: formData.get("password"),
     name: formData.get("name"),
     clientName: formData.get("clientName"),
+    agreeToTerms: formData.get("agreeToTerms"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
@@ -97,6 +101,8 @@ export async function signup(
     name: parsed.data.name,
     email: parsed.data.email,
     role: "admin", // first user of a new client is the admin
+    agreed_to_terms_at: new Date().toISOString(),
+    terms_version_agreed: 1,
   });
 
   if (userError) {
