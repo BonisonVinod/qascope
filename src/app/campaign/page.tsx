@@ -29,7 +29,7 @@ export default function CampaignPage() {
 
   // Calculations
   const traditionalSpend = auditors * salary;
-  const qascopeSeats = Math.max(1, Math.ceil(agents / 25)); // 1 lead per 25 agents
+  const qascopeSeats = agents; // Billed per monitored agent seat
   const qascopePlatformSpend = qascopeSeats * 1450;
   const qascopeTokenSpend = conversations * 0.20; // ₹0.20 per call scored on gpt-4o-mini
   const qascopeTotalSpend = qascopePlatformSpend + qascopeTokenSpend;
@@ -520,7 +520,7 @@ export default function CampaignPage() {
                 </span>
                 <div className="rounded bg-zinc-950/60 p-2 mt-2 border border-zinc-800 text-[10px] text-zinc-400 space-y-1 font-mono">
                   <div className="flex justify-between">
-                    <span>Seats ({qascopeSeats} TL/Admins):</span>
+                    <span>Monitored Agent Seats ({qascopeSeats} Agents):</span>
                     <span>₹{qascopePlatformSpend.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between">
@@ -555,7 +555,7 @@ export default function CampaignPage() {
               Enterprise QA platforms charge massive software markups on LLM tokens—often billing up to ₹2.00 to ₹5.00 per analyzed conversation. We think that's extortionate.
             </p>
             <p className="mt-3 text-zinc-400 leading-relaxed">
-              QAScope runs on a **Bring Your Own Key (BYOK)** model. You plug in your own OpenRouter or OpenAI credentials directly in the settings panel. We bill you a flat flat seat fee, while the provider bills you for tokens consumed at raw cost (~₹0.20 per audit on `gpt-4o-mini`).
+              QAScope runs on a **Bring Your Own Key (BYOK)** model. You plug in your own OpenRouter or OpenAI credentials directly in the settings panel. We bill you a flat seat fee per monitored agent, while the provider bills you for tokens consumed at raw cost (~₹0.20 per audit on `gpt-4o-mini`).
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
