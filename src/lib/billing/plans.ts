@@ -83,13 +83,13 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   },
 
   /**
-   * Starter tier — 1 to 49 seats at $20/seat/month. DB name: "starter".
+   * Starter tier — 1 to 49 seats at ₹1,600/seat/month. DB name: "starter".
    */
   starter: {
     name: "starter",
     label: "Starter",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 20,
+    pricePerSeatUsd: 1600,
     seatRange: "1–49 seats",
     minSeats: 1,
     maxSeats: 49,
@@ -100,7 +100,7 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
     description: "For small QA teams running daily audits.",
     features: [
       "Unlimited conversations (bring your own AI key)",
-      "$20 / seat / month · up to 49 seats",
+      "₹1,600 / seat / month · up to 49 seats",
       "Custom rubric + fatal rules",
       "Two-tier review workflow",
       "Webhook ingest — connect any CRM",
@@ -113,14 +113,14 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   },
 
   /**
-   * Growth tier — 50 to 99 seats at $18/seat/month on ALL seats. DB name: "team".
-   * Retroactive: a 60-seat team pays $18 × 60, not $20×49 + $18×11.
+   * Growth tier — 50 to 99 seats at ₹1,450/seat/month on ALL seats. DB name: "team".
+   * Retroactive: a 60-seat team pays ₹1,450 × 60, not ₹1,600×49 + ₹1,450×11.
    */
   team: {
     name: "team",
     label: "Growth",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 18,
+    pricePerSeatUsd: 1450,
     seatRange: "50–99 seats",
     minSeats: 50,
     maxSeats: 99,
@@ -131,7 +131,7 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
     description: "For growing BPOs running multiple campaigns.",
     features: [
       "Unlimited conversations (bring your own AI key)",
-      "$18 / seat / month on all seats · 50–99 seats",
+      "₹1,450 / seat / month on all seats · 50–99 seats",
       "Everything in Starter",
       "Live web & API data verification (order/customer fact-checking)",
       "Freshdesk + Zoho Desk native connectors",
@@ -143,14 +143,14 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   },
 
   /**
-   * Scale tier — 100+ seats at $16/seat/month on ALL seats. DB name: "pro".
-   * Retroactive: a 100-seat team pays $16 × 100, not $18×99 + $16×1.
+   * Scale tier — 100+ seats at ₹1,300/seat/month on ALL seats. DB name: "pro".
+   * Retroactive: a 100-seat team pays ₹1,300 × 100, not ₹1,450×99 + ₹1,300×1.
    */
   pro: {
     name: "pro",
     label: "Scale",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 16,
+    pricePerSeatUsd: 1300,
     seatRange: "100+ seats",
     minSeats: 100,
     maxSeats: -1,
@@ -161,7 +161,7 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
     description: "For large operations across multiple BPO clients.",
     features: [
       "Unlimited conversations (bring your own AI key)",
-      "$16 / seat / month on all seats · 100+ seats",
+      "₹1,300 / seat / month on all seats · 100+ seats",
       "Everything in Growth",
       "Salesforce Service Cloud + Zendesk connectors",
       "Custom rubric templates per campaign",
@@ -181,16 +181,14 @@ export function getPlan(name: PlanName | null | undefined): PlanDefinition {
   return PLANS.pilot;
 }
 
-/** Format a USD dollar amount. Returns "Free" for $0. */
+/** Format a Rupee (INR) amount. Returns "Free" for ₹0. */
 export function formatUsd(amount: number): string {
   if (amount === 0) return "Free";
-  return `$${amount.toLocaleString("en-US")}`;
+  return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-/**
- * @deprecated Renamed to formatUsd. This shim keeps legacy callers working
- * without a build failure while we migrate references over time.
- */
+/** Format a Rupee (INR) amount. */
 export function formatInr(amount: number): string {
-  return formatUsd(amount);
+  if (amount === 0) return "Free";
+  return `₹${amount.toLocaleString("en-IN")}`;
 }

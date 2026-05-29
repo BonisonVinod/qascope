@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PLANS, PLAN_ORDER, formatUsd, getPlan } from "@/lib/billing/plans";
 import { getUsage } from "@/lib/billing/usage";
 import { formatMicroInr, formatTokens } from "@/lib/billing/openai-cost";
-import { CheckoutButton } from "./checkout-button";
+import { PlanPicker } from "./plan-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -300,103 +300,20 @@ export default async function BillingPage() {
 
       {/* Plan picker */}
       <section>
-        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
-          Plans
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 mb-1">
+          Plans & Pricing
         </h2>
-        <p className="mt-1 max-w-2xl text-xs text-zinc-500">
+        <p className="max-w-2xl text-xs text-zinc-500 mb-6">
           Pricing is a <strong className="text-zinc-700 dark:text-zinc-300">retroactive volume discount</strong> — the
           rate you qualify for applies to <em>every</em> seat from seat 1, not
           just the extra ones. Upgrading to the next tier actually lowers your
-          total bill.
+          total bill. Use the dynamic seat selector below to see total pricing and upgrades.
         </p>
-        <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-4">
-          {PLAN_ORDER.map((p) => {
-            const plan = PLANS[p];
-            const isCurrent = client?.active_plan === p;
-            // Highlight the tier that matches current seat count
-            const isRecommended =
-              !isCurrent &&
-              seatsUsed >= plan.minSeats &&
-              (plan.maxSeats === -1 || seatsUsed <= plan.maxSeats);
-            return (
-              <div
-                key={p}
-                className={`relative rounded-lg border p-5 transition ${
-                  isCurrent
-                    ? "border-emerald-400 bg-emerald-50/40 dark:border-emerald-700 dark:bg-emerald-950/30"
-                    : isRecommended
-                      ? "border-blue-400 bg-blue-50/40 dark:border-blue-700 dark:bg-blue-950/30"
-                      : "border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-lg font-semibold">{plan.label}</h3>
-                    <p className="text-[11px] text-zinc-400">{plan.seatRange}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {isCurrent && (
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400">
-                        Current
-                      </span>
-                    )}
-                    {isRecommended && (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-blue-800 dark:bg-blue-950 dark:text-blue-400">
-                        Recommended
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="mt-3 text-2xl font-bold">
-                  {plan.pricePerSeatUsd === 0 ? (
-                    "Free"
-                  ) : (
-                    <>
-                      {formatUsd(plan.pricePerSeatUsd)}
-                      <span className="ml-1 text-sm font-normal text-zinc-500">
-                        / seat / mo
-                      </span>
-                    </>
-                  )}
-                </p>
-                {/* Savings callout: show how upgrading to this tier saves vs staying on the tier below */}
-                {plan.name === "team" && (
-                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
-                    50 seats → <strong>$900/mo</strong>{" "}
-                    <span className="text-zinc-400">(vs $980 on Starter)</span>
-                  </p>
-                )}
-                {plan.name === "pro" && (
-                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-400">
-                    100 seats → <strong>$1,600/mo</strong>{" "}
-                    <span className="text-zinc-400">(vs $1,782 on Growth)</span>
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-zinc-500">{plan.description}</p>
-                <ul className="mt-4 space-y-1.5 text-sm">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-1.5">
-                      <span className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400">
-                        ✓
-                      </span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-5">
-                  <CheckoutButton
-                    planName={p}
-                    planLabel={plan.label}
-                    pricePerSeat={plan.pricePerSeatUsd}
-                    currentPlan={client?.active_plan ?? "pilot"}
-                    seatCount={seatsUsed}
-                    isAdmin={isAdmin}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <PlanPicker
+          currentPlanName={client?.active_plan ?? "pilot"}
+          seatsUsed={seatsUsed}
+          isAdmin={isAdmin}
+        />
       </section>
 
       {/* History */}

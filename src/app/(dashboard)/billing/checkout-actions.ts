@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PlanName } from "@/lib/database.types";
+import { getPlan } from "@/lib/billing/plans";
 
 // Razorpay plan IDs from dashboard — set via env vars
 const RAZORPAY_PLAN_IDS: Partial<Record<PlanName, string>> = {
@@ -25,6 +26,7 @@ type CheckoutResult =
  */
 export async function createRazorpaySubscription(
   planName: PlanName,
+  requestedQuantity?: number,
 ): Promise<CheckoutResult> {
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
     return { error: "Payment gateway not configured. Contact support." };
@@ -50,7 +52,28 @@ export async function createRazorpaySubscription(
   }
 
   try {
-    // Create Razorpay subscription via API
+    // Dynamically calculate seat count (accepted users + pending invitations)
+    const adminClient = createAdminClient();
+    const { count: memberCount } = await adminClient
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", appUser.client_id);
+    const { count: openInviteCount } = await adminClient
+      .from("invitations")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", appUser.client_id)
+      .is("accepted_at", null);
+    const seatsUsed = (memberCount ?? 0) + (openInviteCount ?? 0);
+    
+    // Respect the plan's minimum seats requirement (Starter: 1, Growth: 50, Scale: 100)
+    // and any custom quantity selected by the user.
+    const plan = getPlan(planName);
+    let finalQuantity = Math.max(plan.minSeats, seatsUsed);
+    if (requestedQuantity && requestedQuantity > 0) {
+      finalQuantity = Math.max(finalQuantity, requestedQuantity);
+    }
+
+    // Create Razorpay subscription via API (Do NOT send callback_url or cancel_url here)
     const response = await fetch("https://api.razorpay.com/v1/subscriptions", {
       method: "POST",
       headers: {
@@ -60,10 +83,8 @@ export async function createRazorpaySubscription(
       body: JSON.stringify({
         plan_id: planId,
         total_count: 12,          // 12 months, then renews
-        quantity: 1,              // Seat billing handled separately via addons
+        quantity: finalQuantity,  // Dynamic seat count passed here!
         notify_info: { notify_email: appUser.email },
-        callback_url: `${APP_URL}/billing?status=success`,
-        cancel_url:   `${APP_URL}/billing?status=cancelled`,
       }),
     });
 

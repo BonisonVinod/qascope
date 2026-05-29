@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createRazorpaySubscription } from "./checkout-actions";
 import type { PlanName } from "@/lib/database.types";
+import { getPlan } from "@/lib/billing/plans";
 
 declare global {
   interface Window {
@@ -54,7 +55,9 @@ export function CheckoutButton({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const monthlyTotal = pricePerSeat * seatCount;
+  const plan = getPlan(planName);
+  const chargedSeats = Math.max(plan.minSeats, seatCount);
+  const monthlyTotal = pricePerSeat * chargedSeats;
   const isCurrent = currentPlan === planName;
 
   async function handleCheckout() {
@@ -68,7 +71,7 @@ export function CheckoutButton({
         return;
       }
 
-      const result = await createRazorpaySubscription(planName);
+      const result = await createRazorpaySubscription(planName, seatCount);
 
       if ("error" in result) {
         setError(result.error);
@@ -79,9 +82,9 @@ export function CheckoutButton({
         key: result.keyId,
         subscription_id: result.subscriptionId,
         name: "QAScope",
-        description: `${planLabel} Plan — ${seatCount} seats × $${pricePerSeat}/seat/mo`,
-        prefill: { email: result.prefillEmail },
+        description: `${planLabel} Plan — ${chargedSeats} seats × ₹${pricePerSeat}/seat/mo`,
         theme: { color: "#18181b" },
+        prefill: { email: result.prefillEmail },
         handler: (_response) => {
           // Payment success — webhook will activate the plan server-side
           setSuccess(true);
@@ -139,7 +142,9 @@ export function CheckoutButton({
         ) : isCurrent ? (
           "Current plan"
         ) : (
-          `Upgrade to ${planLabel} — $${monthlyTotal.toLocaleString()}/mo`
+          `Upgrade to ${planLabel} — ₹${monthlyTotal.toLocaleString()}/mo${
+            chargedSeats > seatCount ? ` (Min ${plan.minSeats} seats)` : ""
+          }`
         )}
       </button>
 

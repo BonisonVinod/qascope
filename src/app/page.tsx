@@ -200,7 +200,7 @@ export default async function Home() {
           {[
             {
               name: "Starter",
-              price: "$20",
+              price: "₹1,600",
               seats: "1 – 49 seats",
               desc: "Perfect for pilot operations and small BPO teams looking to automate their basic auditing.",
               btn: "Start Free Trial",
@@ -208,7 +208,7 @@ export default async function Home() {
             },
             {
               name: "Growth",
-              price: "$18",
+              price: "₹1,450",
               seats: "50 – 99 seats",
               desc: "Save 10% on all seats! High-performance settings, webhook channels, and custom templates.",
               btn: "Get Growth Now",
@@ -216,7 +216,7 @@ export default async function Home() {
             },
             {
               name: "Scale",
-              price: "$16",
+              price: "₹1,300",
               seats: "100+ seats",
               desc: "Save 20% on all seats! Deep enterprise RLS protection, multi-tenant managers, and SLA sweeps.",
               btn: "Scale Workspace",
