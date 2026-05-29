@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PLANS, PLAN_ORDER, formatUsd, getPlan } from "@/lib/billing/plans";
 import { getUsage } from "@/lib/billing/usage";
 import { formatMicroInr, formatTokens } from "@/lib/billing/openai-cost";
-import { PlanPicker } from "./plan-picker";
+import { PlanPicker } from "@/app/(dashboard)/billing/plan-picker";
 
 export const dynamic = "force-dynamic";
 
