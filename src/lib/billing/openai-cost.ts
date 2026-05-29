@@ -115,10 +115,10 @@ export function formatMicroInr(microInr: number): string {
   const rupees = microInr / 1_000_000;
   if (rupees < 0.01) return "<₹0.01";
   if (rupees < 1) return `₹${rupees.toFixed(2)}`;
-  return `₹${rupees.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  return `₹${rupees.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
 /** Format a token count (1234 -> "1,234"). */
 export function formatTokens(n: number): string {
-  return n.toLocaleString("en-IN");
+  return n.toLocaleString("en-US");
 }

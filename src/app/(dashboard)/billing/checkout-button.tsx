@@ -142,7 +142,7 @@ export function CheckoutButton({
         ) : isCurrent ? (
           "Current plan"
         ) : (
-          `Upgrade to ${planLabel} — ₹${monthlyTotal.toLocaleString()}/mo${
+          `Upgrade to ${planLabel} — ₹${monthlyTotal.toLocaleString("en-US")}/mo${
             chargedSeats > seatCount ? ` (Min ${plan.minSeats} seats)` : ""
           }`
         )}
