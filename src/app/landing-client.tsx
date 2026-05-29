@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PLANS, PLAN_ORDER, formatUsd } from "@/lib/billing/plans";
+import { submitDemoRequest } from "@/app/landing-actions";
 
 interface CampaignData {
   title: string;
@@ -20,6 +21,40 @@ export function LandingClient() {
   const [salary, setSalary] = useState<number>(35000);
   const [auditors, setAuditors] = useState<number>(5);
   const [conversations, setConversations] = useState<number>(22000);
+
+  // Form Submission State
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+  const [formLoading, setFormLoading] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    bpoType: "BFSI Debt Recovery",
+    agentCount: 50,
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const res = await submitDemoRequest(formData);
+      if (res && "error" in res && res.error) {
+        setFormError(res.error);
+      } else {
+        setFormSubmitted(true);
+      }
+    } catch (err) {
+      setFormError((err as Error).message);
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   // Auto-adjust conversations and auditors when agents slider moves
   useEffect(() => {
@@ -781,6 +816,148 @@ export function LandingClient() {
               <p className="mt-2 text-sm text-zinc-400 leading-relaxed">{faq.a}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Campaign Lead Capture Form Section */}
+      <section id="book-demo" className="mx-auto max-w-4xl px-6 py-16 border-t border-zinc-900">
+        <div className="rounded-3xl border border-teal-500/30 bg-gradient-to-b from-zinc-900/80 to-zinc-950 p-8 md:p-12 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 h-[200px] w-[200px] rounded-full bg-teal-500/5 blur-[80px] pointer-events-none" />
+          
+          <div className="max-w-2xl mx-auto text-center mb-8">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">Launch Partner Offer</h3>
+            <h4 className="mt-2 text-3xl font-extrabold text-white">Audit 500 Conversations Free</h4>
+            <p className="mt-3 text-zinc-400">
+              No payment card required. We set up your workspace, calibrate the rubric for your target campaign, and upload your first CSV batch live on a 30-minute call.
+            </p>
+          </div>
+
+          {formSubmitted ? (
+            <div className="rounded-2xl border border-teal-500 bg-teal-950/20 p-8 text-center max-w-md mx-auto space-y-4">
+              <span className="text-4xl">🚀</span>
+              <h5 className="text-2xl font-bold text-white">Walkthrough Scheduled!</h5>
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                Thank you, <span className="text-teal-400 font-semibold">{formData.name}</span>. We've received your pilot request for the <span className="text-teal-400 font-semibold">{formData.bpoType}</span> campaign. 
+              </p>
+              <p className="text-xs text-zinc-500">
+                A calendar invitation and direct setup instructions have been sent to your email <span className="text-zinc-400 font-mono">{formData.email}</span>.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleFormSubmit} className="max-w-md mx-auto space-y-6">
+              {formError && (
+                <div className="rounded-lg bg-rose-950/30 border border-rose-900/40 p-3 text-xs text-rose-400 font-medium">
+                  ⚠️ {formError}
+                </div>
+              )}
+
+              {/* Input Name */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="name">
+                  Full Name
+                </label>
+                <input
+                  required
+                  type="text"
+                  id="name"
+                  name="name"
+                  placeholder="e.g. Bonison Vinod"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-655 outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Input Email */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="email">
+                  Work Email Address
+                </label>
+                <input
+                  required
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="e.g. name@bpo-operations.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-655 outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Select Campaign SOP */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="bpoType">
+                  Target BPO Campaign Vertical
+                </label>
+                <select
+                  id="bpoType"
+                  name="bpoType"
+                  value={formData.bpoType}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="BFSI Debt Recovery">BFSI Debt Recovery (Collections)</option>
+                  <option value="BFSI Credit Cards">BFSI Credit Cards Sales</option>
+                  <option value="Telecom Swaps">Telecom SIM Swap & Verification</option>
+                  <option value="D2C Refunds">D2C Customer Refunds</option>
+                  <option value="Custom SOP">Other Campaign / Custom SOP Rubric</option>
+                </select>
+              </div>
+
+              {/* Agents Count */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="agentCount">
+                  Total Active Campaign Agents
+                </label>
+                <input
+                  type="number"
+                  id="agentCount"
+                  name="agentCount"
+                  min="10"
+                  max="1000"
+                  value={formData.agentCount}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={formLoading}
+                className="w-full rounded-xl bg-teal-500 py-4 text-center text-sm font-bold text-zinc-950 transition hover:bg-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.2)] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {formLoading ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Scheduling Demo Walkthrough…
+                  </>
+                ) : (
+                  "Request 30-Min Walkthrough on My Data"
+                )}
+              </button>
+
+              {/* Direct Escape Sign In / Sign Up CTA */}
+              <div className="text-center text-xs text-zinc-500 mt-4 border-t border-zinc-900 pt-4">
+                Skip the walkthrough?{" "}
+                <Link href="/login" className="text-teal-400 font-bold hover:underline">
+                  Sign In
+                </Link>
+                {" "}or{" "}
+                <Link href="/signup" className="text-teal-400 font-bold hover:underline">
+                  Register for Free Trial
+                </Link>
+              </div>
+
+              <p className="text-[10px] text-zinc-500 text-center leading-normal">
+                By clicking, you request a private beta slot for a 500-conversation audit run. We do not sell or share customer support transcripts. Multi-tenant Postgres row-level security is active.
+              </p>
+            </form>
+          )}
         </div>
       </section>
 
