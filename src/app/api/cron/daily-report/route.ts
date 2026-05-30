@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { sendEmail } from "@/lib/email/send";
+import { sendEmail, fromEmail } from "@/lib/email/send";
 import { dailyReportHtml } from "@/lib/email/templates/daily-report";
 
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -197,8 +197,13 @@ export async function GET(req: NextRequest) {
         reportUrl: `${APP_URL}/reports`,
       });
 
+      const isSandbox = fromEmail.includes("resend.dev");
+      const recipient = isSandbox
+        ? [process.env.SANDBOX_RECIPIENT || "supportqascope@gmail.com"]
+        : managerEmails;
+
       await sendEmail({
-        to: managerEmails,
+        to: recipient,
         subject: `QA Daily Report — ${reportDate} · ${client.name}`,
         html,
       });

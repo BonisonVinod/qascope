@@ -29,6 +29,8 @@ export function LandingClient() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
+    preferredSlot: "",
     bpoType: "BFSI Debt Recovery",
     agentCount: 50,
   });
@@ -840,7 +842,7 @@ export function LandingClient() {
                 Thank you, <span className="text-teal-400 font-semibold">{formData.name}</span>. We've received your pilot request for the <span className="text-teal-400 font-semibold">{formData.bpoType}</span> campaign. 
               </p>
               <p className="text-xs text-zinc-500">
-                A calendar invitation and direct setup instructions have been sent to your email <span className="text-zinc-400 font-mono">{formData.email}</span>.
+                A calendar invitation for your preferred slot (<span className="text-teal-400 font-semibold">{formData.preferredSlot}</span>) and setup instructions have been sent to <span className="text-zinc-400 font-mono">{formData.email}</span>.
               </p>
             </div>
           ) : (
@@ -880,6 +882,40 @@ export function LandingClient() {
                   name="email"
                   placeholder="e.g. name@bpo-operations.com"
                   value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-655 outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Input Phone */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="phone">
+                  Phone Number
+                </label>
+                <input
+                  required
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  placeholder="e.g. +91 98765 43210"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-655 outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                />
+              </div>
+
+              {/* Input Preferred Slot */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="preferredSlot">
+                  Preferred Demo Slot / Timing
+                </label>
+                <input
+                  required
+                  type="text"
+                  id="preferredSlot"
+                  name="preferredSlot"
+                  placeholder="e.g. Tomorrow 3 PM, or Monday afternoon"
+                  value={formData.preferredSlot}
                   onChange={handleInputChange}
                   className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white placeholder-zinc-655 outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
                 />

@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
-import { sendEmail } from "@/lib/email/send";
+import { sendEmail, fromEmail } from "@/lib/email/send";
 import { lowScoreAlertHtml } from "@/lib/email/templates/low-score-alert";
 
 type SB = SupabaseClient<Database>;
@@ -105,8 +105,13 @@ export async function maybeSendLowScoreAlert(
       scoreUrl,
     });
 
+    const isSandbox = fromEmail.includes("resend.dev");
+    const recipient = isSandbox
+      ? [process.env.SANDBOX_RECIPIENT || "supportqascope@gmail.com"]
+      : to;
+
     await sendEmail({
-      to,
+      to: recipient,
       subject: `⚠ Low Score Alert — ${agentName} scored ${Math.round(totalScore)}/100 · ${clientName}`,
       html,
       text: `${agentName} scored ${Math.round(totalScore)}/100 (threshold: ${passThreshold}). View: ${scoreUrl}`,

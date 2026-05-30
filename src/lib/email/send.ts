@@ -18,7 +18,7 @@ import { Resend } from "resend";
 
 const apiKey = process.env.RESEND_API_KEY;
 export const fromEmail =
-  process.env.FROM_EMAIL ?? "QAScope <onboarding@resend.dev>";
+  process.env.FROM_EMAIL?.trim() || "QAScope <onboarding@resend.dev>";
 
 let _client: Resend | null = null;
 
