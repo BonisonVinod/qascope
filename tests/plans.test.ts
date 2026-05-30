@@ -14,17 +14,17 @@ test("PLANS has expected conversation caps", () => {
 });
 
 test("PLANS has expected pricing", () => {
-  assert.equal(PLANS.pilot.monthlyPriceInr, 0);
-  assert.equal(PLANS.starter.monthlyPriceInr, 6_999);
-  assert.equal(PLANS.team.monthlyPriceInr, 14_999);
-  assert.equal(PLANS.pro.monthlyPriceInr, 29_999);
+  assert.equal(PLANS.pilot.pricePerSeatUsd, 0);
+  assert.equal(PLANS.starter.pricePerSeatUsd, 1600);
+  assert.equal(PLANS.team.pricePerSeatUsd, 1450);
+  assert.equal(PLANS.pro.pricePerSeatUsd, 1300);
 });
 
 test("PLANS has expected seat counts", () => {
   assert.equal(PLANS.pilot.seatsIncluded, 1);
   assert.equal(PLANS.starter.seatsIncluded, 1);
-  assert.equal(PLANS.team.seatsIncluded, 3);
-  assert.equal(PLANS.pro.seatsIncluded, 5);
+  assert.equal(PLANS.team.seatsIncluded, 50);
+  assert.equal(PLANS.pro.seatsIncluded, 100);
 });
 
 test("Pilot is hosted-OpenAI; paid tiers are BYO key", () => {

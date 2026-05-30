@@ -184,11 +184,11 @@ export function getPlan(name: PlanName | null | undefined): PlanDefinition {
 /** Format a Rupee (INR) amount. Returns "Free" for ₹0. */
 export function formatUsd(amount: number): string {
   if (amount === 0) return "Free";
-  return `₹${amount.toLocaleString("en-US")}`;
+  return `₹${amount.toLocaleString("en-IN")}`;
 }
 
 /** Format a Rupee (INR) amount. */
 export function formatInr(amount: number): string {
   if (amount === 0) return "Free";
-  return `₹${amount.toLocaleString("en-US")}`;
+  return `₹${amount.toLocaleString("en-IN")}`;
 }
