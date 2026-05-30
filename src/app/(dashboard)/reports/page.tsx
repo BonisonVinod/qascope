@@ -289,25 +289,141 @@ export default async function ReportsPage({
             <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
               Status mix
             </h2>
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <StatusTile
-                label="Final"
-                count={finalCount}
-                total={total}
-                tone="ok"
-              />
-              <StatusTile
-                label="Needs review"
-                count={needsReview}
-                total={total}
-                tone="warning"
-              />
-              <StatusTile
-                label="Compliance fail"
-                count={compliance}
-                total={total}
-                tone="danger"
-              />
+            <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {/* Numerical Status Cards */}
+              <div className="lg:col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <StatusTile
+                  label="Final"
+                  count={finalCount}
+                  total={total}
+                  tone="ok"
+                />
+                <StatusTile
+                  label="Needs review"
+                  count={needsReview}
+                  total={total}
+                  tone="warning"
+                />
+                <StatusTile
+                  label="Compliance fail"
+                  count={compliance}
+                  total={total}
+                  tone="danger"
+                />
+              </div>
+
+              {/* Glowing SVG Donut Chart Visual */}
+              <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 flex items-center justify-between gap-6">
+                <div className="relative flex items-center justify-center h-28 w-28 shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    {/* Background track circle */}
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      fill="transparent"
+                      stroke="currentColor"
+                      className="text-zinc-100 dark:text-zinc-800/60"
+                      strokeWidth="10"
+                    />
+                    {total > 0 && (() => {
+                      const finalPct = finalCount / total;
+                      const reviewPct = needsReview / total;
+                      const failPct = compliance / total;
+
+                      const circ = 2 * Math.PI * 38; // ~238.76
+                      
+                      const finalDash = finalPct * circ;
+                      const reviewDash = reviewPct * circ;
+                      const failDash = failPct * circ;
+
+                      const finalOffset = 0;
+                      const reviewOffset = -finalDash;
+                      const failOffset = -(finalDash + reviewDash);
+
+                      return (
+                        <>
+                          {/* Final segment (emerald) */}
+                          {finalDash > 0 && (
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="38"
+                              fill="transparent"
+                              stroke="#10b981"
+                              strokeWidth="10"
+                              strokeDasharray={`${finalDash} ${circ - finalDash}`}
+                              strokeDashoffset={finalOffset}
+                              strokeLinecap={finalDash === circ ? "butt" : "round"}
+                              className="transition-all duration-500 ease-out"
+                            />
+                          )}
+                          {/* Needs Review segment (amber) */}
+                          {reviewDash > 0 && (
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="38"
+                              fill="transparent"
+                              stroke="#f59e0b"
+                              strokeWidth="10"
+                              strokeDasharray={`${reviewDash} ${circ - reviewDash}`}
+                              strokeDashoffset={reviewOffset}
+                              strokeLinecap="round"
+                              className="transition-all duration-500 ease-out"
+                            />
+                          )}
+                          {/* Compliance Fail segment (rose) */}
+                          {failDash > 0 && (
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="38"
+                              fill="transparent"
+                              stroke="#f43f5e"
+                              strokeWidth="10"
+                              strokeDasharray={`${failDash} ${circ - failDash}`}
+                              strokeDashoffset={failOffset}
+                              strokeLinecap="round"
+                              className="transition-all duration-500 ease-out"
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
+                  </svg>
+                  {/* Center Text overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-400">Total</span>
+                    <span className="text-sm font-bold text-zinc-900 dark:text-white leading-none mt-0.5">{total}</span>
+                  </div>
+                </div>
+
+                {/* Donut Legend */}
+                <div className="flex-1 space-y-2 font-mono text-xs text-zinc-500">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <span>Final</span>
+                    </span>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{pct(finalCount, total)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200">
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      <span>Review</span>
+                    </span>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{pct(needsReview, total)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-zinc-800 dark:text-zinc-200">
+                      <span className="h-2 w-2 rounded-full bg-rose-500" />
+                      <span>Fails</span>
+                    </span>
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">{pct(compliance, total)}%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -331,7 +447,18 @@ export default async function ReportsPage({
                   {channelRows.map((r) => (
                     <tr key={r.channel}>
                       <td className="px-4 py-2 capitalize">
-                        {r.channel.replace("_", " ")}
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{r.channel.replace("_", " ")}</span>
+                          <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+                            ({pct(r.n, total)}%)
+                          </span>
+                        </div>
+                        <div className="mt-1 h-1.5 w-28 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                          <div
+                            className="h-full rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.4)]"
+                            style={{ width: `${pct(r.n, total)}%` }}
+                          />
+                        </div>
                       </td>
                       <td className="px-4 py-2 text-right text-zinc-500">
                         {r.n.toLocaleString()}
@@ -505,14 +632,35 @@ function StatusTile({
       : tone === "warning"
         ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950"
         : "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950";
+
+  const percent = Number(pct(count, total));
+  const barColor =
+    tone === "danger"
+      ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"
+      : tone === "warning"
+        ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+        : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+  const bgBar =
+    tone === "danger"
+      ? "bg-red-200 dark:bg-red-900/40"
+      : tone === "warning"
+        ? "bg-amber-200 dark:bg-amber-900/40"
+        : "bg-emerald-200 dark:bg-emerald-900/40";
+
   return (
     <div className={`rounded-lg border p-4 ${cls}`}>
       <p className="text-xs font-medium uppercase tracking-wider text-zinc-700 dark:text-zinc-200">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{count.toLocaleString()}</p>
-      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">
-        {pct(count, total)}% of week
+      <div className={`mt-2 h-1.5 w-full rounded-full ${bgBar}`}>
+        <div
+          className={`h-full rounded-full ${barColor}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">
+        {percent.toFixed(1)}% of week
       </p>
     </div>
   );
