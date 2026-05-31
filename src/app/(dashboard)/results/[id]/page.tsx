@@ -134,6 +134,90 @@ export default async function ResultDetailPage(props: { params: Params }) {
         </section>
       )}
 
+      {/* 📋 Rubric Score Sheet Summary Grid */}
+      <section className="print:block">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          Rubric Score Sheet
+        </h2>
+        <div className="mt-2 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 shadow-sm">
+          <table className="w-full text-left text-sm border-collapse">
+            <thead className="border-b border-zinc-200 bg-zinc-50 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">
+              <tr>
+                <th className="px-4 py-3">Rubric / Criterion</th>
+                <th className="px-4 py-3 text-center">Weight</th>
+                <th className="px-4 py-3 text-center">Score</th>
+                <th className="px-4 py-3">Audit Finding / Reason for Low Score</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              {rows.map(({ criterion, detail }) => {
+                const scoreNum = detail?.score ?? 0;
+                const isLow = scoreNum < 2;
+
+                const statusLabel =
+                  scoreNum === 2 ? "Met" : scoreNum === 1 ? "Partial" : "Failed";
+                
+                const badgeStyle =
+                  scoreNum === 2
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40"
+                    : scoreNum === 1
+                      ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/40 animate-pulse"
+                      : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800/40 animate-pulse";
+
+                return (
+                  <tr
+                    key={criterion.id}
+                    className={`transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 ${
+                      isLow ? "bg-zinc-50/30 dark:bg-zinc-900/10" : ""
+                    }`}
+                  >
+                    <td className="px-4 py-3.5">
+                      <div className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        {criterion.name}
+                        {criterion.critical_fail_boolean && (
+                          <span className="rounded bg-red-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-red-800 dark:bg-red-950 dark:text-red-400 border border-red-200 dark:border-red-900/30">
+                            Critical
+                          </span>
+                        )}
+                      </div>
+                      {criterion.description && (
+                        <span className="mt-0.5 block text-xs text-zinc-500 font-normal leading-normal">
+                          {criterion.description}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 text-center font-mono text-zinc-500">
+                      {criterion.weight}%
+                    </td>
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold leading-normal ${badgeStyle}`}>
+                        {scoreNum === 2 ? "✓" : scoreNum === 1 ? "⚠" : "✗"} {scoreNum}/2 · {statusLabel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-xs leading-normal">
+                      {isLow ? (
+                        <div className="space-y-1">
+                          <p className={`font-semibold ${scoreNum === 1 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
+                            {scoreNum === 1 ? "⚠ Partial Performance Finding:" : "✗ Critical Compliance Gap:"}
+                          </p>
+                          <p className="text-zinc-600 dark:text-zinc-300 italic">
+                            &ldquo;{detail?.explanation || "No audit explanation provided by QA engine."}&rdquo;
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                          ✓ Fully compliant and met SOP guidelines.
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
           Criterion breakdown
