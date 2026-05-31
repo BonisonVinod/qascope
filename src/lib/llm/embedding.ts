@@ -94,6 +94,18 @@ async function callOpenAiCompatEmbed(
     // column compatible with existing rows.
     dimensions: EMBEDDING_DIM,
   });
+
+  if (!resp || !resp.data) {
+    if (baseUrl && (baseUrl.includes("/keys") || baseUrl.includes("/workspaces"))) {
+      throw new Error(
+        `Invalid Base URL configured in Settings ("${baseUrl}"). It seems to be a website settings page URL instead of the actual API endpoint. For OpenRouter, please use "https://openrouter.ai/api/v1".`
+      );
+    }
+    throw new Error(
+      `Embedding endpoint did not return a valid data array. Check that your API key and Base URL ("${baseUrl || "https://api.openai.com/v1"}") are correct.`
+    );
+  }
+
   const v = resp.data[0]?.embedding;
   if (!Array.isArray(v) || v.length !== EMBEDDING_DIM) {
     throw new Error(

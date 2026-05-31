@@ -18,21 +18,29 @@ export default function CampaignPage() {
   const [agents, setAgents] = useState<number>(50);
   const [salary, setSalary] = useState<number>(35000);
   const [auditors, setAuditors] = useState<number>(5);
+  const [ticketsPerAgent, setTicketsPerAgent] = useState<number>(440);
   const [conversations, setConversations] = useState<number>(22000);
+  const [channelType, setChannelType] = useState<"ticket" | "chat">("chat");
 
-  // Auto-adjust conversations when agents change (assuming 20 calls/day * 22 days per agent = 440 calls)
+  // Auto-adjust conversations when agents change
   useEffect(() => {
-    setConversations(agents * 440);
+    setConversations(agents * ticketsPerAgent);
     // Set a proportional auditor count (1 auditor per 10 agents is standard in legacy 5% QA)
     setAuditors(Math.max(1, Math.ceil(agents / 10)));
-  }, [agents]);
+  }, [agents, ticketsPerAgent]);
 
-  // Calculations
+  // Plan A: ₹799/agent/mo + BYOK tokens
+  const planACost = agents * 799 + conversations * 0.20;
+  
+  // Plan B: ₹4,999 flat platform + ₹1.50/chat usage + BYOK tokens
+  const planBCost = 4999 + conversations * (1.50 + 0.20);
+  
+  const isPlanACheaper = planACost < planBCost;
+  const qascopeTotalSpend = isPlanACheaper ? planACost : planBCost;
+  const recommendedPlanLabel = isPlanACheaper ? "Plan A" : "Plan B";
+
   const traditionalSpend = auditors * salary;
-  const qascopeSeats = agents; // Billed per monitored agent seat
-  const qascopePlatformSpend = qascopeSeats * 1450;
   const qascopeTokenSpend = conversations * 0.20; // ₹0.20 per call scored on gpt-4o-mini
-  const qascopeTotalSpend = qascopePlatformSpend + qascopeTokenSpend;
   const netMonthlySavings = traditionalSpend - qascopeTotalSpend;
 
   // Form Submission State
@@ -42,6 +50,7 @@ export default function CampaignPage() {
     email: "",
     bpoType: "BFSI Debt Recovery",
     agentCount: 50,
+    channelType: "chat",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -420,6 +429,37 @@ export default function CampaignPage() {
           <div className="lg:col-span-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-6">
             <h5 className="text-lg font-bold text-white border-b border-zinc-800 pb-3 font-mono">Campaign Configuration</h5>
 
+            {/* Channel Type Toggle Option */}
+            <div className="space-y-2">
+              <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold">
+                Interaction Channel
+              </label>
+              <div className="grid grid-cols-2 gap-2 rounded-xl bg-zinc-950 p-1 border border-zinc-900">
+                <button
+                  type="button"
+                  onClick={() => setChannelType("chat")}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all duration-200 ${
+                    channelType === "chat"
+                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-extrabold"
+                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40"
+                  }`}
+                >
+                  <span>💬</span> Chat / Messaging
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChannelType("ticket")}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all duration-200 ${
+                    channelType === "ticket"
+                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-extrabold"
+                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40"
+                  }`}
+                >
+                  <span>✉️</span> Ticket / Email
+                </button>
+              </div>
+            </div>
+
             {/* Slider 1: Agents */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
@@ -441,7 +481,28 @@ export default function CampaignPage() {
               </div>
             </div>
 
-            {/* Slider 2: Auditor Salary */}
+            {/* Slider 2: Monthly Tickets per Agent */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm font-semibold">
+                <span className="text-zinc-300">Avg Monthly {channelType === "chat" ? "Chats" : "Tickets"} per Agent</span>
+                <span className="text-teal-400 font-mono">{ticketsPerAgent} {channelType === "chat" ? "chats" : "tickets"} / mo</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="1500"
+                step="50"
+                value={ticketsPerAgent}
+                onChange={(e) => setTicketsPerAgent(parseInt(e.target.value))}
+                className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
+              />
+              <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+                <span>100 {channelType === "chat" ? "chats" : "tickets"}</span>
+                <span>1,500 {channelType === "chat" ? "chats" : "tickets"}</span>
+              </div>
+            </div>
+
+            {/* Slider 3: Auditor Salary */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
                 <span className="text-zinc-300">Avg Human QA Salary / mo</span>
@@ -486,12 +547,12 @@ export default function CampaignPage() {
             {/* Static volume info */}
             <div className="rounded-lg bg-zinc-950 p-4 border border-zinc-800 grid grid-cols-2 gap-4 text-center">
               <div>
-                <span className="text-[10px] uppercase text-zinc-500 block font-mono">Total Monthly Tickets</span>
+                <span className="text-[10px] uppercase text-zinc-500 block font-mono">Total Monthly {channelType === "chat" ? "Chats" : "Tickets"}</span>
                 <span className="text-lg font-bold text-white mt-1 block font-mono">{conversations.toLocaleString()}</span>
               </div>
               <div>
                 <span className="text-[10px] uppercase text-zinc-500 block font-mono">QAScope Scored volume</span>
-                <span className="text-lg font-bold text-teal-400 mt-1 block font-mono">100% (All Tickets)</span>
+                <span className="text-lg font-bold text-teal-400 mt-1 block font-mono">100% ({channelType === "chat" ? "All Chats" : "All Tickets"})</span>
               </div>
             </div>
           </div>
@@ -513,19 +574,35 @@ export default function CampaignPage() {
 
               {/* QAScope Cost */}
               <div>
-                <span className="text-xs uppercase text-teal-400 font-mono block">QAScope 100% Automated Cost</span>
+                <span className="text-xs uppercase text-teal-400 font-mono block">Recommended Option: {recommendedPlanLabel}</span>
                 <span className="text-2xl font-extrabold text-teal-400 mt-1 block font-mono">
                   ₹{Math.round(qascopeTotalSpend).toLocaleString("en-IN")}
                   <span className="text-xs font-normal text-teal-500"> / mo</span>
                 </span>
-                <div className="rounded bg-zinc-950/60 p-2 mt-2 border border-zinc-800 text-[10px] text-zinc-400 space-y-1 font-mono">
-                  <div className="flex justify-between">
-                    <span>Monitored Agent Seats ({qascopeSeats} Agents):</span>
-                    <span>₹{qascopePlatformSpend.toLocaleString("en-IN")}</span>
+                
+                <div className="rounded bg-zinc-950/60 p-2.5 mt-2 border border-zinc-800 text-[10px] text-zinc-400 space-y-2 font-mono">
+                  <div className="border-b border-zinc-800 pb-1 text-[11px] font-bold text-white uppercase tracking-wider">Compare Plan Options:</div>
+                  
+                  {/* Plan A Breakdown */}
+                  <div className={`p-1.5 rounded ${isPlanACheaper ? "bg-teal-950/30 border border-teal-800/40" : ""}`}>
+                    <div className="flex justify-between font-semibold text-zinc-200">
+                      <span>Plan A (Seat-Based):</span>
+                      <span>₹{Math.round(planACost).toLocaleString("en-IN")}/mo</span>
+                    </div>
+                    <div className="text-[9px] text-zinc-500 mt-0.5">
+                      ₹799/agent × {agents} agents + ₹{Math.round(conversations * 0.20).toLocaleString("en-IN")} tokens
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>LLM BYOK Tokens:</span>
-                    <span>₹{qascopeTokenSpend.toLocaleString("en-IN")}</span>
+                  
+                  {/* Plan B Breakdown */}
+                  <div className={`p-1.5 rounded ${!isPlanACheaper ? "bg-teal-950/30 border border-teal-800/40" : ""}`}>
+                    <div className="flex justify-between font-semibold text-zinc-200">
+                      <span>Plan B (Usage-Based):</span>
+                      <span>₹{Math.round(planBCost).toLocaleString("en-IN")}/mo</span>
+                    </div>
+                    <div className="text-[9px] text-zinc-500 mt-0.5">
+                      ₹4,999 flat + ₹1.50/{channelType === "chat" ? "chat" : "ticket"} (₹{Math.round(conversations * 1.50).toLocaleString("en-IN")} usage + ₹{Math.round(conversations * 0.20).toLocaleString("en-IN")} tokens)
+                    </div>
                   </div>
                 </div>
               </div>
@@ -686,6 +763,23 @@ export default function CampaignPage() {
                   <option value="Telecom Swaps">Telecom SIM Swap & Verification</option>
                   <option value="D2C Refunds">D2C Customer Refunds</option>
                   <option value="Custom SOP">Other Campaign / Custom SOP Rubric</option>
+                </select>
+              </div>
+
+              {/* Interaction Channel Type Select Option */}
+              <div className="space-y-1.5">
+                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="channelType">
+                  Interaction Channel Type
+                </label>
+                <select
+                  id="channelType"
+                  name="channelType"
+                  value={formData.channelType}
+                  onChange={handleInputChange}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="chat">Chat / Messaging / Social</option>
+                  <option value="ticket">Ticket / Case / Email</option>
                 </select>
               </div>
 

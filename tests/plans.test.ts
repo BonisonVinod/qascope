@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PLANS, PLAN_ORDER, getPlan, formatInr } from "../src/lib/billing/plans.ts";
 
-test("PLAN_ORDER lists the 4 tiers in order", () => {
-  assert.deepEqual(PLAN_ORDER, ["pilot", "starter", "team", "pro"]);
+test("PLAN_ORDER lists the 3 active tiers in order", () => {
+  assert.deepEqual(PLAN_ORDER, ["pilot", "starter", "team"]);
 });
 
 test("PLANS has expected conversation caps", () => {
@@ -15,15 +15,15 @@ test("PLANS has expected conversation caps", () => {
 
 test("PLANS has expected pricing", () => {
   assert.equal(PLANS.pilot.pricePerSeatUsd, 0);
-  assert.equal(PLANS.starter.pricePerSeatUsd, 1600);
-  assert.equal(PLANS.team.pricePerSeatUsd, 1450);
+  assert.equal(PLANS.starter.pricePerSeatUsd, 799);
+  assert.equal(PLANS.team.pricePerSeatUsd, 4999);
   assert.equal(PLANS.pro.pricePerSeatUsd, 1300);
 });
 
 test("PLANS has expected seat counts", () => {
   assert.equal(PLANS.pilot.seatsIncluded, 1);
   assert.equal(PLANS.starter.seatsIncluded, 1);
-  assert.equal(PLANS.team.seatsIncluded, 50);
+  assert.equal(PLANS.team.seatsIncluded, 9999);
   assert.equal(PLANS.pro.seatsIncluded, 100);
 });
 

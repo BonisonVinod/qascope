@@ -107,7 +107,7 @@ export async function scoreConversation(
           .join("\n")}\n`
       : "";
 
-  // 3. Skip if already scored
+  // 3. Delete old score if it already exists (re-evaluation wipes old results)
   const { data: existing } = await supabase
     .from("qa_scores")
     .select("id")
@@ -115,12 +115,13 @@ export async function scoreConversation(
     .eq("rubric_id", rubric.id)
     .maybeSingle();
   if (existing) {
-    return {
-      ok: true,
-      qaScoreId: existing.id,
-      totalScore: 0,
-      status: "final",
-    };
+    const { error: delErr } = await supabase
+      .from("qa_scores")
+      .delete()
+      .eq("id", existing.id);
+    if (delErr) {
+      return { ok: false, error: `Failed to clear old score during re-evaluation: ${delErr.message}` };
+    }
   }
 
   // 3b. Run live verification in parallel with skip check.

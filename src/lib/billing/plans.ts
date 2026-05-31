@@ -83,72 +83,71 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   },
 
   /**
-   * Starter tier — 1 to 49 seats at ₹1,600/seat/month. DB name: "starter".
+   * Plan A — predictable agent-based billing at ₹800/seat/month. DB name: "starter".
    */
   starter: {
     name: "starter",
-    label: "Starter",
+    label: "Plan A (Seat-Based)",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 1600,
-    seatRange: "1–49 seats",
+    pricePerSeatUsd: 799,
+    seatRange: "₹799/agent/mo",
     minSeats: 1,
-    maxSeats: 49,
+    maxSeats: -1,
     seatsIncluded: 1,
     byoOpenAiKey: true,
     integrationsAvailable: false,
     supportResponseSla: SUPPORT_SLA,
-    description: "For small QA teams running daily audits.",
+    description: "For campaigns that prefer a predictable monthly cost per active agent.",
     features: [
       "Unlimited conversations (bring your own AI key)",
-      "₹1,600 / seat / month · up to 49 seats",
+      "₹799 / active agent seat / month",
+      "Beautiful Rubric Score Sheets",
       "Custom rubric + fatal rules",
       "Two-tier review workflow",
-      "Webhook ingest — connect any CRM",
-      "Real-time low-score email alerts",
-      "Day-end manager report (email + in-app)",
-      "Saved report templates",
+      "CSV bulk upload & automated scoring",
+      "Daily manager email reports & trends",
+      "Coaching note generator",
       SUPPORT_SLA,
     ],
     razorpayPlanId: null,
   },
 
   /**
-   * Growth tier — 50 to 99 seats at ₹1,450/seat/month on ALL seats. DB name: "team".
-   * Retroactive: a 60-seat team pays ₹1,450 × 60, not ₹1,600×49 + ₹1,450×11.
+   * Plan B — flexible usage-based billing at ₹4,999/mo flat platform fee + ₹1.50/chat. DB name: "team".
    */
   team: {
     name: "team",
-    label: "Growth",
+    label: "Plan B (Usage-Based)",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 1450,
-    seatRange: "50–99 seats",
-    minSeats: 50,
-    maxSeats: 99,
-    seatsIncluded: 50,
+    pricePerSeatUsd: 4999,
+    seatRange: "₹4,999/mo flat + ₹1.50/chat",
+    minSeats: 1,
+    maxSeats: -1,
+    seatsIncluded: 9999, // unlimited seats
     byoOpenAiKey: true,
     integrationsAvailable: true,
     supportResponseSla: SUPPORT_SLA,
-    description: "For growing BPOs running multiple campaigns.",
+    description: "For high-volume campaigns or seasonal support centers with unlimited QA seats.",
     features: [
-      "Unlimited conversations (bring your own AI key)",
-      "₹1,450 / seat / month on all seats · 50–99 seats",
-      "Everything in Starter",
-      "Live web & API data verification (order/customer fact-checking)",
-      "Freshdesk + Zoho Desk native connectors",
+      "₹4,999 / month flat platform base fee",
+      "₹1.50 / conversation scored (usage fee)",
+      "Unlimited QA & Admin logins (no account sharing limits)",
+      "Bring your own OpenAI / OpenRouter key",
+      "Freshdesk, Zoho Desk, Salesforce integrations (Webhook)",
+      "Live web API verification (fact-checking agent claims)",
+      "Saved custom report templates",
       "Bulk team CSV import",
-      "Agent coaching history & trend reports",
       SUPPORT_SLA,
     ],
     razorpayPlanId: null,
   },
 
   /**
-   * Scale tier — 100+ seats at ₹1,300/seat/month on ALL seats. DB name: "pro".
-   * Retroactive: a 100-seat team pays ₹1,300 × 100, not ₹1,450×99 + ₹1,300×1.
+   * Scale tier — kept for backwards compatibility (hidden from default rendering). DB name: "pro".
    */
   pro: {
     name: "pro",
-    label: "Scale",
+    label: "Scale Enterprise",
     monthlyLimit: 1_000_000,
     pricePerSeatUsd: 1300,
     seatRange: "100+ seats",
@@ -158,11 +157,11 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
     byoOpenAiKey: true,
     integrationsAvailable: true,
     supportResponseSla: SUPPORT_SLA,
-    description: "For large operations across multiple BPO clients.",
+    description: "For custom high-scale operations across multiple BPO clients.",
     features: [
       "Unlimited conversations (bring your own AI key)",
-      "₹1,300 / seat / month on all seats · 100+ seats",
-      "Everything in Growth",
+      "Custom volume-based pricing",
+      "Everything in Plan B",
       "Salesforce Service Cloud + Zendesk connectors",
       "Custom rubric templates per campaign",
       "Priority onboarding session",
@@ -173,7 +172,7 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
 };
 
 /** Order in which plans are rendered on /billing. */
-export const PLAN_ORDER: CataloguePlanName[] = ["pilot", "starter", "team", "pro"];
+export const PLAN_ORDER: CataloguePlanName[] = ["pilot", "starter", "team"];
 
 export function getPlan(name: PlanName | null | undefined): PlanDefinition {
   if (name === "growth") return PLANS.team; // legacy alias

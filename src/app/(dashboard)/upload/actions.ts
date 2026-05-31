@@ -212,6 +212,15 @@ export async function uploadConversations(
     };
   }
 
+  // Wipes all previous conversations and cascade-deletes related audit results for this client
+  const { error: clearErr } = await supabase
+    .from("conversations")
+    .delete()
+    .eq("client_id", clientId);
+  if (clearErr) {
+    return { ok: false, error: `Failed to clear old conversations: ${clearErr.message}` };
+  }
+
   // Dedupe existing conversations by (client_id, external_conversation_id)
   const externalIds = validRows.map((r) => r.data.conversation_id);
   const { data: existing } = await supabase

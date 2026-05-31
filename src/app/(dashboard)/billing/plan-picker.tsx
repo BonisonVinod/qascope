@@ -143,9 +143,9 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
           const isExcluded = isAboveMax || (p === "pilot" && seats > 1);
 
           // Calculate seat billing pricing details
-          // Growth and Scale enforce a minimum floor charge (50/100 seats)
-          const chargedSeats = Math.max(plan.minSeats, seats);
-          const monthlyTotal = plan.pricePerSeatUsd * chargedSeats;
+          // Plan B is a flat platform fee (no per-seat multiplication)
+          const chargedSeats = plan.name === "team" ? 1 : Math.max(plan.minSeats, seats);
+          const monthlyTotal = plan.name === "team" ? plan.pricePerSeatUsd : (plan.pricePerSeatUsd * chargedSeats);
 
           // Highlight the plan card recommended for this seat tier
           const isRecommended =
@@ -207,6 +207,13 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
                   <p className="text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
                     {plan.pricePerSeatUsd === 0 ? (
                       "Free"
+                    ) : plan.name === "team" ? (
+                      <>
+                        {formatUsd(plan.pricePerSeatUsd)}
+                        <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">
+                          {" "}/ month flat
+                        </span>
+                      </>
                     ) : (
                       <>
                         {formatUsd(plan.pricePerSeatUsd)}
@@ -223,7 +230,9 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
                         Total: {formatUsd(monthlyTotal)} / mo
                       </p>
                       <p className="text-[11px] text-zinc-400">
-                        {isBelowMin ? (
+                        {plan.name === "team" ? (
+                          <span>Flat base fee (covers unlimited seats)</span>
+                        ) : isBelowMin ? (
                           <span>Charged at {plan.minSeats}-seat minimum</span>
                         ) : (
                           <span>Based on {seats} requested seat{seats === 1 ? "" : "s"}</span>
@@ -236,12 +245,7 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
                 {/* Savings helper callouts */}
                 {plan.name === "team" && !isExcluded && (
                   <p className="rounded-lg bg-teal-50/40 p-2.5 text-xs font-medium text-teal-700 dark:bg-teal-950/10 dark:text-teal-400 border border-teal-200/20">
-                    💡 <strong>Growth savings:</strong> Pays for itself! 50 seats cost <strong>₹72,500/mo</strong> vs ₹80,000/mo on Starter.
-                  </p>
-                )}
-                {plan.name === "pro" && !isExcluded && (
-                  <p className="rounded-lg bg-indigo-50/40 p-2.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/10 dark:text-indigo-400 border border-indigo-200/20">
-                    💡 <strong>Scale savings:</strong> Max discounts! 100 seats cost <strong>₹1,30,000/mo</strong> vs ₹1,45,000/mo on Growth.
+                    💡 <strong>Plan B Advantage:</strong> Covers unlimited agent & QA logins. You only pay for what you score (₹1.50/chat)!
                   </p>
                 )}
 
