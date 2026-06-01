@@ -189,3 +189,45 @@ export async function setClientPlan(
     return { error: (err as Error).message };
   }
 }
+
+/**
+ * Delete a client workspace and all associated users completely.
+ * Cascades: conversations → scores → review_queue, then auth users, then client row.
+ * Super admin only.
+ */
+export async function deleteClient(
+  clientId: string,
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await requireSuperAdmin();
+    const admin = createAdminClient();
+
+    // 1. Get all user IDs for this client
+    const { data: users, error: usersErr } = await admin
+      .from("users")
+      .select("id")
+      .eq("client_id", clientId);
+
+    if (usersErr) return { error: usersErr.message };
+
+    // 2. Delete each user from Supabase Auth (cascades public.users via FK)
+    for (const u of users ?? []) {
+      const { error: authErr } = await admin.auth.admin.deleteUser(u.id);
+      if (authErr) {
+        console.warn(`Could not delete auth user ${u.id}:`, authErr.message);
+      }
+    }
+
+    // 3. Delete the client row — FK cascades handle conversations/scores/queue
+    const { error: clientErr } = await admin
+      .from("clients")
+      .delete()
+      .eq("id", clientId);
+
+    if (clientErr) return { error: clientErr.message };
+
+    return { ok: true };
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}

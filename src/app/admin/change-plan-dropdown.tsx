@@ -5,10 +5,10 @@ import { setClientPlan } from "./admin-actions";
 import type { PlanName } from "@/lib/database.types";
 
 const PLANS: { value: PlanName; label: string }[] = [
-  { value: "pilot",   label: "Pilot (Free)" },
-  { value: "starter", label: "Starter ($20/seat)" },
-  { value: "team",    label: "Growth ($18/seat)" },
-  { value: "pro",     label: "Scale ($16/seat)" },
+  { value: "pilot",   label: "Pilot (Free Trial)" },
+  { value: "starter", label: "Plan A — Seat-Based (₹799/agent/mo)" },
+  { value: "team",    label: "Plan B — Usage-Based (₹4,999 flat + ₹1.50/convo)" },
+  { value: "pro",     label: "Scale Enterprise (Custom)" },
 ];
 
 export function ChangePlanDropdown({

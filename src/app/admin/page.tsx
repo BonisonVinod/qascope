@@ -1,21 +1,22 @@
 import { getAllClients, getPlatformStats } from "./admin-actions";
 import { ChangePlanDropdown } from "./change-plan-dropdown";
+import { DeleteClientButton } from "./delete-client-button";
 import type { PlanName } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
 
 const PLAN_LABELS: Record<string, string> = {
-  pilot: "Pilot",
-  starter: "Starter",
-  team: "Growth",
-  pro: "Scale",
+  pilot:   "Pilot",
+  starter: "Plan A",
+  team:    "Plan B",
+  pro:     "Scale",
 };
 
 const PLAN_COLORS: Record<string, string> = {
   pilot:   "bg-zinc-700 text-zinc-300",
-  starter: "bg-blue-900 text-blue-300",
-  team:    "bg-purple-900 text-purple-300",
-  pro:     "bg-emerald-900 text-emerald-300",
+  starter: "bg-teal-900 text-teal-300",
+  team:    "bg-emerald-900 text-emerald-300",
+  pro:     "bg-purple-900 text-purple-300",
 };
 
 const SUB_STATUS_COLORS: Record<string, string> = {
@@ -135,6 +136,7 @@ export default async function AdminPage() {
                 <th className="px-4 py-3 font-medium">Last active</th>
                 <th className="px-4 py-3 font-medium">Sub status</th>
                 <th className="px-4 py-3 font-medium">Change plan</th>
+                <th className="px-4 py-3 font-medium">Delete</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60 bg-zinc-950">
@@ -173,11 +175,17 @@ export default async function AdminPage() {
                       clientName={c.name}
                     />
                   </td>
+                  <td className="px-4 py-3">
+                    <DeleteClientButton
+                      clientId={c.id}
+                      clientName={c.name}
+                    />
+                  </td>
                 </tr>
               ))}
               {sorted.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-zinc-600">
+                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-zinc-600">
                     No clients yet.
                   </td>
                 </tr>
