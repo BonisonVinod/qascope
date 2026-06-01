@@ -20,7 +20,6 @@ export default function CampaignPage() {
   const [auditors, setAuditors] = useState<number>(5);
   const [ticketsPerAgent, setTicketsPerAgent] = useState<number>(440);
   const [conversations, setConversations] = useState<number>(22000);
-  const [channelType, setChannelType] = useState<"ticket" | "chat">("chat");
 
   // Auto-adjust conversations when agents change
   useEffect(() => {
@@ -29,10 +28,10 @@ export default function CampaignPage() {
     setAuditors(Math.max(1, Math.ceil(agents / 10)));
   }, [agents, ticketsPerAgent]);
 
-  // Plan A: ₹799/agent/mo + BYOK tokens
+  // Plan A: ₹799/agent/mo + Cloud API infrastructure cost
   const planACost = agents * 799 + conversations * 0.20;
   
-  // Plan B: ₹4,999 flat platform + ₹1.50/chat usage + BYOK tokens
+  // Plan B: ₹4,999 flat platform + ₹1.50/convo usage + Cloud API infrastructure cost
   const planBCost = 4999 + conversations * (1.50 + 0.20);
   
   const isPlanACheaper = planACost < planBCost;
@@ -40,7 +39,7 @@ export default function CampaignPage() {
   const recommendedPlanLabel = isPlanACheaper ? "Plan A" : "Plan B";
 
   const traditionalSpend = auditors * salary;
-  const qascopeTokenSpend = conversations * 0.20; // ₹0.20 per call scored on gpt-4o-mini
+  const qascopeInfraSpend = conversations * 0.20; // ₹0.20 per conversation raw API cloud cost
   const netMonthlySavings = traditionalSpend - qascopeTotalSpend;
 
   // Form Submission State
@@ -50,7 +49,6 @@ export default function CampaignPage() {
     email: "",
     bpoType: "BFSI Debt Recovery",
     agentCount: 50,
-    channelType: "chat",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -429,37 +427,6 @@ export default function CampaignPage() {
           <div className="lg:col-span-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-6">
             <h5 className="text-lg font-bold text-white border-b border-zinc-800 pb-3 font-mono">Campaign Configuration</h5>
 
-            {/* Channel Type Toggle Option */}
-            <div className="space-y-2">
-              <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold">
-                Interaction Channel
-              </label>
-              <div className="grid grid-cols-2 gap-2 rounded-xl bg-zinc-950 p-1 border border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => setChannelType("chat")}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all duration-200 ${
-                    channelType === "chat"
-                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-extrabold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40"
-                  }`}
-                >
-                  <span>💬</span> Chat / Messaging
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChannelType("ticket")}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all duration-200 ${
-                    channelType === "ticket"
-                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-extrabold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40"
-                  }`}
-                >
-                  <span>✉️</span> Ticket / Email
-                </button>
-              </div>
-            </div>
-
             {/* Slider 1: Agents */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
@@ -481,11 +448,11 @@ export default function CampaignPage() {
               </div>
             </div>
 
-            {/* Slider 2: Monthly Tickets per Agent */}
+            {/* Slider 2: Monthly Conversations per Agent */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
-                <span className="text-zinc-300">Avg Monthly {channelType === "chat" ? "Chats" : "Tickets"} per Agent</span>
-                <span className="text-teal-400 font-mono">{ticketsPerAgent} {channelType === "chat" ? "chats" : "tickets"} / mo</span>
+                <span className="text-zinc-300">Avg Monthly Conversations per Agent</span>
+                <span className="text-teal-400 font-mono">{ticketsPerAgent} conversations / mo</span>
               </div>
               <input
                 type="range"
@@ -497,8 +464,8 @@ export default function CampaignPage() {
                 className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
               />
               <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
-                <span>100 {channelType === "chat" ? "chats" : "tickets"}</span>
-                <span>1,500 {channelType === "chat" ? "chats" : "tickets"}</span>
+                <span>100 convos</span>
+                <span>1,500 convos</span>
               </div>
             </div>
 
@@ -547,12 +514,12 @@ export default function CampaignPage() {
             {/* Static volume info */}
             <div className="rounded-lg bg-zinc-950 p-4 border border-zinc-800 grid grid-cols-2 gap-4 text-center">
               <div>
-                <span className="text-[10px] uppercase text-zinc-500 block font-mono">Total Monthly {channelType === "chat" ? "Chats" : "Tickets"}</span>
+                <span className="text-[10px] uppercase text-zinc-500 block font-mono">Total Monthly Conversations</span>
                 <span className="text-lg font-bold text-white mt-1 block font-mono">{conversations.toLocaleString()}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase text-zinc-500 block font-mono">QAScope Scored volume</span>
-                <span className="text-lg font-bold text-teal-400 mt-1 block font-mono">100% ({channelType === "chat" ? "All Chats" : "All Tickets"})</span>
+                <span className="text-[10px] uppercase text-zinc-500 block font-mono">QA Process Audit Coverage</span>
+                <span className="text-lg font-bold text-teal-400 mt-1 block font-mono">100% of Volume</span>
               </div>
             </div>
           </div>
@@ -601,7 +568,7 @@ export default function CampaignPage() {
                       <span>₹{Math.round(planBCost).toLocaleString("en-IN")}/mo</span>
                     </div>
                     <div className="text-[9px] text-zinc-500 mt-0.5">
-                      ₹4,999 flat + ₹1.50/{channelType === "chat" ? "chat" : "ticket"} (₹{Math.round(conversations * 1.50).toLocaleString("en-IN")} usage + ₹{Math.round(conversations * 0.20).toLocaleString("en-IN")} tokens)
+                      ₹4,999 flat platform + ₹1.50/convo (₹{Math.round(conversations * 1.50).toLocaleString("en-IN")} usage + ₹{Math.round(conversations * 0.20).toLocaleString("en-IN")} infra)
                     </div>
                   </div>
                 </div>
@@ -622,63 +589,63 @@ export default function CampaignPage() {
         </div>
       </section>
 
-      {/* BYOK and Architecture Section */}
+      {/* Direct Cloud Ingestion Section */}
       <section id="byok" className="mx-auto max-w-6xl px-6 py-16 border-t border-zinc-900">
         <div className="grid gap-12 lg:grid-cols-2 items-center">
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">The BYOK Advantage</h3>
-            <h4 className="mt-2 text-3xl font-bold text-white">Why QAScope is 10x Cheaper than Enterprise Competitors</h4>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">Process Cost Control</h3>
+            <h4 className="mt-2 text-3xl font-bold text-white">Direct Cloud API Processing Model</h4>
             <p className="mt-4 text-zinc-400 leading-relaxed">
-              Enterprise QA platforms charge massive software markups on LLM tokens—often billing up to ₹2.00 to ₹5.00 per analyzed conversation. We think that's extortionate.
+              Standard auditing platforms charge high software markups on transaction processing, adding 400% to 800% profit margins on top of standard cloud computation. 
             </p>
             <p className="mt-3 text-zinc-400 leading-relaxed">
-              QAScope runs on a **Bring Your Own Key (BYOK)** model. You plug in your own OpenRouter or OpenAI credentials directly in the settings panel. We bill you a flat seat fee per monitored agent, while the provider bills you for tokens consumed at raw cost (~₹0.20 per audit on `gpt-4o-mini`).
+              QAScope operates on a direct, secure cloud API model. You securely link your own OpenAI or OpenRouter credential node in the settings console. Audit scoring runs through your dedicated infrastructure connection, billing you at raw cost (~₹0.20 per audit) directly from the cloud provider, eliminating software margins.
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/20 p-4">
                 <span className="text-2xl block">🔑</span>
-                <h5 className="mt-2 font-bold text-white text-sm">Data Sovereignty</h5>
-                <p className="mt-1 text-xs text-zinc-500 leading-normal">Your API keys and transcripts go directly to the provider, never proxied through middle parties.</p>
+                <h5 className="mt-2 font-bold text-white text-sm">Data Control</h5>
+                <p className="mt-1 text-xs text-zinc-500 leading-normal">Your transcripts process securely through your direct network connection, bypassing third-party proxies.</p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/20 p-4">
                 <span className="text-2xl block">📈</span>
-                <h5 className="mt-2 font-bold text-white text-sm">Real-time Usage</h5>
-                <p className="mt-1 text-xs text-zinc-500 leading-normal">Track your exact API token expenditures down to the single Paisa on your QAScope billing tab.</p>
+                <h5 className="mt-2 font-bold text-white text-sm">Cost Transparency</h5>
+                <p className="mt-1 text-xs text-zinc-500 leading-normal">Monitor your exact cloud infrastructure token utilization on your billing console to the paisa.</p>
               </div>
             </div>
           </div>
 
-          {/* Code Visual Mockup */}
+          {/* Configuration Visual Mockup */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3 shadow-2xl">
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 font-mono text-xs">
               <div className="flex items-center gap-2 border-b border-zinc-800 pb-3 mb-4 text-zinc-500">
                 <span className="h-3 w-3 rounded-full bg-red-500/80" />
                 <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
                 <span className="h-3 w-3 rounded-full bg-green-500/80" />
-                <span className="ml-2">Settings → LLM provider credentials</span>
+                <span className="ml-2">Console → Data Ingestion settings</span>
               </div>
               <div className="space-y-3">
                 <div>
-                  <span className="text-zinc-500">// Configure OpenRouter / OpenAI in 1 minute</span>
+                  <span className="text-zinc-500">// Connect secure API credential endpoint</span>
                   <p className="mt-1">
-                    <span className="text-teal-400">const</span> config = &#123;
+                    <span className="text-teal-400">const</span> connectionConfig = &#123;
                   </p>
                   <p className="pl-4">
-                    provider: <span className="text-teal-300">"openrouter"</span>,
+                    endpoint: <span className="text-teal-300">"https://openrouter.ai/api/v1"</span>,
                   </p>
                   <p className="pl-4">
-                    model: <span className="text-teal-300">"openai/gpt-4o-mini"</span>,
+                    complianceModel: <span className="text-teal-300">"openai/gpt-4o-mini"</span>,
                   </p>
                   <p className="pl-4">
-                    apiKey: <span className="text-amber-500">"sk-or-v1-****************"</span>
+                    secureKeyHash: <span className="text-amber-500">"sk-or-v1-****************"</span>
                   </p>
                   <p>&#125;;</p>
                 </div>
                 <div className="h-px bg-zinc-800" />
                 <div className="text-[10px] text-zinc-500 leading-normal">
-                  <p>✔️ OpenRouter support covers Claude 3.5 Sonnet, Llama 3, Gemini Flash & Mistral.</p>
-                  <p className="mt-1">✔️ Raw provider rates apply. Zero percentage markups by QAScope.</p>
+                  <p>✔️ Direct integration with Claude 3.5, Llama 3, Gemini, and custom enterprise endpoints.</p>
+                  <p className="mt-1">✔️ Raw cloud processing rates apply. Zero markup added by QAScope.</p>
                 </div>
               </div>
             </div>
@@ -763,23 +730,6 @@ export default function CampaignPage() {
                   <option value="Telecom Swaps">Telecom SIM Swap & Verification</option>
                   <option value="D2C Refunds">D2C Customer Refunds</option>
                   <option value="Custom SOP">Other Campaign / Custom SOP Rubric</option>
-                </select>
-              </div>
-
-              {/* Interaction Channel Type Select Option */}
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="channelType">
-                  Interaction Channel Type
-                </label>
-                <select
-                  id="channelType"
-                  name="channelType"
-                  value={formData.channelType}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                >
-                  <option value="chat">Chat / Messaging / Social</option>
-                  <option value="ticket">Ticket / Case / Email</option>
                 </select>
               </div>
 

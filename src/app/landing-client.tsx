@@ -22,7 +22,6 @@ export function LandingClient() {
   const [auditors, setAuditors] = useState<number>(5);
   const [ticketsPerAgent, setTicketsPerAgent] = useState<number>(440);
   const [conversations, setConversations] = useState<number>(22000);
-  const [channelType, setChannelType] = useState<"ticket" | "chat">("chat");
 
   // Form Submission State
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
@@ -35,7 +34,6 @@ export function LandingClient() {
     preferredSlot: "",
     bpoType: "BFSI Debt Recovery",
     agentCount: 50,
-    channelType: "chat",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -67,10 +65,10 @@ export function LandingClient() {
     setAuditors(Math.max(1, Math.ceil(agents / 10))); // 1 auditor per 10 agents standard
   }, [agents, ticketsPerAgent]);
 
-  // Plan A: ₹799/agent/mo + BYOK tokens
+  // Plan A: ₹799/agent/mo + Cloud API infrastructure cost
   const planACost = agents * 799 + conversations * 0.20;
   
-  // Plan B: ₹4,999 flat platform + ₹1.50/chat usage + BYOK tokens
+  // Plan B: ₹4,999 flat platform + ₹1.50/convo usage + Cloud API infrastructure cost
   const planBCost = 4999 + conversations * (1.50 + 0.20);
   
   const isPlanACheaper = planACost < planBCost;
@@ -78,7 +76,7 @@ export function LandingClient() {
   const recommendedPlanLabel = isPlanACheaper ? "Plan A" : "Plan B";
 
   const traditionalSpend = auditors * salary;
-  const qascopeTokenSpend = conversations * 0.20; // ₹0.20 per call scored on gpt-4o-mini
+  const qascopeInfraSpend = conversations * 0.20; // ₹0.20 per conversation raw API cloud cost
   const netMonthlySavings = traditionalSpend - qascopeTotalSpend;
 
   // Interactive Rubrics Tab State
@@ -190,18 +188,18 @@ export function LandingClient() {
 
       {/* Hero Section */}
       <section className="relative mx-auto max-w-5xl px-6 pt-20 pb-16 text-center lg:pt-32">
-        <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-950/30 px-3.5 py-1 text-xs font-semibold text-teal-400">
+        <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-950/30 px-3.5 py-1 text-xs font-semibold text-teal-400 font-mono">
           <span className="flex h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
-          Next-Generation Call Center AI Auditing · Made for Indian BPOs
+          Enterprise Quality Assurance & Process Compliance Control · Built for Indian BPOs
         </div>
         <h2 className="mt-8 text-4xl font-extrabold tracking-tight text-white sm:text-6xl bg-gradient-to-b from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent leading-tight max-w-4xl mx-auto">
-          100% Agent Auditing. <br />
+          100% Process Auditing. <br />
           <span className="text-teal-400 bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text">
-            Audit the Unreviewed 95%.
+            Eliminate Compliance Leakage.
           </span>
         </h2>
         <p className="mx-auto mt-6 max-w-3xl text-lg text-zinc-400 leading-relaxed">
-          Traditional manual QA checks only a 5% sample. The other 95% is where compliance penalties, regulatory escapes, and coaching blindspots hide. QAScope scores **100% of your customer conversations** against your exact SOP rubrics instantly.
+          Standard manual QA checks review a minor 5% sample. QAScope automates the quality audit process, continuously scoring **100% of client interactions** against standard operating procedures, protecting your SLAs and reducing team lead overhead.
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link
@@ -216,9 +214,7 @@ export function LandingClient() {
           >
             See Live Demo
           </a>
-        </div>
-
-        {/* Dashboard Preview Mockup */}
+          {/* Dashboard Preview Mockup */}
         <div className="mt-16 overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950 p-3 shadow-2xl shadow-teal-950/10">
           <div className="rounded-xl border border-zinc-900 bg-zinc-900/40 p-4 text-left">
             <div className="flex items-center justify-between border-b border-zinc-900 pb-3 mb-4">
@@ -229,7 +225,7 @@ export function LandingClient() {
                 <span className="ml-2 text-xs text-zinc-500 font-mono">qascope.com/dashboard</span>
               </div>
               <span className="rounded bg-teal-950 border border-teal-800/40 px-2 py-0.5 text-[10px] font-semibold text-teal-400 uppercase tracking-widest">
-                Live Audit Console
+                Process Compliance Console
               </span>
             </div>
             {/* Visual cards mimicking app layout */}
@@ -240,18 +236,18 @@ export function LandingClient() {
                 <div className="mt-2 h-1.5 w-full rounded bg-zinc-800"><div className="h-full rounded bg-teal-500" style={{width: '94%'}} /></div>
               </div>
               <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Conversations Audited</p>
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Audited Interactions</p>
                 <p className="mt-1 text-2xl font-bold text-teal-400">12,481</p>
-                <p className="text-[10px] text-zinc-500 mt-1">100% of entire ticket volume</p>
+                <p className="text-[10px] text-zinc-500 mt-1">100% of entire client volume</p>
               </div>
               <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Human Reviews Pending</p>
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500">Supervisor Review Queue</p>
                 <p className="mt-1 text-2xl font-bold text-rose-500">3</p>
                 <p className="text-[10px] text-zinc-500 mt-1">SLA compliant (within 24h)</p>
               </div>
             </div>
           </div>
-        </div>
+        </div>       </div>
       </section>
 
       {/* The 95% Operations Gap Section */}
@@ -486,37 +482,6 @@ export function LandingClient() {
           <div className="lg:col-span-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-6">
             <h5 className="text-lg font-bold text-white border-b border-zinc-800 pb-3 font-mono">Campaign Configuration</h5>
 
-            {/* Channel Type Toggle Option */}
-            <div className="space-y-2">
-              <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold">
-                Interaction Channel
-              </label>
-              <div className="grid grid-cols-2 gap-2 rounded-xl bg-zinc-950 p-1 border border-zinc-900">
-                <button
-                  type="button"
-                  onClick={() => setChannelType("chat")}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all duration-200 ${
-                    channelType === "chat"
-                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-extrabold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40"
-                  }`}
-                >
-                  <span>💬</span> Chat / Messaging
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChannelType("ticket")}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all duration-200 ${
-                    channelType === "ticket"
-                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.3)] font-extrabold"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/40"
-                  }`}
-                >
-                  <span>✉️</span> Ticket / Email
-                </button>
-              </div>
-            </div>
-
             {/* Slider 1: Agents */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
@@ -538,11 +503,11 @@ export function LandingClient() {
               </div>
             </div>
 
-            {/* Slider 2: Monthly Tickets per Agent */}
+            {/* Slider 2: Monthly Conversations per Agent */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
-                <span className="text-zinc-300">Avg Monthly {channelType === "chat" ? "Chats" : "Tickets"} per Agent</span>
-                <span className="text-teal-400 font-mono">{ticketsPerAgent} {channelType === "chat" ? "chats" : "tickets"} / mo</span>
+                <span className="text-zinc-300">Avg Monthly Conversations per Agent</span>
+                <span className="text-teal-400 font-mono">{ticketsPerAgent} conversations / mo</span>
               </div>
               <input
                 type="range"
@@ -554,8 +519,8 @@ export function LandingClient() {
                 className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
               />
               <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
-                <span>100 {channelType === "chat" ? "chats" : "tickets"}</span>
-                <span>1,500 {channelType === "chat" ? "chats" : "tickets"}</span>
+                <span>100 convos</span>
+                <span>1,500 convos</span>
               </div>
             </div>
 
@@ -604,12 +569,12 @@ export function LandingClient() {
             {/* Static volume info */}
             <div className="rounded-lg bg-zinc-950 p-4 border border-zinc-800 grid grid-cols-2 gap-4 text-center">
               <div>
-                <span className="text-[10px] uppercase text-zinc-500 block font-mono">Total Monthly {channelType === "chat" ? "Chats" : "Tickets"}</span>
+                <span className="text-[10px] uppercase text-zinc-500 block font-mono">Total Monthly Conversations</span>
                 <span className="text-lg font-bold text-white mt-1 block font-mono">{conversations.toLocaleString("en-US")}</span>
               </div>
               <div>
-                <span className="text-[10px] uppercase text-zinc-500 block font-mono">QAScope Scored volume</span>
-                <span className="text-lg font-bold text-teal-400 mt-1 block font-mono">100% ({channelType === "chat" ? "All Chats" : "All Tickets"})</span>
+                <span className="text-[10px] uppercase text-zinc-500 block font-mono">QA Process Audit Coverage</span>
+                <span className="text-lg font-bold text-teal-400 mt-1 block font-mono">100% of Volume</span>
               </div>
             </div>
           </div>
@@ -658,7 +623,7 @@ export function LandingClient() {
                       <span>₹{Math.round(planBCost).toLocaleString("en-US")}/mo</span>
                     </div>
                     <div className="text-[9px] text-zinc-500 mt-0.5">
-                      ₹4,999 flat + ₹1.50/{channelType === "chat" ? "chat" : "ticket"} (₹{Math.round(conversations * 1.50).toLocaleString("en-US")} usage + ₹{Math.round(conversations * 0.20).toLocaleString("en-US")} tokens)
+                      ₹4,999 flat platform + ₹1.50/convo (₹{Math.round(conversations * 1.50).toLocaleString("en-US")} usage + ₹{Math.round(conversations * 0.20).toLocaleString("en-US")} infra)
                     </div>
                   </div>
                 </div>
@@ -679,63 +644,63 @@ export function LandingClient() {
         </div>
       </section>
 
-      {/* BYOK and Architecture Section */}
+      {/* Direct Cloud Ingestion Section */}
       <section id="byok" className="mx-auto max-w-6xl px-6 py-16 border-t border-zinc-900">
         <div className="grid gap-12 lg:grid-cols-2 items-center">
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">The BYOK Advantage</h3>
-            <h4 className="mt-2 text-3xl font-bold text-white">Why QAScope is 10x Cheaper than Enterprise Competitors</h4>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">Process Cost Control</h3>
+            <h4 className="mt-2 text-3xl font-bold text-white">Direct Cloud API Processing Model</h4>
             <p className="mt-4 text-zinc-400 leading-relaxed">
-              Enterprise QA platforms charge massive software markups on LLM tokens—often billing up to ₹2.00 to ₹5.00 per analyzed conversation. We think that's extortionate.
+              Standard auditing platforms charge high software markups on transaction processing, adding 400% to 800% profit margins on top of standard cloud computation. 
             </p>
             <p className="mt-3 text-zinc-400 leading-relaxed">
-              QAScope runs on a **Bring Your Own Key (BYOK)** model. You plug in your own OpenAI or OpenRouter credentials directly in the settings panel. We bill you a flat seat fee per monitored agent, while the provider bills you for tokens consumed at raw cost (~₹0.20 per audit on `gpt-4o-mini`).
+              QAScope operates on a direct, secure cloud API model. You securely link your own OpenAI or OpenRouter credential node in the settings console. Audit scoring runs through your dedicated infrastructure connection, billing you at raw cost (~₹0.20 per audit) directly from the cloud provider, eliminating software margins.
             </p>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/20 p-4">
                 <span className="text-2xl block">🔑</span>
-                <h5 className="mt-2 font-bold text-white text-sm">Data Sovereignty</h5>
-                <p className="mt-1 text-xs text-zinc-500 leading-normal">Your API keys and transcripts go directly to the provider, never proxied through middle parties.</p>
+                <h5 className="mt-2 font-bold text-white text-sm">Data Control</h5>
+                <p className="mt-1 text-xs text-zinc-500 leading-normal">Your transcripts process securely through your direct network connection, bypassing third-party proxies.</p>
               </div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900/20 p-4">
                 <span className="text-2xl block">📈</span>
-                <h5 className="mt-2 font-bold text-white text-sm">Real-time Usage</h5>
-                <p className="mt-1 text-xs text-zinc-500 leading-normal">Track your exact API token expenditures down to the single Rupee on your QAScope billing tab.</p>
+                <h5 className="mt-2 font-bold text-white text-sm">Cost Transparency</h5>
+                <p className="mt-1 text-xs text-zinc-500 leading-normal">Monitor your exact cloud infrastructure token utilization on your billing console to the paisa.</p>
               </div>
             </div>
           </div>
 
-          {/* Code Visual Mockup */}
+          {/* Configuration Visual Mockup */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3 shadow-2xl">
             <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 font-mono text-xs">
               <div className="flex items-center gap-2 border-b border-zinc-800 pb-3 mb-4 text-zinc-500">
                 <span className="h-3 w-3 rounded-full bg-red-500/80" />
                 <span className="h-3 w-3 rounded-full bg-yellow-500/80" />
                 <span className="h-3 w-3 rounded-full bg-green-500/80" />
-                <span className="ml-2">Settings → LLM provider credentials</span>
+                <span className="ml-2">Console → Data Ingestion settings</span>
               </div>
               <div className="space-y-3">
                 <div>
-                  <span className="text-zinc-500">// Configure OpenRouter / OpenAI in 1 minute</span>
+                  <span className="text-zinc-500">// Connect secure API credential endpoint</span>
                   <p className="mt-1">
-                    <span className="text-teal-400">const</span> config = &#123;
+                    <span className="text-teal-400">const</span> connectionConfig = &#123;
                   </p>
                   <p className="pl-4">
-                    provider: <span className="text-teal-300">"openrouter"</span>,
+                    endpoint: <span className="text-teal-300">"https://openrouter.ai/api/v1"</span>,
                   </p>
                   <p className="pl-4">
-                    model: <span className="text-teal-300">"openai/gpt-4o-mini"</span>,
+                    complianceModel: <span className="text-teal-300">"openai/gpt-4o-mini"</span>,
                   </p>
                   <p className="pl-4">
-                    apiKey: <span className="text-amber-500">"sk-or-v1-****************"</span>
+                    secureKeyHash: <span className="text-amber-500">"sk-or-v1-****************"</span>
                   </p>
                   <p>&#125;;</p>
                 </div>
                 <div className="h-px bg-zinc-800" />
                 <div className="text-[10px] text-zinc-500 leading-normal">
-                  <p>✔️ OpenRouter support covers Claude 3.5 Sonnet, Llama 3, Gemini Flash & Mistral.</p>
-                  <p className="mt-1">✔️ Raw provider rates apply. Zero percentage markups by QAScope.</p>
+                  <p>✔️ Direct integration with Claude 3.5, Llama 3, Gemini, and custom enterprise endpoints.</p>
+                  <p className="mt-1">✔️ Raw cloud processing rates apply. Zero markup added by QAScope.</p>
                 </div>
               </div>
             </div>
@@ -743,115 +708,111 @@ export function LandingClient() {
         </div>
       </section>
 
-      {/* Pricing Tiers Section */}
-      <section id="pricing" className="mx-auto max-w-6xl px-6 py-20 border-t border-zinc-900">
+      {/* Pricing Section */}
+      <section id="pricing" className="mx-auto max-w-5xl px-6 py-20 border-t border-zinc-900">
         <div className="text-center mb-16">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">Standard Pricing</h3>
-          <h4 className="mt-2 text-3xl font-bold text-white">Simple, Volume-Based Seat Pricing</h4>
-          <p className="mt-2 text-sm text-zinc-400">Enjoy retroactive volume discounts — your qualified rate applies to every seat from seat 1.</p>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-teal-400">Service Plan Catalog</h3>
+          <h4 className="mt-2 text-3xl font-bold text-white">Simple, Transparent Pricing Plans</h4>
+          <p className="mt-2 text-sm text-zinc-400">No complex negotiations. Choose the model that matches your campaign scale.</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {[
-            {
-              name: "Starter",
-              price: "₹1,600",
-              seats: "1 – 49 seats",
-              desc: "Perfect for pilot operations and small BPO teams looking to automate their basic auditing.",
-              features: [
-                "Unlimited conversations (bring your own AI key)",
-                "₹1,600 / seat / month · up to 49 seats",
-                "Custom rubric + fatal rules",
-                "Two-tier review workflow",
-                "Webhook ingest — connect any CRM",
-                "Real-time low-score email alerts",
-                "Day-end manager report (email + in-app)",
-                "Saved report templates",
-                "Email support, within 24 hours"
-              ],
-              btn: "Start Free Trial",
-              active: false
-            },
-            {
-              name: "Growth",
-              price: "₹1,450",
-              seats: "50 – 99 seats",
-              desc: "Save 10% on all seats! High-performance settings, CRM webhook channels, and coaching logs.",
-              features: [
-                "Unlimited conversations (bring your own AI key)",
-                "₹1,450 / seat / month on all seats · 50–99 seats",
-                "Everything in Starter",
-                "Live web & API data verification (order fact-checking)",
-                "Freshdesk + Zoho Desk native connectors",
-                "Bulk team CSV import",
-                "Agent coaching history & trend reports",
-                "Email support, within 24 hours"
-              ],
-              btn: "Get Growth Now",
-              active: true
-            },
-            {
-              name: "Scale",
-              price: "₹1,300",
-              seats: "100+ seats",
-              desc: "Save 20% on all seats! Deep enterprise protection, multi-tenant campaigns, and priority SLA.",
-              features: [
-                "Unlimited conversations (bring your own AI key)",
-                "₹1,300 / seat / month on all seats · 100+ seats",
-                "Everything in Growth",
-                "Salesforce Service Cloud + Zendesk connectors",
-                "Custom rubric templates per campaign",
-                "Priority onboarding session",
-                "Email support, within 24 hours"
-              ],
-              btn: "Scale Workspace",
-              active: false
-            }
-          ].map((plan) => (
-            <div
-              key={plan.name}
-              className={`rounded-2xl border p-6 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-xl ${
-                plan.active
-                  ? "border-teal-500 bg-teal-950/10 shadow-lg shadow-teal-950/20 relative"
-                  : "border-zinc-900 bg-zinc-900/10"
-              }`}
-            >
-              {plan.active && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-teal-500 px-3 py-0.5 text-[9px] font-bold uppercase text-zinc-950 tracking-wider">
-                  Most Popular
-                </span>
-              )}
-              <div>
-                <h4 className="text-lg font-bold text-zinc-300">{plan.name}</h4>
-                <p className="mt-4 text-4xl font-extrabold text-white tracking-tight">
-                  {plan.price}
-                  <span className="text-sm font-medium text-zinc-500"> / seat / mo</span>
-                </p>
-                <p className="mt-2 text-xs font-semibold uppercase text-teal-400 tracking-widest">{plan.seats}</p>
-                <p className="mt-4 text-xs text-zinc-400 leading-relaxed">{plan.desc}</p>
-                <ul className="mt-6 space-y-2 text-xs text-zinc-300">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <span className="text-emerald-500 font-extrabold">✓</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
+        <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto">
+          {/* Plan A card */}
+          <div className="rounded-2xl border border-zinc-900 bg-zinc-900/10 p-8 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-xl">
+            <div>
+              <div className="inline-flex rounded-full bg-zinc-950 border border-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-400 uppercase tracking-widest font-mono">
+                Plan A: Seat-Based
               </div>
-              <div className="mt-8">
-                <Link
-                  href="/signup"
-                  className={`block w-full rounded-xl py-3 text-center text-xs font-bold transition-all ${
-                    plan.active
-                      ? "bg-teal-500 text-zinc-950 hover:bg-teal-400 shadow-[0_0_15px_rgba(20,184,166,0.25)]"
-                      : "bg-zinc-900 text-zinc-200 border border-zinc-800 hover:bg-zinc-800"
-                  }`}
-                >
-                  {plan.btn}
-                </Link>
-              </div>
+              <h4 className="mt-4 text-xl font-bold text-white">Linear Seat Billing</h4>
+              <p className="mt-4 text-4xl font-extrabold text-white tracking-tight">
+                ₹799
+                <span className="text-sm font-medium text-zinc-500"> / active agent / mo</span>
+              </p>
+              <p className="mt-4 text-xs text-zinc-400 leading-relaxed">
+                Perfect for small-to-mid operations and campaign desks looking for flat, linear budgeting without platform fees.
+              </p>
+              <ul className="mt-6 space-y-3 text-xs text-zinc-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>100% interaction audits (direct cloud connection)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Custom compliance rubric + fatal criteria rules</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Unified Team Lead (TL) review queue</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Standard webhook ingestion API & CSV uploads</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Low-score email alerts & saved templates</span>
+                </li>
+              </ul>
             </div>
-          ))}
+            <div className="mt-8">
+              <Link
+                href="/signup"
+                className="block w-full rounded-xl bg-zinc-900 py-3 text-center text-xs font-bold text-zinc-200 border border-zinc-800 hover:bg-zinc-800 transition"
+              >
+                Get Seat-Based Plan
+              </Link>
+            </div>
+          </div>
+
+          {/* Plan B card */}
+          <div className="rounded-2xl border border-teal-500 bg-teal-950/10 p-8 flex flex-col justify-between transition hover:-translate-y-1 hover:shadow-xl shadow-lg shadow-teal-950/15 relative">
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-teal-500 px-3 py-0.5 text-[9px] font-bold uppercase text-zinc-950 tracking-wider font-mono">
+              Cheaper for Scaling Volumes
+            </span>
+            <div>
+              <div className="inline-flex rounded-full bg-teal-950/50 border border-teal-800/40 px-3 py-1 text-xs font-semibold text-teal-400 uppercase tracking-widest font-mono">
+                Plan B: Usage-Based
+              </div>
+              <h4 className="mt-4 text-xl font-bold text-white">Flat Platform Billing</h4>
+              <p className="mt-4 text-4xl font-extrabold text-white tracking-tight">
+                ₹4,999
+                <span className="text-sm font-medium text-zinc-500"> / mo platform + ₹1.50/convo</span>
+              </p>
+              <p className="mt-4 text-xs text-zinc-400 leading-relaxed">
+                Best value for scaling campaigns. Includes **unlimited seats** to prevent single-account sharing risks across QA auditor staff!
+              </p>
+              <ul className="mt-6 space-y-3 text-xs text-zinc-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span className="font-semibold text-teal-300">Unlimited monitored Agent & Auditor logins</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Everything in Plan A (custom rubrics, alerts)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Freshdesk, Zoho Desk, and native CRM integrations</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Live fact-checking against web data sources</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-teal-400 font-extrabold">✓</span>
+                  <span>Automated daily PDF report digest schedules</span>
+                </li>
+              </ul>
+            </div>
+            <div className="mt-8">
+              <Link
+                href="/signup"
+                className="block w-full rounded-xl bg-teal-500 py-3 text-center text-xs font-bold text-zinc-950 hover:bg-teal-400 transition shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+              >
+                Get Usage-Based Plan
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -864,20 +825,20 @@ export function LandingClient() {
         <div className="space-y-6">
           {[
             {
-              q: "What is Bring Your Own Key (BYOK) billing?",
-              a: "BYOK means you input your own LLM provider API keys (OpenAI or OpenRouter) in the settings panel. We score conversations using your credentials directly. We never markup your AI usage — you only pay our flat per-seat software fee, making QA operations extremely cost-efficient."
+              q: "What is direct cloud infrastructure billing?",
+              a: "Instead of charging inflated markups on processing, QAScope connects directly to your own standard cloud API credentials (like OpenAI or OpenRouter). You pay for processing at absolute raw infrastructure cost (approx. ₹0.20 per transcript scored), ensuring maximum cost transparency."
             },
             {
-              q: "How does the two-tier human audit/appeals queue work?",
-              a: "When AI scores conversations, any score falling below your defined threshold or flagged with low confidence goes into the review queue. A team lead reviews it first (Tier 1). If there is a disagreement, the score is escalated to a configured second reviewer (Tier 2) for final override, protecting agent relations."
+              q: "How does the human review workflow prevent agent disputes?",
+              a: "Any automated score falling below your client's SLA threshold or flagged with low evaluation confidence is instantly routed to your Team Leads (Tier 1) review queue. If an agent appeals, the audit is escalated to a Campaign Manager (Tier 2) for final override, maintaining absolute process calibration."
             },
             {
-              q: "Is our CRM data secure with tenant isolation?",
-              a: "Yes. QAScope is built on top of Supabase with strict, multi-tenant Row-Level Security (RLS) policies. Every query has client isolation, ensuring your agents, rubrics, and CRM transcripts are accessible strictly within your workspace."
+              q: "Is our client data secure and compliant?",
+              a: "Absolutely. QAScope enforces strict, multi-tenant Row-Level Security (RLS) policies within your dedicated workspace database, complying with standard data protection policies. Client transcripts, rubrics, and QA scores are completely isolated."
             },
             {
-              q: "How do we connect our CRM via webhook?",
-              a: "Under Settings → Webhooks, you can create ingestion tokens. This generates a unique API endpoint for your company. You can configure Zendesk, Freshdesk, or your telephony provider to automatically POST tickets as JSON to this webhook for instantaneous, touchless AI audits."
+              q: "How do we ingest conversations from our CRM?",
+              a: "Under Settings, you can configure unified webhook endpoints to accept JSON logs from any CRM (Freshdesk, Zoho, Zendesk) or telephony dialer. The system handles all interaction formats as a standardized conversation audit stream."
             }
           ].map((faq, idx) => (
             <div key={idx} className="rounded-xl border border-zinc-900 bg-zinc-900/10 p-5">
@@ -1005,23 +966,6 @@ export function LandingClient() {
                   <option value="Telecom Swaps">Telecom SIM Swap & Verification</option>
                   <option value="D2C Refunds">D2C Customer Refunds</option>
                   <option value="Custom SOP">Other Campaign / Custom SOP Rubric</option>
-                </select>
-              </div>
-
-              {/* Interaction Channel Type Select Option */}
-              <div className="space-y-1.5">
-                <label className="text-xs uppercase text-zinc-400 tracking-wider font-mono font-bold" htmlFor="channelType">
-                  Interaction Channel Type
-                </label>
-                <select
-                  id="channelType"
-                  name="channelType"
-                  value={formData.channelType}
-                  onChange={handleInputChange}
-                  className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-sm text-white outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                >
-                  <option value="chat">Chat / Messaging / Social</option>
-                  <option value="ticket">Ticket / Case / Email</option>
                 </select>
               </div>
 
