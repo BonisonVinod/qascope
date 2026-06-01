@@ -129,8 +129,12 @@ export async function signup(
 }
 
 export async function signout() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("Supabase auth signout error (ignored during session reset):", err);
+  }
   revalidatePath("/", "layout");
   redirect("/login");
 }
