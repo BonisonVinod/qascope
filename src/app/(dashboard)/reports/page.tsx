@@ -86,7 +86,14 @@ export default async function ReportsPage({
     isCurrent = weekRange.isCurrent;
   }
 
-  const { data: scores } = await supabase
+  // Get current user's client_id for explicit tenant filter (defense-in-depth alongside RLS)
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: appUser } = user
+    ? await supabase.from("users").select("client_id").eq("id", user.id).single()
+    : { data: null };
+  const clientId = appUser?.client_id;
+
+  const scoresQuery = supabase
     .from("qa_scores")
     .select(
       "id, total_score, original_total_score, appealed_at, status, conversation_id, created_at",
@@ -95,6 +102,11 @@ export default async function ReportsPage({
     .lt("created_at", end.toISOString())
     .limit(5000);
 
+  if (clientId) scoresQuery.eq("client_id" as any, clientId);
+
+  const { data: scores } = await scoresQuery;
+
+  const isTruncated = (scores?.length ?? 0) === 5000;
   const list = scores ?? [];
 
   const total = list.length;
@@ -262,6 +274,12 @@ export default async function ReportsPage({
         </div>
       ) : (
         <>
+          {/* Truncation warning — shown when the 5000-row cap is hit */}
+          {isTruncated && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              ⚠️ This report shows the first 5,000 scored conversations in this range. Some data may be missing. Narrow the date range for a complete view.
+            </div>
+          )}
           {/* Headline KPIs */}
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat label="Conversations scored" value={total.toLocaleString()} />

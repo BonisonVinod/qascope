@@ -74,12 +74,19 @@ export default async function ReviewQueuePage() {
   const latestBatchId = client?.latest_upload_batch_id ?? null;
 
   let batchScoreIds: string[] = [];
-  if (latestBatchId && clientId) {
-    const { data: batchConvs } = await supabase
+  if (clientId) {
+    let query = supabase
       .from("conversations")
       .select("id")
-      .eq("client_id", clientId)
-      .eq("upload_batch_id", latestBatchId);
+      .eq("client_id", clientId);
+    if (latestBatchId) {
+      query = query.or(`upload_batch_id.eq.${latestBatchId},upload_batch_id.is.null`);
+    } else {
+      query = query.is("upload_batch_id", null);
+    }
+    const { data: batchConvs } = await query
+      .order("created_at", { ascending: false })
+      .limit(1000);
     const convIds = (batchConvs ?? []).map((c) => c.id);
     if (convIds.length > 0) {
       const { data: scores } = await supabase
@@ -123,12 +130,17 @@ export default async function ReviewQueuePage() {
   const resolved = rows.filter((r) => r.state === "closed");
 
   let totalConvs: number | null = null;
-  if (latestBatchId && clientId) {
-    const { count } = await supabase
+  if (clientId) {
+    let query = supabase
       .from("conversations")
       .select("id", { count: "exact", head: true })
-      .eq("client_id", clientId)
-      .eq("upload_batch_id", latestBatchId);
+      .eq("client_id", clientId);
+    if (latestBatchId) {
+      query = query.or(`upload_batch_id.eq.${latestBatchId},upload_batch_id.is.null`);
+    } else {
+      query = query.is("upload_batch_id", null);
+    }
+    const { count } = await query;
     totalConvs = count ?? null;
   }
 
@@ -141,11 +153,10 @@ export default async function ReviewQueuePage() {
             {pendingFirst.length} awaiting first review &middot; {pendingSecond.length}{" "}
             awaiting second review &middot; {resolved.length} resolved
             {typeof totalConvs === "number" ? ` of ${totalConvs} total` : ""}
-            {latestBatchId ? " · current upload" : ""}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             SLA: {client?.sla_hours ?? 24}h per tier &middot; items auto-approve after
-            deadline. Showing only the most recent upload.
+            deadline. Showing latest upload batch and real-time streams.
           </p>
         </div>
       </div>

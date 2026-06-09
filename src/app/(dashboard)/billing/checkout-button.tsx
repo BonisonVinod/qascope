@@ -30,6 +30,7 @@ type Props = {
   currentPlan: PlanName | null;
   seatCount: number;
   isAdmin: boolean;
+  prepaidAmountInr?: number;
 };
 
 function loadRazorpayScript(): Promise<boolean> {
@@ -50,6 +51,7 @@ export function CheckoutButton({
   currentPlan,
   seatCount,
   isAdmin,
+  prepaidAmountInr = 0,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export function CheckoutButton({
 
   const plan = getPlan(planName);
   const chargedSeats = Math.max(plan.minSeats, seatCount);
-  const monthlyTotal = pricePerSeat * chargedSeats;
+  const monthlyTotal = plan.name === "team" ? plan.flatMonthlyFeeInr : (pricePerSeat * chargedSeats);
   const isCurrent = currentPlan === planName;
 
   async function handleCheckout() {
@@ -71,18 +73,22 @@ export function CheckoutButton({
         return;
       }
 
-      const result = await createRazorpaySubscription(planName, seatCount);
+      const result = await createRazorpaySubscription(planName, seatCount, prepaidAmountInr);
 
       if ("error" in result) {
         setError(result.error);
         return;
       }
 
+      const totalCheckoutPrice = monthlyTotal + prepaidAmountInr;
+
       const rzp = new window.Razorpay({
         key: result.keyId,
         subscription_id: result.subscriptionId,
         name: "QAScope",
-        description: `${planLabel} Plan — ${chargedSeats} seats × ₹${pricePerSeat}/seat/mo`,
+        description: planName === "team" 
+          ? `${planLabel} Plan — ₹${totalCheckoutPrice.toLocaleString("en-IN")}/mo total (includes prepaid credits)` 
+          : `${planLabel} Plan — ${chargedSeats} seats × ₹${pricePerSeat}/seat/mo`,
         theme: { color: "#18181b" },
         prefill: { email: result.prefillEmail },
         handler: (_response) => {
@@ -143,7 +149,7 @@ export function CheckoutButton({
           "Current plan"
         ) : (
           `Upgrade to ${planLabel} — ₹${monthlyTotal.toLocaleString("en-US")}/mo${
-            chargedSeats > seatCount ? ` (Min ${plan.minSeats} seats)` : ""
+            planName === "team" ? " (Unlimited seats)" : (chargedSeats > seatCount ? ` (Min ${plan.minSeats} seats)` : "")
           }`
         )}
       </button>

@@ -17,6 +17,7 @@ export type SecondReviewerDecision =
   | "auto_confirmed";
 export type PlanName = "pilot" | "starter" | "team" | "growth" | "pro";
 export type SubscriptionStatus = "trialing" | "active" | "past_due" | "canceled";
+export type AlertSeverity = "critical" | "warning" | "info";
 
 
 type WorkspaceDocumentsRow = {
@@ -158,12 +159,126 @@ type ConversationsRow = {
   created_at: string;
 };
 
+type VoiceAuditJobsRow = {
+  id: string;
+  client_id: string;
+  webhook_token_id: string | null;
+  external_call_id: string | null;
+  source_type: string;
+  source_system: string | null;
+  recording_url: string | null;
+  storage_path: string | null;
+  status: string;
+  attempt_count: number;
+  max_attempts: number;
+  next_attempt_at: string | null;
+  locked_at: string | null;
+  locked_by: string | null;
+  error_message: string | null;
+  transcript_text: string | null;
+  transcription_model: string | null;
+  transcription_metadata: Record<string, unknown> | null;
+  transcribed_at: string | null;
+  conversation_id: string | null;
+  scored_at: string | null;
+  completed_at: string | null;
+  metadata_json: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  duration_seconds: number | null;
+  language: string | null;
+  audio_filename: string | null;
+  audio_content_type: string | null;
+  audio_size_bytes: number | null;
+  job_id: string | null;
+};
+
+type VoiceAuditEventsRow = {
+  id: string;
+  job_id: string;
+  client_id: string;
+  event_type: string;
+  message: string;
+  details_json: Record<string, unknown>;
+  created_at: string;
+};
+
+type OutboundWebhooksRow = {
+  id: string;
+  client_id: string;
+  url: string;
+  secret: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+type OutboundWebhookDeliveriesRow = {
+  id: string;
+  webhook_id: string;
+  client_id: string;
+  qa_score_id: string | null;
+  event_type: string;
+  request_payload: Record<string, unknown>;
+  response_status: number | null;
+  response_body: string | null;
+  error_message: string | null;
+  is_success: boolean;
+  created_at: string;
+};
+
+type PushSubscriptionsRow = {
+  id: string;
+  user_id: string;
+  client_id: string;
+  subscription: Record<string, unknown>;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type QaRubricsRow = {
   id: string;
   client_id: string;
   name: string;
   version: number;
   is_default: boolean;
+  created_at: string;
+};
+
+type AlertPreferencesRow = {
+  client_id: string;
+  email_on_critical_fail: boolean;
+  email_on_low_score: boolean;
+  alert_score_threshold: number | null;
+  updated_at: string;
+};
+
+type AgentNotificationsRow = {
+  id: string;
+  client_id: string;
+  user_id: string;
+  qa_score_id: string | null;
+  severity: AlertSeverity;
+  title: string;
+  body: string;
+  action_url: string | null;
+  is_read: boolean;
+  created_at: string;
+};
+
+type ClientBalancesRow = {
+  client_id: string;
+  conversations_remaining: number;
+  updated_at: string;
+};
+
+type BalanceTransactionsRow = {
+  id: string;
+  client_id: string;
+  amount: number;
+  transaction_type: string;
+  reference_id: string | null;
+  description: string | null;
   created_at: string;
 };
 
@@ -241,6 +356,8 @@ type WebhookTokensRow = {
   created_at: string;
   last_used_at: string | null;
   is_active: boolean;
+  signing_secret: string | null;
+  allow_unsigned: boolean;
 };
 
 type DataSourcesRow = {
@@ -274,6 +391,8 @@ export type Database = {
           created_at?: string;
           last_used_at?: string | null;
           is_active?: boolean;
+          signing_secret?: string | null;
+          allow_unsigned?: boolean;
         };
         Update: {
           id?: string;
@@ -283,6 +402,8 @@ export type Database = {
           created_by?: string | null;
           last_used_at?: string | null;
           is_active?: boolean;
+          signing_secret?: string | null;
+          allow_unsigned?: boolean;
         };
         Relationships: [];
       };
@@ -582,7 +703,15 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<QaScoresRow>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "qa_scores_conversation_id_fkey",
+            columns: ["conversation_id"],
+            isOneToOne: false,
+            referencedRelation: "conversations",
+            referencedColumns: ["id"]
+          }
+        ];
       };
       qa_score_details: {
         Row: QaScoreDetailsRow;
@@ -662,6 +791,35 @@ export type Database = {
         Update: Partial<DocumentChunksRow>;
         Relationships: [];
       };
+      alert_preferences: {
+        Row: AlertPreferencesRow;
+        Insert: {
+          client_id: string;
+          email_on_critical_fail?: boolean;
+          email_on_low_score?: boolean;
+          alert_score_threshold?: number | null;
+          updated_at?: string;
+        };
+        Update: Partial<AlertPreferencesRow>;
+        Relationships: [];
+      };
+      agent_notifications: {
+        Row: AgentNotificationsRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          user_id: string;
+          qa_score_id?: string | null;
+          severity: AlertSeverity;
+          title: string;
+          body: string;
+          action_url?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<AgentNotificationsRow>;
+        Relationships: [];
+      };
       subscriptions: {
         Row: SubscriptionsRow;
         Insert: {
@@ -677,12 +835,224 @@ export type Database = {
         Update: Partial<SubscriptionsRow>;
         Relationships: [];
       };
+      client_balances: {
+        Row: ClientBalancesRow;
+        Insert: {
+          client_id: string;
+          conversations_remaining?: number;
+          updated_at?: string;
+        };
+        Update: {
+          conversations_remaining?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      balance_transactions: {
+        Row: BalanceTransactionsRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          amount: number;
+          transaction_type: string;
+          reference_id?: string | null;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          amount?: number;
+          transaction_type?: string;
+          reference_id?: string | null;
+          description?: string | null;
+        };
+        Relationships: [];
+      };
+      voice_audit_jobs: {
+        Row: VoiceAuditJobsRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          webhook_token_id?: string | null;
+          external_call_id?: string | null;
+          source_type?: string;
+          source_system?: string | null;
+          recording_url?: string | null;
+          storage_path?: string | null;
+          status?: string;
+          attempt_count?: number;
+          max_attempts?: number;
+          next_attempt_at?: string | null;
+          locked_at?: string | null;
+          locked_by?: string | null;
+          error_message?: string | null;
+          transcript_text?: string | null;
+          transcription_model?: string | null;
+          transcription_metadata?: Record<string, unknown> | null;
+          transcribed_at?: string | null;
+          conversation_id?: string | null;
+          scored_at?: string | null;
+          completed_at?: string | null;
+          metadata_json?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+          duration_seconds?: number | null;
+          language?: string | null;
+          audio_filename?: string | null;
+          audio_content_type?: string | null;
+          audio_size_bytes?: number | null;
+          job_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          webhook_token_id?: string | null;
+          external_call_id?: string | null;
+          source_type?: string;
+          source_system?: string | null;
+          recording_url?: string | null;
+          storage_path?: string | null;
+          status?: string;
+          attempt_count?: number;
+          max_attempts?: number;
+          next_attempt_at?: string | null;
+          locked_at?: string | null;
+          locked_by?: string | null;
+          error_message?: string | null;
+          transcript_text?: string | null;
+          transcription_model?: string | null;
+          transcription_metadata?: Record<string, unknown> | null;
+          transcribed_at?: string | null;
+          conversation_id?: string | null;
+          scored_at?: string | null;
+          completed_at?: string | null;
+          metadata_json?: Record<string, unknown> | null;
+          created_at?: string;
+          updated_at?: string;
+          duration_seconds?: number | null;
+          language?: string | null;
+          audio_filename?: string | null;
+          audio_content_type?: string | null;
+          audio_size_bytes?: number | null;
+          job_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "voice_audit_jobs_conversation_id_fkey",
+            columns: ["conversation_id"],
+            isOneToOne: false,
+            referencedRelation: "conversations",
+            referencedColumns: ["id"]
+          }
+        ];
+      };
+      voice_audit_events: {
+        Row: VoiceAuditEventsRow;
+        Insert: {
+          id?: string;
+          job_id: string;
+          client_id: string;
+          event_type: string;
+          message: string;
+          details_json?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          job_id?: string;
+          client_id?: string;
+          event_type?: string;
+          message?: string;
+          details_json?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      outbound_webhooks: {
+        Row: OutboundWebhooksRow;
+        Insert: {
+          id?: string;
+          client_id: string;
+          url: string;
+          secret: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          client_id?: string;
+          url?: string;
+          secret?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      outbound_webhook_deliveries: {
+        Row: OutboundWebhookDeliveriesRow;
+        Insert: {
+          id?: string;
+          webhook_id: string;
+          client_id: string;
+          qa_score_id?: string | null;
+          event_type: string;
+          request_payload: Record<string, unknown>;
+          response_status?: number | null;
+          response_body?: string | null;
+          error_message?: string | null;
+          is_success: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          webhook_id?: string;
+          client_id?: string;
+          qa_score_id?: string | null;
+          event_type?: string;
+          request_payload?: Record<string, unknown>;
+          response_status?: number | null;
+          response_body?: string | null;
+          error_message?: string | null;
+          is_success?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionsRow;
+        Insert: {
+          id?: string;
+          user_id: string;
+          client_id: string;
+          subscription: Record<string, unknown>;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          client_id?: string;
+          subscription?: Record<string, unknown>;
+          user_agent?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       seed_default_rubric: {
         Args: { p_client_id: string };
         Returns: string;
+      };
+      add_balance_transaction: {
+        Args: { p_client_id: string; p_amount: number; p_type: string; p_reference_id?: string; p_description?: string };
+        Returns: void;
+      };
+      claim_voice_audit_jobs: {
+        Args: { p_worker_id: string; p_limit?: number };
+        Returns: VoiceAuditJobsRow[];
       };
       current_client_id: {
         Args: Record<string, never>;

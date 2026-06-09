@@ -5,6 +5,7 @@ import {
   createWebhookToken,
   revokeWebhookToken,
   deleteWebhookToken,
+  setWebhookUnsignedMode,
 } from "./webhook-actions";
 
 type Token = {
@@ -13,6 +14,7 @@ type Token = {
   is_active: boolean;
   created_at: string;
   last_used_at: string | null;
+  allow_unsigned: boolean;
 };
 
 export function WebhookPanel({
@@ -26,16 +28,19 @@ export function WebhookPanel({
 }) {
   const [newTokenName, setNewTokenName] = useState("");
   const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const [createdSigningSecret, setCreatedSigningSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const ingestUrl = `${appUrl}/api/ingest/webhook`;
+  const voiceIngestUrl = `${appUrl}/api/ingest/voice`;
 
   function handleCreate() {
     if (!newTokenName.trim()) return;
     setError(null);
     setCreatedToken(null);
+    setCreatedSigningSecret(null);
     startTransition(async () => {
       const fd = new FormData();
       fd.append("name", newTokenName.trim());
@@ -44,6 +49,7 @@ export function WebhookPanel({
         setError(res.error ?? null);
       } else {
         setCreatedToken(res.token!);
+        setCreatedSigningSecret(res.signingSecret!);
         setNewTokenName("");
       }
     });
@@ -56,9 +62,10 @@ export function WebhookPanel({
     });
   }
 
-  function copyEndpoint() {
+  function copyEndpoint(kind: "transcript" | "voice") {
     if (!createdToken) return;
-    const full = `${ingestUrl}?token=${createdToken}`;
+    const base = kind === "voice" ? voiceIngestUrl : ingestUrl;
+    const full = `${base}?token=${createdToken}`;
     navigator.clipboard.writeText(full).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -68,21 +75,65 @@ export function WebhookPanel({
   return (
     <div className="space-y-6">
       {/* Endpoint info */}
-      <div className="rounded-md bg-zinc-50 px-4 py-3 dark:bg-zinc-950">
+      <div className="space-y-4 rounded-md bg-zinc-50 px-4 py-3 dark:bg-zinc-950">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Transcript ingest endpoint
+          </p>
+          <code className="mt-1 block break-all text-xs text-zinc-700 dark:text-zinc-300">
+            POST {ingestUrl}?token={"<your-token>"}
+          </code>
+          <p className="mt-2 text-xs text-zinc-400">
+            Use this when CRM/chat tools already provide a final transcript.
+          </p>
+        </div>
+
+        <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
         <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-          Ingest endpoint
+            Voice recording ingest endpoint
         </p>
         <code className="mt-1 block break-all text-xs text-zinc-700 dark:text-zinc-300">
-          POST {ingestUrl}?token={"<your-token>"}
+            POST {voiceIngestUrl}?token={"<your-token>"}
         </code>
         <p className="mt-2 text-xs text-zinc-400">
-          Send a JSON body with <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">transcript</code> (required) plus optional{" "}
+            Use this when a dialer sends a post-call recording URL. QAScope
+            downloads the recording, transcribes it, and scores it automatically.
+          </p>
+        </div>
+      </div>
+
+      <details className="rounded-md border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <summary className="cursor-pointer text-xs font-medium uppercase tracking-wider text-zinc-500">
+          Dialer payload fields
+        </summary>
+        <p className="mt-3 text-xs text-zinc-500">
+          QAScope accepts common dialer names like{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">recording_url</code>,{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">recordingUrl</code>,{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">RecordingUrl</code>,{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">callRecordingUrl</code>,{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">CallSid</code>, and{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">AgentName</code>.
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-md bg-zinc-900 p-4 text-xs text-zinc-100">
+          {`{
+  "call_id": "CALL-1001",
+  "recording_url": "https://dialer.example.com/recordings/CALL-1001.mp3",
+  "agent_name": "Priya Sharma",
+  "customer_id": "CUST-1234",
+  "campaign": "Collections",
+  "duration_seconds": 142,
+  "source_system": "Exotel"
+}`}
+        </pre>
+      </details>
+
+      <div className="rounded-md border border-zinc-200 bg-white p-4 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
+          Transcript endpoint body requires <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">transcript</code> plus optional{" "}
           <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">agent_name</code>,{" "}
           <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">customer_id</code>,{" "}
           <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">order_id</code>,{" "}
           <code className="rounded bg-zinc-200 px-1 dark:bg-zinc-800">channel</code>.
-          QAScope scores it automatically.
-        </p>
       </div>
 
       {/* Newly created token reveal */}
@@ -102,12 +153,41 @@ export function WebhookPanel({
               {copied ? "Copied!" : "Copy token"}
             </button>
           </div>
-          <button
-            onClick={copyEndpoint}
-            className="mt-2 text-xs text-emerald-700 underline hover:no-underline dark:text-emerald-400"
-          >
-            Copy full endpoint URL with token
-          </button>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <button
+              onClick={() => copyEndpoint("transcript")}
+              className="text-xs text-emerald-700 underline hover:no-underline dark:text-emerald-400"
+            >
+              Copy transcript endpoint
+            </button>
+            <button
+              onClick={() => copyEndpoint("voice")}
+              className="text-xs text-emerald-700 underline hover:no-underline dark:text-emerald-400"
+            >
+              Copy voice endpoint
+            </button>
+          </div>
+          {createdSigningSecret && (
+            <div className="mt-4 border-t border-emerald-200 pt-3 dark:border-emerald-800">
+              <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                Signing secret
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 overflow-x-auto rounded bg-white px-3 py-2 text-xs text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+                  {createdSigningSecret}
+                </code>
+                <button
+                  onClick={() => copyToken(createdSigningSecret)}
+                  className="shrink-0 rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+                >
+                  Copy secret
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-300">
+                Give this to the dialer team. It proves incoming call notifications are genuine.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -172,6 +252,23 @@ export function WebhookPanel({
                 {canEdit && t.is_active && (
                   <button
                     onClick={() =>
+                      t.allow_unsigned
+                        ? startTransition(() => { void setWebhookUnsignedMode(t.id, false); })
+                        : confirm("Allow this dialer to send calls without signature verification? Use only when it cannot sign webhooks.") &&
+                          startTransition(() => { void setWebhookUnsignedMode(t.id, true); })
+                    }
+                    className={`rounded px-2 py-1 text-xs ${
+                      t.allow_unsigned
+                        ? "text-amber-700 hover:bg-amber-50 dark:text-amber-400"
+                        : "text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400"
+                    }`}
+                  >
+                    {t.allow_unsigned ? "Unsigned allowed" : "Signed"}
+                  </button>
+                )}
+                {canEdit && t.is_active && (
+                  <button
+                    onClick={() =>
                       startTransition(() => { void revokeWebhookToken(t.id); })
                     }
                     className="rounded px-2 py-1 text-xs text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
@@ -210,6 +307,17 @@ export function WebhookPanel({
     "customer_id": "CUST-1234",
     "order_id": "ORD-9876",
     "channel": "voice_transcript"
+  }'`}
+        </pre>
+        <pre className="mt-3 overflow-x-auto rounded-md bg-zinc-900 p-4 text-xs text-zinc-100">
+          {`curl -X POST "${voiceIngestUrl}?token=YOUR_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "call_id": "CALL-1001",
+    "recording_url": "https://dialer.example.com/recordings/CALL-1001.mp3",
+    "agent_name": "Priya Sharma",
+    "customer_id": "CUST-1234",
+    "source_system": "Exotel"
   }'`}
         </pre>
       </details>

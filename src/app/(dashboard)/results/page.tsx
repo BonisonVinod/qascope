@@ -48,15 +48,21 @@ export default async function ResultsPage() {
     latestBatchId = clientRow?.latest_upload_batch_id ?? null;
   }
 
-  // Pre-compute the conversation ids that belong to the latest batch.
-  // No batch yet → empty Results, with an explanation.
+  // Pre-compute the conversation ids that belong to the latest batch OR real-time streams (no batch).
   let batchConvIds: string[] = [];
-  if (latestBatchId && clientId) {
-    const { data: batchConvs } = await supabase
+  if (clientId) {
+    let query = supabase
       .from("conversations")
       .select("id")
-      .eq("client_id", clientId)
-      .eq("upload_batch_id", latestBatchId);
+      .eq("client_id", clientId);
+    if (latestBatchId) {
+      query = query.or(`upload_batch_id.eq.${latestBatchId},upload_batch_id.is.null`);
+    } else {
+      query = query.is("upload_batch_id", null);
+    }
+    const { data: batchConvs } = await query
+      .order("created_at", { ascending: false })
+      .limit(1000);
     batchConvIds = (batchConvs ?? []).map((c) => c.id);
   }
 
@@ -140,12 +146,12 @@ export default async function ResultsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Results</h1>
           <p className="mt-2 text-sm text-zinc-500">
-            {latestBatchId
-              ? `${totalScored} scored · ${unscored > 0 ? `${unscored} pending` : "all caught up"} · current upload`
-              : "No upload yet."}
+            {totalConvs > 0
+              ? `${totalScored} scored · ${unscored > 0 ? `${unscored} pending` : "all caught up"} · current workspace`
+              : "No conversations ingested yet."}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
-            Showing only conversations from your most recent upload. Older
+            Showing conversations from your latest upload batch and real-time streams. Older
             data lives in <Link href="/reports" className="underline-offset-2 hover:underline">Reports</Link>.
           </p>
         </div>

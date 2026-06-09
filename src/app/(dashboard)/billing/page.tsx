@@ -3,6 +3,8 @@ import { PLANS, PLAN_ORDER, formatUsd, getPlan } from "@/lib/billing/plans";
 import { getUsage } from "@/lib/billing/usage";
 import { formatMicroInr, formatTokens } from "@/lib/billing/openai-cost";
 import { PlanPicker } from "@/app/(dashboard)/billing/plan-picker";
+import { TopUpButton } from "@/app/(dashboard)/billing/topup-button";
+import { CancelButton } from "@/app/(dashboard)/billing/cancel-button";
 
 export const dynamic = "force-dynamic";
 
@@ -94,8 +96,10 @@ export default async function BillingPage() {
   );
 
   const currentPlan = getPlan(client?.active_plan ?? "pilot");
-  // Estimated monthly bill = seats × per-seat price (USD)
-  const estimatedMonthlyUsd = seatsUsed * currentPlan.pricePerSeatUsd;
+  // Estimated monthly bill
+  const estimatedMonthlyUsd = currentPlan.name === "team" 
+    ? currentPlan.flatMonthlyFeeInr 
+    : (seatsUsed * currentPlan.pricePerSeatInr);
 
   // Subscription history (last 5)
   const { data: history } = clientId
@@ -106,6 +110,16 @@ export default async function BillingPage() {
         .order("created_at", { ascending: false })
         .limit(5)
     : { data: [] };
+
+  // Fetch prepaid conversation balance
+  const { data: balanceData } = clientId
+    ? await supabase
+        .from("client_balances")
+        .select("conversations_remaining")
+        .eq("client_id", clientId)
+        .maybeSingle()
+    : { data: null };
+  const conversationsRemaining = balanceData?.conversations_remaining ?? 0;
 
   return (
     <div className="space-y-10">
@@ -125,25 +139,32 @@ export default async function BillingPage() {
           <p className="mt-1 text-2xl font-semibold">{currentPlan.label}</p>
           <p className="mt-1 text-xs text-zinc-400">{currentPlan.seatRange}</p>
           <p className="mt-1 text-sm text-zinc-500">{currentPlan.description}</p>
-          {currentPlan.pricePerSeatUsd > 0 ? (
+          {currentPlan.pricePerSeatInr > 0 || currentPlan.flatMonthlyFeeInr > 0 ? (
             <>
               <p className="mt-3 text-sm">
                 <strong className="text-lg">
-                  {formatUsd(currentPlan.pricePerSeatUsd)}
+                  {currentPlan.name === "team" ? formatUsd(currentPlan.flatMonthlyFeeInr) : formatUsd(currentPlan.pricePerSeatInr)}
                 </strong>
-                <span className="text-zinc-500"> / seat / month</span>
+                <span className="text-zinc-500">
+                  {currentPlan.name === "team" ? " / month flat" : " / seat / month"}
+                </span>
               </p>
               <p className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-400">
                 ≈ {formatUsd(estimatedMonthlyUsd)} / month
-                <span className="ml-1 text-xs font-normal text-zinc-500">
-                  ({seatsUsed} seat{seatsUsed === 1 ? "" : "s"})
-                </span>
+                {currentPlan.name !== "team" && (
+                  <span className="ml-1 text-xs font-normal text-zinc-500">
+                    ({seatsUsed} seat{seatsUsed === 1 ? "" : "s"})
+                  </span>
+                )}
               </p>
             </>
           ) : (
             <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
               Free trial
             </p>
+          )}
+          {currentPlan.name !== "pilot" && (
+            <CancelButton isAdmin={isAdmin} />
           )}
         </div>
 
@@ -204,6 +225,50 @@ export default async function BillingPage() {
               </>
             )}
           </p>
+        </div>
+      </section>
+
+      {/* Prepaid Conversation Credits (Always visible, but disabled if not on Plan B) */}
+      <section className={currentPlan.name !== "team" ? "opacity-60 grayscale-[0.5] pointer-events-none relative" : ""}>
+        {currentPlan.name !== "team" && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 dark:bg-zinc-950/40 backdrop-blur-[1px] rounded-2xl">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm font-medium">
+              <span className="text-zinc-500">🔒</span> Requires Plan B (Growth)
+            </div>
+          </div>
+        )}
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500 mb-1">
+          Conversation Credits
+        </h2>
+        <p className="max-w-2xl text-xs text-zinc-500 mb-4">
+          Plan B charges a flat platform fee, and you purchase conversation credits upfront. Unused credits roll over.
+        </p>
+        
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 relative">
+          <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col justify-center">
+            <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">
+              Available Balance
+            </p>
+            <div className="flex items-baseline gap-2">
+              <p className={`text-5xl font-black tracking-tight ${conversationsRemaining <= 0 ? 'text-red-600 dark:text-red-500' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                {conversationsRemaining.toLocaleString()}
+              </p>
+              <p className="text-sm font-medium text-zinc-500">credits</p>
+            </div>
+            {conversationsRemaining <= 0 && currentPlan.name === "team" && (
+              <p className="mt-3 text-xs font-semibold text-red-600 bg-red-50 px-3 py-2 rounded-md border border-red-100 dark:bg-red-950/30 dark:border-red-900/50 dark:text-red-400">
+                ⚠️ Your balance is depleted. Scoring is paused until you top up.
+              </p>
+            )}
+          </div>
+
+          <div className="lg:col-span-2">
+            <TopUpButton 
+              isAdmin={isAdmin} 
+              estimatedUsageCost={0} 
+              estimatedChats={0} 
+            />
+          </div>
         </div>
       </section>
 
@@ -304,10 +369,7 @@ export default async function BillingPage() {
           Plans & Pricing
         </h2>
         <p className="max-w-2xl text-xs text-zinc-500 mb-6">
-          Pricing is a <strong className="text-zinc-700 dark:text-zinc-300">retroactive volume discount</strong> — the
-          rate you qualify for applies to <em>every</em> seat from seat 1, not
-          just the extra ones. Upgrading to the next tier actually lowers your
-          total bill. Use the dynamic seat selector below to see total pricing and upgrades.
+          Use the seat selector below to see total pricing and upgrades. Plan A is billed per agent seat. Plan B is a flat platform fee for unlimited seats, with a small per-conversation usage charge.
         </p>
         <PlanPicker
           currentPlanName={client?.active_plan ?? "pilot"}

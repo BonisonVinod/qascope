@@ -26,25 +26,26 @@ export type PlanDefinition = {
   label: string;
   /** Conversations cap per month. Unlimited on paid tiers. */
   monthlyLimit: number;
-  /** USD per seat per month (0 = free). */
+  /** INR platform fee per seat per month (0 = free, 0 on Plan B = flat fee model). */
+  pricePerSeatInr: number;
+  /** @deprecated Use pricePerSeatInr. Kept so billing UI compiles without a migration. */
   pricePerSeatUsd: number;
-  /** Human-readable seat range for this tier. */
+  /** INR flat monthly platform fee (Plan B only, 0 for seat-based plans). */
+  flatMonthlyFeeInr: number;
+  /** INR per conversation scored (chat or voice call). 0 = no usage charge. */
+  pricePerConversationInr: number;
+  /** Human-readable pricing summary. */
   seatRange: string;
   /** Minimum seats to qualify for this tier (inclusive). */
   minSeats: number;
   /** Maximum seats for this tier (inclusive). -1 = unlimited. */
   maxSeats: number;
-  /** Seats included in base plan before overage kicks in. */
   seatsIncluded: number;
-  /** Whether the customer must bring their own QA-engine key. */
   byoOpenAiKey: boolean;
-  /** Whether this plan can use CRM integration features. */
   integrationsAvailable: boolean;
-  /** Email-support SLA commitment. */
   supportResponseSla: string;
   description: string;
   features: string[];
-  /** Razorpay plan id — set once created in Razorpay dashboard. */
   razorpayPlanId: string | null;
 };
 
@@ -55,27 +56,29 @@ const SUPPORT_SLA = "Email support, within 24 hours";
 export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   /**
    * Free trial. DB name: "pilot".
-   * QAScope covers the AI cost on this tier (capped at 500 conversations).
+   * QAScope covers AI cost on this tier (capped at 500 conversations).
    */
   pilot: {
     name: "pilot",
     label: "Pilot",
     monthlyLimit: 500,
+    pricePerSeatInr: 0,
     pricePerSeatUsd: 0,
-    seatRange: "Trial",
+    flatMonthlyFeeInr: 0,
+    pricePerConversationInr: 0,
+    seatRange: "Free Trial",
     minSeats: 1,
     maxSeats: 1,
     seatsIncluded: 1,
     byoOpenAiKey: false,
     integrationsAvailable: false,
     supportResponseSla: SUPPORT_SLA,
-    description: "Free trial — explore QAScope before you commit.",
+    description: "Explore QAScope free before you commit.",
     features: [
       "500 conversations / month (AI cost covered by QAScope)",
       "1 admin seat",
-      "Custom rubric + project-specific fatal rules",
+      "Custom rubric + fatal rules",
       "Full scoring & two-tier review workflow",
-      "Saved report templates",
       "CSV upload only (no CRM integrations)",
       SUPPORT_SLA,
     ],
@@ -83,29 +86,35 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   },
 
   /**
-   * Plan A — predictable agent-based billing at ₹800/seat/month. DB name: "starter".
+   * Plan A — Seat-based platform fee. DB name: "starter".
+   * ₹799/seat/month. Unlimited conversations. No per-conversation charge.
    */
   starter: {
     name: "starter",
-    label: "Plan A (Seat-Based)",
+    label: "Plan A — Seat Based",
     monthlyLimit: 1_000_000,
+    pricePerSeatInr: 799,
     pricePerSeatUsd: 799,
-    seatRange: "₹799/agent/mo",
+    flatMonthlyFeeInr: 0,
+    pricePerConversationInr: 0,
+    seatRange: "₹799 / agent / month",
     minSeats: 1,
     maxSeats: -1,
     seatsIncluded: 1,
     byoOpenAiKey: true,
-    integrationsAvailable: false,
+    integrationsAvailable: true,
     supportResponseSla: SUPPORT_SLA,
-    description: "For campaigns that prefer a predictable monthly cost per active agent.",
+    description: "Predictable monthly cost per active agent. Unlimited chat & voice audits.",
     features: [
-      "Unlimited conversations (bring your own AI key)",
       "₹799 / active agent seat / month",
-      "Beautiful Rubric Score Sheets",
-      "Custom rubric + fatal rules",
-      "Two-tier review workflow",
+      "Unlimited conversations — chat, email & voice calls",
+      "No per-conversation or per-minute charges",
+      "Bring your own AI provider key (BYOK)",
+      "CRM & Dialer integrations via Webhook",
+      "Custom rubric + fatal compliance rules",
+      "Two-tier human review workflow",
       "CSV bulk upload & automated scoring",
-      "Daily manager email reports & trends",
+      "Weekly QA reports & agent leaderboard",
       "Coaching note generator",
       SUPPORT_SLA,
     ],
@@ -113,65 +122,73 @@ export const PLANS: Record<CataloguePlanName, PlanDefinition> = {
   },
 
   /**
-   * Plan B — flexible usage-based billing at ₹4,999/mo flat platform fee + ₹1.50/chat. DB name: "team".
+   * Plan B — Usage-based platform fee. DB name: "team".
+   * ₹4,999/month flat + ₹1.50 per conversation (chat or voice call).
+   * Transcription API cost is on the customer's own key — not charged by QAScope.
    */
   team: {
     name: "team",
-    label: "Plan B (Usage-Based)",
+    label: "Plan B — Usage Based",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 4999,
-    seatRange: "₹4,999/mo flat + ₹1.50/chat",
+    pricePerSeatInr: 0,
+    pricePerSeatUsd: 4999,  // Plan B: flat fee mapped here for legacy billing UI
+    flatMonthlyFeeInr: 4999,
+    pricePerConversationInr: 1.5,
+    seatRange: "₹4,999/mo + ₹1.50/conversation",
     minSeats: 1,
     maxSeats: -1,
-    seatsIncluded: 9999, // unlimited seats
+    seatsIncluded: 9999,
     byoOpenAiKey: true,
     integrationsAvailable: true,
     supportResponseSla: SUPPORT_SLA,
-    description: "For high-volume campaigns or seasonal support centers with unlimited QA seats.",
+    description: "Flat monthly fee with pay-per-use scoring. Unlimited seats for your whole team.",
     features: [
       "₹4,999 / month flat platform base fee",
-      "₹1.50 / conversation scored (usage fee)",
-      "Unlimited QA & Admin logins (no account sharing limits)",
-      "Bring your own OpenAI / OpenRouter key",
-      "Freshdesk, Zoho Desk, Salesforce integrations (Webhook)",
-      "Live web API verification (fact-checking agent claims)",
-      "Saved custom report templates",
-      "Bulk team CSV import",
+      "₹1.50 per conversation scored (chat, email or voice call)",
+      "Unlimited QA & Admin seats — no headcount limits",
+      "Bring your own AI provider key (BYOK)",
+      "Voice transcription cost on your own API key",
+      "CRM & Dialer integrations via Webhook",
+      "Outbound score delivery to your CRM",
+      "Real-time critical fail alerts to managers",
+      "Weekly & custom-range QA reports",
+      "Coaching note generator",
       SUPPORT_SLA,
     ],
     razorpayPlanId: null,
   },
 
   /**
-   * Scale tier — kept for backwards compatibility (hidden from default rendering). DB name: "pro".
+   * Scale tier — hidden from billing page, available for enterprise deals only.
+   * DB name: "pro". Applied manually via DB for large clients.
    */
   pro: {
     name: "pro",
     label: "Scale Enterprise",
     monthlyLimit: 1_000_000,
-    pricePerSeatUsd: 1300,
-    seatRange: "100+ seats",
+    pricePerSeatInr: 0,
+    pricePerSeatUsd: 0,
+    flatMonthlyFeeInr: 0,
+    pricePerConversationInr: 0,
+    seatRange: "Custom pricing",
     minSeats: 100,
     maxSeats: -1,
     seatsIncluded: 100,
     byoOpenAiKey: true,
     integrationsAvailable: true,
     supportResponseSla: SUPPORT_SLA,
-    description: "For custom high-scale operations across multiple BPO clients.",
+    description: "Custom pricing for large BPO operations.",
     features: [
-      "Unlimited conversations (bring your own AI key)",
-      "Custom volume-based pricing",
       "Everything in Plan B",
-      "Salesforce Service Cloud + Zendesk connectors",
-      "Custom rubric templates per campaign",
-      "Priority onboarding session",
+      "Custom volume pricing",
+      "Priority onboarding & dedicated support",
       SUPPORT_SLA,
     ],
     razorpayPlanId: null,
   },
 };
 
-/** Order in which plans are rendered on /billing. */
+/** Plans shown on /billing — Scale (pro) is hidden, available only via direct deal. */
 export const PLAN_ORDER: CataloguePlanName[] = ["pilot", "starter", "team"];
 
 export function getPlan(name: PlanName | null | undefined): PlanDefinition {
@@ -180,14 +197,13 @@ export function getPlan(name: PlanName | null | undefined): PlanDefinition {
   return PLANS.pilot;
 }
 
-/** Format a Rupee (INR) amount. Returns "Free" for ₹0. */
-export function formatUsd(amount: number): string {
+/** Format an INR amount. Returns "Free" for ₹0. */
+export function formatInr(amount: number): string {
   if (amount === 0) return "Free";
   return `₹${amount.toLocaleString("en-IN")}`;
 }
 
-/** Format a Rupee (INR) amount. */
-export function formatInr(amount: number): string {
-  if (amount === 0) return "Free";
-  return `₹${amount.toLocaleString("en-IN")}`;
+/** @deprecated Use formatInr instead. Alias kept so existing imports compile. */
+export function formatUsd(amount: number): string {
+  return formatInr(amount);
 }

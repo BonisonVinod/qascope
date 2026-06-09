@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PROVIDER_INFO, type LlmProvider } from "@/lib/llm/client";
+import { inferAudioFilename } from "@/lib/voice/transcription-utils";
 
 export type LlmSettingsState =
   | undefined
@@ -261,5 +262,122 @@ export async function testLlmSettings(
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     return { ok: false, error: `Provider test failed: ${message}` };
+  }
+}
+
+function tinySilentWav(): Buffer {
+  const sampleRate = 8000;
+  const seconds = 1;
+  const samples = sampleRate * seconds;
+  const dataSize = samples * 2;
+  const buffer = Buffer.alloc(44 + dataSize);
+
+  buffer.write("RIFF", 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write("WAVE", 8);
+  buffer.write("fmt ", 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write("data", 36);
+  buffer.writeUInt32LE(dataSize, 40);
+  return buffer;
+}
+
+export async function testVoiceTranscriptionSettings(
+  _prev: LlmSettingsState,
+  formData: FormData,
+): Promise<LlmSettingsState> {
+  const adminUser = await loadAdminUser();
+  if (!adminUser.ok) return { ok: false, error: adminUser.error };
+
+  const provider = readProvider(formData);
+  if (!provider) return { ok: false, error: "Pick a provider first." };
+  if (provider === "bedrock") {
+    return {
+      ok: false,
+      error: "Bedrock is not supported for voice transcription in this version.",
+    };
+  }
+
+  const admin = createAdminClient();
+  const { data: existingClient } = await admin
+    .from("clients")
+    .select("llm_api_key")
+    .eq("id", adminUser.clientId)
+    .single();
+
+  const apiKey =
+    String(formData.get("apiKey") ?? "").trim() || existingClient?.llm_api_key || "";
+  const baseUrl =
+    String(formData.get("baseUrl") ?? "").trim() ||
+    PROVIDER_INFO[provider].defaultBaseUrl;
+  const configuredModel =
+    String(formData.get("model") ?? "").trim() ||
+    PROVIDER_INFO[provider].defaultModel;
+  const model =
+    provider === "openrouter"
+      ? "openai/whisper-large-v3"
+      : configuredModel.includes("transcribe") || configuredModel.includes("whisper")
+        ? configuredModel
+        : "gpt-4o-mini-transcribe";
+
+  if (!apiKey) return { ok: false, error: "API key is required." };
+  if (!baseUrl && (provider === "custom" || provider === "azure")) {
+    return { ok: false, error: `${provider} requires a base URL.` };
+  }
+
+  try {
+    if (provider === "openrouter") {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/audio/transcriptions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://qascope-sdiz.vercel.app",
+          "X-Title": "QAScope",
+        },
+        body: JSON.stringify({
+          input_audio: { data: tinySilentWav().toString("base64"), format: "wav" },
+          model,
+        }),
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`HTTP ${response.status}: ${body.slice(0, 500)}`);
+      }
+      return { ok: true, message: `Voice transcription test passed for ${model}.` };
+    }
+
+    const client = new OpenAI({
+      apiKey,
+      baseURL: baseUrl || undefined,
+      timeout: 30_000,
+      maxRetries: 0,
+    });
+    const file = await OpenAI.toFile(tinySilentWav(), inferAudioFilename("voice-capability", "audio/wav"), {
+      type: "audio/wav",
+    });
+    await client.audio.transcriptions.create({
+      model,
+      file,
+      response_format: "json",
+      temperature: 0,
+    });
+
+    return {
+      ok: true,
+      message: `Voice transcription test passed for ${model}.`,
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      error: `Voice transcription test failed: ${message}`,
+    };
   }
 }

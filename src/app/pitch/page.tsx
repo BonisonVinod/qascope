@@ -9,6 +9,8 @@ export default function PitchPage() {
   const agentPresets = [25, 50, 100, 200];
   const [selectedAgents, setSelectedAgents] = useState<number>(50);
   const [salary] = useState<number>(35000);
+  const [isVoice, setIsVoice] = useState<boolean>(true);
+  const [aht, setAht] = useState<number>(4);
   
   // Lead form state
   const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
@@ -63,10 +65,12 @@ export default function PitchPage() {
   const traditionalSoftwareSpend = 10000; // Average legacy platform fee
   const traditionalTotalSpend = traditionalLaborSpend + traditionalSoftwareSpend;
 
+  const apiUnitCost = isVoice ? 0.20 + aht * 0.50 : 0.20;
+
   // QAScope Automated Audit Setup
-  // Plan A: ₹799/agent/month + Direct Cloud API cost (~₹0.20/convo)
+  // Plan A: ₹799/agent/month + Direct Cloud API cost
   const qascopePlatformSpend = selectedAgents * 799;
-  const qascopeCloudInfraSpend = totalConversations * 0.20;
+  const qascopeCloudInfraSpend = totalConversations * apiUnitCost;
   const qascopeTotalSpend = qascopePlatformSpend + qascopeCloudInfraSpend;
 
   // Net Savings
@@ -88,8 +92,8 @@ We built QAScope to solve this. It is an automated Quality Assurance platform ca
 Here is how we help campaigns:
 1. 📈 100% Audit Coverage: Continuous, touchless auditing of every single email, chat, and voice transcript.
 2. 🛡️ SOP Adherence: Catch compliance errors, missed disclosures, or RBI skips instantly.
-3. 📉 50% Auditing Cost Reduction: A typical 50-agent campaign saves ₹1.3 Lakhs+ every single month in manual labor costs while getting 20x better coverage. 
-4. ⚙️ Direct Cloud Billing: Pay raw infrastructure cloud processing costs directly (~₹0.20/convo) with zero software markup.
+3. 📉 Cost Reduction: A typical ${selectedAgents}-agent campaign saves ₹${netMonthlySavings.toLocaleString('en-IN')} every single month in manual labor costs while getting 20x better coverage. 
+4. ⚙️ Direct Cloud Billing: Pay raw infrastructure cloud processing costs directly (~₹${apiUnitCost.toFixed(2)}/convo${isVoice ? ` including ${aht}m AHT Whisper transcription` : ""}) with zero software markup.
 
 We can set up a secure sandbox workspace, calibrate your exact campaign SOP, and audit 100 test conversations for free.
 
@@ -114,7 +118,7 @@ Rather than random sampling, QAScope continuously scores 100% of customer intera
 Here are the Campaign Economics for a ${selectedAgents}-Agent Team:
 * Traditional QA Cost (${traditionalAuditors} Auditors @ ₹${salary.toLocaleString('en-IN')}/mo + platform): ₹${traditionalTotalSpend.toLocaleString('en-IN')} / month
 * QAScope Platform Cost (Plan A Seat-Based): ₹${qascopePlatformSpend.toLocaleString('en-IN')} / month (₹799/agent)
-* Cloud Ingestion Processing Cost (~₹0.20/convo raw cost): ₹${qascopeCloudInfraSpend.toLocaleString('en-IN')} / month
+* Cloud Ingestion Processing Cost (~₹${apiUnitCost.toFixed(2)}/convo raw cost${isVoice ? ` including ${aht}m AHT Whisper` : ""}): ₹${qascopeCloudInfraSpend.toLocaleString('en-IN')} / month
 * NET MARGIN SAVED: ₹${netMonthlySavings.toLocaleString('en-IN')} / month (Save ${percentSaved}% in margins while getting 20x better coverage!)
 
 Because we operate on a direct cloud connection model, we charge zero markup on transaction processing. Your transcripts are processed securely through your own OpenAI/OpenRouter API credentials, guaranteeing 100% data sovereignty and Mumbai AWS compliant residency.
@@ -261,7 +265,7 @@ Founder, QAScope
           </div>
 
           {/* Quick presets selectors */}
-          <div className="flex justify-center gap-3 mb-8">
+          <div className="flex justify-center gap-3 mb-4">
             {agentPresets.map((preset) => (
               <button
                 key={preset}
@@ -275,6 +279,62 @@ Founder, QAScope
                 {preset} Agents
               </button>
             ))}
+          </div>
+
+          {/* Voice vs Non-Voice toggle & AHT slider for sales pitch */}
+          <div className="max-w-md mx-auto mb-8 bg-zinc-950/40 rounded-xl p-4 border border-zinc-800 space-y-4">
+            <div className="space-y-1.5">
+              <span className="text-[10px] uppercase text-zinc-500 font-mono tracking-wider font-bold">Campaign Channel Type</span>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsVoice(true)}
+                  className={`rounded-lg py-2 text-xs font-bold tracking-wide transition flex items-center justify-center gap-2 ${
+                    isVoice
+                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+                      : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <span>📞</span> Voice
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsVoice(false)}
+                  className={`rounded-lg py-2 text-xs font-bold tracking-wide transition flex items-center justify-center gap-2 ${
+                    !isVoice
+                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+                      : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <span>💬</span> Chat / Email
+                </button>
+              </div>
+            </div>
+
+            {isVoice && (
+              <div className="space-y-2 transition-all duration-300 border-t border-zinc-900 pt-3">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-zinc-400">Average Handling Time (AHT)</span>
+                  <span className="text-teal-400 font-mono font-bold">{aht} minutes</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={aht}
+                  onChange={(e) => setAht(parseInt(e.target.value))}
+                  className="w-full h-1 bg-zinc-850 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                />
+                <div className="flex justify-between text-[9px] text-zinc-500 font-mono">
+                  <span>1m</span>
+                  <span>10m</span>
+                </div>
+                <p className="text-[9px] text-zinc-500 font-mono text-center">
+                  Estimated Whisper transcription raw cost: ₹{(aht * 0.50).toFixed(2)} per call
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Cost Ledger Table */}
@@ -325,7 +385,7 @@ Founder, QAScope
                   <td className="py-4 pr-4 text-zinc-300">
                     <span className="block font-bold">Direct Cloud Processing (BYOK)</span>
                     <span className="text-[10px] text-zinc-500 font-normal">
-                      Raw computation infrastructure cost (~₹0.20 per convo audit, zero vendor markup)
+                      Raw computation infrastructure cost (~₹{apiUnitCost.toFixed(2)} per convo audit{isVoice ? ` including ${aht}m Whisper` : ""}, zero vendor markup)
                     </span>
                   </td>
                   <td className="py-4 pr-4 text-center text-zinc-400">

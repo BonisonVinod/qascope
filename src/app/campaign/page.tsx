@@ -20,6 +20,8 @@ export default function CampaignPage() {
   const [auditors, setAuditors] = useState<number>(5);
   const [ticketsPerAgent, setTicketsPerAgent] = useState<number>(440);
   const [conversations, setConversations] = useState<number>(22000);
+  const [isVoice, setIsVoice] = useState<boolean>(true);
+  const [aht, setAht] = useState<number>(4);
 
   // Auto-adjust conversations when agents change
   useEffect(() => {
@@ -28,18 +30,20 @@ export default function CampaignPage() {
     setAuditors(Math.max(1, Math.ceil(agents / 10)));
   }, [agents, ticketsPerAgent]);
 
+  const apiUnitCost = isVoice ? 0.20 + aht * 0.50 : 0.20;
+
   // Plan A: ₹799/agent/mo + Cloud API infrastructure cost
-  const planACost = agents * 799 + conversations * 0.20;
+  const planACost = agents * 799 + conversations * apiUnitCost;
   
   // Plan B: ₹4,999 flat platform + ₹1.50/convo usage + Cloud API infrastructure cost
-  const planBCost = 4999 + conversations * (1.50 + 0.20);
+  const planBCost = 4999 + conversations * (1.50 + apiUnitCost);
   
   const isPlanACheaper = planACost < planBCost;
   const qascopeTotalSpend = isPlanACheaper ? planACost : planBCost;
   const recommendedPlanLabel = isPlanACheaper ? "Plan A" : "Plan B";
 
   const traditionalSpend = auditors * salary;
-  const qascopeInfraSpend = conversations * 0.20; // ₹0.20 per conversation raw API cloud cost
+  const qascopeInfraSpend = conversations * apiUnitCost; // Dynamic raw API cloud cost
   const netMonthlySavings = traditionalSpend - qascopeTotalSpend;
 
   // Form Submission State
@@ -427,6 +431,61 @@ export default function CampaignPage() {
           <div className="lg:col-span-2 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 space-y-6">
             <h5 className="text-lg font-bold text-white border-b border-zinc-800 pb-3 font-mono">Campaign Configuration</h5>
 
+            {/* Toggle: Voice vs Non-Voice */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase text-zinc-500 font-mono tracking-wider font-bold">Campaign Channel Type</span>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsVoice(true)}
+                  className={`rounded-lg py-2.5 text-xs font-bold tracking-wide transition flex items-center justify-center gap-2 ${
+                    isVoice
+                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+                      : "bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <span>📞</span> Voice Campaign
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsVoice(false)}
+                  className={`rounded-lg py-2.5 text-xs font-bold tracking-wide transition flex items-center justify-center gap-2 ${
+                    !isVoice
+                      ? "bg-teal-500 text-zinc-950 shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+                      : "bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  <span>💬</span> Chat / Email
+                </button>
+              </div>
+            </div>
+
+            {/* Slider: AHT (Only for Voice) */}
+            {isVoice && (
+              <div className="space-y-2 transition-all duration-300">
+                <div className="flex justify-between text-sm font-semibold">
+                  <span className="text-zinc-300">Average Handling Time (AHT)</span>
+                  <span className="text-teal-400 font-mono">{aht} minutes</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={aht}
+                  onChange={(e) => setAht(parseInt(e.target.value))}
+                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                />
+                <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+                  <span>1 minute</span>
+                  <span>10 minutes</span>
+                </div>
+                <p className="text-[10px] text-zinc-500 font-mono">
+                  Includes estimated Whisper transcription: ₹{(aht * 0.50).toFixed(2)} per call (@ ₹0.50/min raw cost)
+                </p>
+              </div>
+            )}
+
             {/* Slider 1: Agents */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm font-semibold">
@@ -557,7 +616,7 @@ export default function CampaignPage() {
                       <span>₹{Math.round(planACost).toLocaleString("en-IN")}/mo</span>
                     </div>
                     <div className="text-[9px] text-zinc-500 mt-0.5">
-                      ₹799/agent × {agents} agents + ₹{Math.round(conversations * 0.20).toLocaleString("en-IN")} tokens
+                      ₹799/agent × {agents} agents + ₹{Math.round(conversations * apiUnitCost).toLocaleString("en-IN")} cloud processing
                     </div>
                   </div>
                   
@@ -568,7 +627,7 @@ export default function CampaignPage() {
                       <span>₹{Math.round(planBCost).toLocaleString("en-IN")}/mo</span>
                     </div>
                     <div className="text-[9px] text-zinc-500 mt-0.5">
-                      ₹4,999 flat platform + ₹1.50/convo (₹{Math.round(conversations * 1.50).toLocaleString("en-IN")} usage + ₹{Math.round(conversations * 0.20).toLocaleString("en-IN")} infra)
+                      ₹4,999 flat platform + ₹1.50/convo (₹{Math.round(conversations * 1.50).toLocaleString("en-IN")} usage + ₹{Math.round(conversations * apiUnitCost).toLocaleString("en-IN")} infra)
                     </div>
                   </div>
                 </div>

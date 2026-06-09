@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import {
   saveLlmSettings,
   testLlmSettings,
+  testVoiceTranscriptionSettings,
   type LlmSettingsState,
 } from "./llm-actions";
 import {
@@ -32,6 +33,10 @@ export function LlmSettingsForm({
     LlmSettingsState,
     FormData
   >(testLlmSettings, undefined);
+  const [voiceTestState, voiceTestAction, voiceTestPending] = useActionState<
+    LlmSettingsState,
+    FormData
+  >(testVoiceTranscriptionSettings, undefined);
 
   const [provider, setProvider] = useState<LlmProvider>(
     current.provider ?? "openrouter",
@@ -237,6 +242,14 @@ export function LlmSettingsForm({
         >
           {testPending ? "Testing..." : "Test provider"}
         </button>
+        <button
+          type="submit"
+          formAction={voiceTestAction}
+          disabled={voiceTestPending}
+          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          {voiceTestPending ? "Testing voice..." : "Test voice"}
+        </button>
         {state?.ok === true && (
           <span className="text-xs text-emerald-600 dark:text-emerald-400">
             {state.message}
@@ -255,6 +268,16 @@ export function LlmSettingsForm({
         {testState?.ok === false && (
           <span className="text-xs text-red-600 dark:text-red-400">
             {testState.error}
+          </span>
+        )}
+        {voiceTestState?.ok === true && (
+          <span className="text-xs text-emerald-600 dark:text-emerald-400">
+            {voiceTestState.message}
+          </span>
+        )}
+        {voiceTestState?.ok === false && (
+          <span className="text-xs text-red-600 dark:text-red-400">
+            {voiceTestState.error}
           </span>
         )}
       </div>

@@ -16,7 +16,7 @@ import {
   type ScoredCriterion,
 } from "./scoring-math";
 import { computeSlaDeadline } from "./sla";
-import { maybeSendLowScoreAlert } from "./alert";
+import { dispatchAlerts } from "./alert";
 import { runVerification } from "@/lib/verification/verify";
 
 type SB = SupabaseClient<Database>;
@@ -43,7 +43,7 @@ export async function scoreConversation(
   // 1. Load the conversation
   const { data: conv, error: convErr } = await supabase
     .from("conversations")
-    .select("id, client_id, channel, transcript_text, agent_id")
+    .select("id, client_id, channel, transcript_text, agent_id, external_conversation_id")
     .eq("id", conversationId)
     .single();
   if (convErr || !conv) {
@@ -64,7 +64,7 @@ export async function scoreConversation(
   // 2. Load the client's default rubric + criteria, plus SLA & pass threshold.
   const { data: client } = await supabase
     .from("clients")
-    .select("id, name, sla_hours, pass_threshold, review_confidence_threshold")
+    .select("id, name, sla_hours, pass_threshold, review_confidence_threshold, active_plan")
     .eq("id", conv.client_id)
     .single();
   const slaHours = client?.sla_hours ?? 24;
@@ -75,12 +75,25 @@ export async function scoreConversation(
 
   const { data: rubric, error: rubricErr } = await supabase
     .from("qa_rubrics")
-    .select("id")
+    .select("id, name")
     .eq("client_id", conv.client_id)
     .eq("is_default", true)
     .single();
   if (rubricErr || !rubric) {
     return { ok: false, error: "No default rubric for this client." };
+  }
+
+  // 2b. Enforce prepaid quota for Plan B (team)
+  if (client?.active_plan === "team") {
+    const { data: balance } = await supabase
+      .from("client_balances")
+      .select("conversations_remaining")
+      .eq("client_id", conv.client_id)
+      .maybeSingle();
+
+    if (!balance || balance.conversations_remaining <= 0) {
+      return { ok: false, error: "Quota Exceeded: Please purchase more conversation credits on the Billing page to continue scoring." };
+    }
   }
 
   const { data: criteria, error: critErr } = await supabase
@@ -282,8 +295,12 @@ export async function scoreConversation(
     });
   }
 
-  // 8b. Fire low-score alert email (async/fire-and-forget — never blocks scoring)
-  void maybeSendLowScoreAlert({
+  // 8b. Fire alerts (async/fire-and-forget — never blocks scoring)
+  const failedCriteria = results
+    .filter((r) => r.result.score === 0)
+    .map((r) => r.criterion.name);
+
+  void dispatchAlerts({
     supabase,
     clientId: conv.client_id,
     clientName,
@@ -292,15 +309,18 @@ export async function scoreConversation(
     agentName,
     totalScore: roundedTotal,
     passThreshold,
+    status,
     conversationDate: new Date().toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
       timeZone: "Asia/Kolkata",
     }),
+    failedCriteria,
   });
 
   // 9. Generate coaching note (best effort - non-fatal if it fails)
+  let finalCoachingNote: string | null = null;
   try {
     const coachingNote = await chatText({
       system: COACHING_SYSTEM_INSTRUCTION,
@@ -318,12 +338,47 @@ export async function scoreConversation(
       clientId: conv.client_id,
       feature: "coaching",
     });
+    finalCoachingNote = coachingNote.trim();
     await supabase
       .from("qa_scores")
-      .update({ coaching_note: coachingNote.trim() })
+      .update({ coaching_note: finalCoachingNote })
       .eq("id", scoreRow.id);
   } catch (e) {
     console.error("Coaching note generation failed:", e);
+  }
+
+  // 10. Dispatch Outbound Webhooks (async)
+  try {
+    const { dispatchOutboundWebhook } = await import("@/lib/webhooks/outbound");
+    void dispatchOutboundWebhook(supabase, conv.client_id, scoreRow.id, {
+      event: "audit.completed",
+      data: {
+        conversation_id: conversationId,
+        external_conversation_id: conv.external_conversation_id ?? null,
+        agent_name: agentName,
+        total_score: roundedTotal,
+        has_critical_fail: status === "critical_fail",
+        coaching_note: finalCoachingNote,
+        rubric_name: rubric.name,
+        scored_at: new Date().toISOString(),
+      },
+    });
+  } catch (e) {
+    console.error("Outbound webhook dispatch failed:", e);
+  }
+
+  // 11. Deduct 1 credit from ledger for Plan B (team) customers
+  if (client?.active_plan === "team") {
+    const { error: rpcErr } = await supabase.rpc("add_balance_transaction", {
+      p_client_id: conv.client_id,
+      p_amount: -1,
+      p_type: "usage",
+      p_ref: scoreRow.id,
+      p_desc: `Scored conversation ${conversationId}`
+    });
+    if (rpcErr) {
+      console.error("Failed to deduct balance for scored conversation:", rpcErr);
+    }
   }
 
   return {

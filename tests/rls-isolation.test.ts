@@ -50,7 +50,7 @@ async function createTestUser(
     client_id: clientId,
     name: email,
     email,
-    role,
+    role: role as any,
   });
   if (pubErr) throw new Error(`insert public.users failed: ${pubErr.message}`);
   return userId;

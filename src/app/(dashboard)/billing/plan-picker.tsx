@@ -13,6 +13,8 @@ type Props = {
 
 export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
   const [seats, setSeats] = useState<number>(Math.max(1, seatsUsed));
+  const [callsPerDay, setCallsPerDay] = useState<number>(30);
+  const [workingDays, setWorkingDays] = useState<number>(22);
 
   function handleIncrement() {
     setSeats((prev) => prev + 1);
@@ -112,6 +114,42 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
           </div>
         </div>
 
+        {/* Usage Estimator Inputs for Plan B */}
+        <div className="relative z-10 mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-zinc-200/50 pt-6 dark:border-zinc-800/50">
+          <div>
+            <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block mb-2">
+              Avg Conversations / Day / Agent
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="1"
+                max="200"
+                value={callsPerDay}
+                onChange={(e) => setCallsPerDay(parseInt(e.target.value, 10))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-zinc-200 accent-teal-500 dark:bg-zinc-800 dark:accent-teal-400"
+              />
+              <span className="w-12 text-right text-sm font-bold text-zinc-900 dark:text-zinc-100">{callsPerDay}</span>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider block mb-2">
+              Working Days / Month
+            </label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="1"
+                max="31"
+                value={workingDays}
+                onChange={(e) => setWorkingDays(parseInt(e.target.value, 10))}
+                className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-zinc-200 accent-indigo-500 dark:bg-zinc-800 dark:accent-indigo-400"
+              />
+              <span className="w-12 text-right text-sm font-bold text-zinc-900 dark:text-zinc-100">{workingDays}</span>
+            </div>
+          </div>
+        </div>
+
         {/* Range Slider for visual feedback */}
         <div className="mt-6">
           <input
@@ -143,9 +181,13 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
           const isExcluded = isAboveMax || (p === "pilot" && seats > 1);
 
           // Calculate seat billing pricing details
-          // Plan B is a flat platform fee (no per-seat multiplication)
+          // Plan B is a flat platform fee upfront, usage is calculated as an estimate
           const chargedSeats = plan.name === "team" ? 1 : Math.max(plan.minSeats, seats);
-          const monthlyTotal = plan.name === "team" ? plan.pricePerSeatUsd : (plan.pricePerSeatUsd * chargedSeats);
+          const monthlyTotal = plan.name === "team" ? plan.flatMonthlyFeeInr : (plan.pricePerSeatInr * chargedSeats);
+
+          const totalMonthlyConversations = seats * callsPerDay * workingDays;
+          const estimatedUsageCost = totalMonthlyConversations * plan.pricePerConversationInr;
+          const estimatedTotalCost = monthlyTotal + estimatedUsageCost;
 
           // Highlight the plan card recommended for this seat tier
           const isRecommended =
@@ -205,18 +247,18 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
 
                 <div className="border-b border-zinc-100 pb-4 dark:border-zinc-800/80">
                   <p className="text-4xl font-black text-zinc-900 dark:text-white tracking-tight">
-                    {plan.pricePerSeatUsd === 0 ? (
+                    {plan.pricePerSeatInr === 0 && plan.flatMonthlyFeeInr === 0 ? (
                       "Free"
                     ) : plan.name === "team" ? (
                       <>
-                        {formatUsd(plan.pricePerSeatUsd)}
+                        {formatUsd(plan.flatMonthlyFeeInr)}
                         <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">
                           {" "}/ month flat
                         </span>
                       </>
                     ) : (
                       <>
-                        {formatUsd(plan.pricePerSeatUsd)}
+                        {formatUsd(plan.pricePerSeatInr)}
                         <span className="text-xs font-normal text-zinc-400 dark:text-zinc-500">
                           {" "}/ seat / mo
                         </span>
@@ -224,14 +266,40 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
                     )}
                   </p>
 
-                  {!isExcluded && plan.pricePerSeatUsd > 0 && (
-                    <div className="mt-2 space-y-0.5">
-                      <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400">
-                        Total: {formatUsd(monthlyTotal)} / mo
-                      </p>
-                      <p className="text-[11px] text-zinc-400">
+                  {!isExcluded && (plan.pricePerSeatInr > 0 || plan.flatMonthlyFeeInr > 0) && (
+                    <div className="mt-2 space-y-2 border-t border-zinc-100 pt-3 dark:border-zinc-800/80">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                          Base Fee
+                        </p>
+                        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                          {formatUsd(monthlyTotal)} / mo
+                        </p>
+                      </div>
+
+                      {plan.name === "team" && (
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                            Est. Usage
+                          </p>
+                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            +{formatUsd(estimatedUsageCost)} / mo
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between rounded-lg bg-teal-50 px-3 py-2 dark:bg-teal-950/30">
+                        <p className="text-xs font-extrabold text-teal-800 dark:text-teal-400">
+                          {plan.name === "team" ? "Est. Total" : "Total"}
+                        </p>
+                        <p className="text-sm font-extrabold text-teal-800 dark:text-teal-400">
+                          {formatUsd(plan.name === "team" ? estimatedTotalCost : monthlyTotal)} / mo
+                        </p>
+                      </div>
+
+                      <p className="text-[10px] text-zinc-400 leading-tight">
                         {plan.name === "team" ? (
-                          <span>Flat base fee (covers unlimited seats)</span>
+                          <span>Based on {seats} agents scoring {callsPerDay} chats/day over {workingDays} days. You only pay the base fee today.</span>
                         ) : isBelowMin ? (
                           <span>Charged at {plan.minSeats}-seat minimum</span>
                         ) : (
@@ -289,6 +357,7 @@ export function PlanPicker({ currentPlanName, seatsUsed, isAdmin }: Props) {
                     currentPlan={currentPlanName}
                     seatCount={chargedSeats}
                     isAdmin={isAdmin}
+                    prepaidAmountInr={p === "team" ? estimatedUsageCost : 0}
                   />
                 )}
               </div>

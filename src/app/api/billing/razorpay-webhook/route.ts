@@ -163,6 +163,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         break;
       }
 
+      case "order.paid": {
+        const orderEntity = (payload?.order as Record<string, unknown>)?.entity as Record<string, any>;
+        if (orderEntity?.notes?.type === "topup" && orderEntity?.notes?.client_id && orderEntity?.notes?.credits) {
+          const clientId = orderEntity.notes.client_id;
+          const credits = parseInt(orderEntity.notes.credits, 10);
+          const orderId = orderEntity.id;
+
+          if (!isNaN(credits) && credits > 0) {
+            // Check if we already processed this order to be safe
+            const { data: existing } = await supabase
+              .from("balance_transactions")
+              .select("id")
+              .eq("reference_id", orderId)
+              .maybeSingle();
+
+            if (!existing) {
+              await supabase.rpc("add_balance_transaction", {
+                p_client_id: clientId,
+                p_amount: credits,
+                p_type: "purchase",
+                p_ref: orderId,
+                p_desc: `Purchased ${credits} conversation credits`
+              });
+              console.log(`[razorpay-webhook] Added ${credits} credits to client ${clientId}`);
+            }
+          }
+        }
+        break;
+      }
+
       default:
         // Unknown event — acknowledge but do nothing
         break;

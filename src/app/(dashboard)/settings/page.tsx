@@ -3,6 +3,7 @@ import { ReviewSettingsForm } from "./review-settings-form";
 import { LlmSettingsForm } from "./llm-settings-form";
 import { DangerZone } from "./danger-zone";
 import { WebhookPanel } from "./webhook-panel";
+import { OutboundWebhookPanel } from "./outbound-webhook-panel";
 import { DataSourcePanel } from "./datasource-panel";
 import type { LlmProvider } from "@/lib/llm/client";
 
@@ -44,7 +45,15 @@ export default async function SettingsPage() {
   const { data: webhookTokens } = clientId
     ? await supabase
         .from("webhook_tokens")
-        .select("id, name, is_active, created_at, last_used_at")
+        .select("id, name, is_active, created_at, last_used_at, allow_unsigned")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
+    : { data: [] };
+
+  const { data: outboundWebhooks } = clientId
+    ? await supabase
+        .from("outbound_webhooks")
+        .select("id, url, is_active, created_at")
         .eq("client_id", clientId)
         .order("created_at", { ascending: false })
     : { data: [] };
@@ -202,6 +211,22 @@ export default async function SettingsPage() {
           />
         </div>
       </section>
+
+      <section>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+          Outbound Webhooks (n8n / Zapier)
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+          Automatically send scored audits back to your CRM or dialer. QAScope will POST the score, critical fails, and coaching notes to these URLs every time an audit is completed.
+        </p>
+        <div className="mt-3 max-w-2xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <OutboundWebhookPanel
+            webhooks={outboundWebhooks ?? []}
+            canEdit={canEdit}
+          />
+        </div>
+      </section>
+
       {/* Live Verification section */}
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">

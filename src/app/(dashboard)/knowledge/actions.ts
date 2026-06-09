@@ -65,12 +65,18 @@ export async function uploadDocumentAction(
   // Load user's workspace (client_id)
   const { data: appUser, error: appUserErr } = await supabase
     .from("users")
-    .select("client_id")
+    .select("client_id, role")
     .eq("id", user.id)
     .single();
   if (appUserErr || !appUser) {
     return { ok: false, error: "Could not load your account." };
   }
+
+  // Authorization: only admins and QA managers can upload documents
+  if (appUser.role !== "admin" && appUser.role !== "qa_manager") {
+    return { ok: false, error: "You don't have permission to upload knowledge documents." };
+  }
+
   const workspaceId = appUser.client_id;
 
   // Read file content

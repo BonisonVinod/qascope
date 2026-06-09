@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { ScoreStatus } from "@/lib/database.types";
 import { AppealButton } from "./appeal-button";
 
@@ -37,6 +38,28 @@ export default async function ResultDetailPage(props: { params: Params }) {
     .eq("id", score.conversation_id)
     .single();
   if (!conv) notFound();
+  
+  // Check if this conversation is a voice transcript and has an audio recording
+  let audioUrl: string | null = null;
+  if (conv.channel === "voice_transcript") {
+    const adminSupabase = createAdminClient();
+    const { data: voiceJob } = await adminSupabase
+      .from("voice_audit_jobs")
+      .select("recording_url, storage_path")
+      .eq("conversation_id", conv.id)
+      .maybeSingle();
+
+    if (voiceJob) {
+      if (voiceJob.storage_path) {
+        const { data: signedData } = await adminSupabase.storage
+          .from("voice-recordings")
+          .createSignedUrl(voiceJob.storage_path, 3600);
+        audioUrl = signedData?.signedUrl ?? null;
+      } else if (voiceJob.recording_url) {
+        audioUrl = voiceJob.recording_url;
+      }
+    }
+  }
 
   let agentName = "Unknown";
   let teamName: string | null = null;
@@ -228,6 +251,19 @@ export default async function ResultDetailPage(props: { params: Params }) {
           ))}
         </div>
       </section>
+
+      {audioUrl && (
+        <section>
+          <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">
+            Call Recording
+          </h2>
+          <div className="mt-2 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+            <audio controls src={audioUrl} className="w-full">
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-500">

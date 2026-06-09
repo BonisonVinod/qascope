@@ -27,6 +27,7 @@ type CheckoutResult =
 export async function createRazorpaySubscription(
   planName: PlanName,
   requestedQuantity?: number,
+  prepaidAmountInr?: number,
 ): Promise<CheckoutResult> {
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
     return { error: "Payment gateway not configured. Contact support." };
@@ -72,6 +73,31 @@ export async function createRazorpaySubscription(
     if (requestedQuantity && requestedQuantity > 0) {
       finalQuantity = Math.max(finalQuantity, requestedQuantity);
     }
+    
+    // Plan B (team) is a flat fee, so quantity is always 1
+    if (plan.name === "team") {
+      finalQuantity = 1;
+    }
+
+    // Build the subscription payload
+    const payload: any = {
+      plan_id: planId,
+      total_count: 12,          // 12 months, then renews
+      quantity: finalQuantity,  // Dynamic seat count passed here!
+      notify_info: { notify_email: appUser.email },
+    };
+
+    if (prepaidAmountInr && prepaidAmountInr > 0) {
+      payload.addons = [
+        {
+          item: {
+            name: "Prepaid Conversation Credits",
+            amount: Math.round(prepaidAmountInr * 100), // in paise
+            currency: "INR",
+          },
+        },
+      ];
+    }
 
     // Create Razorpay subscription via API (Do NOT send callback_url or cancel_url here)
     const response = await fetch("https://api.razorpay.com/v1/subscriptions", {
@@ -80,12 +106,7 @@ export async function createRazorpaySubscription(
         "Content-Type": "application/json",
         Authorization: `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
       },
-      body: JSON.stringify({
-        plan_id: planId,
-        total_count: 12,          // 12 months, then renews
-        quantity: finalQuantity,  // Dynamic seat count passed here!
-        notify_info: { notify_email: appUser.email },
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -174,6 +195,68 @@ export async function cancelSubscription(): Promise<{ ok: true } | { error: stri
     }
 
     return { ok: true };
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+}
+
+/**
+ * Creates a one-time Razorpay order for purchasing conversation credits (Top-Ups).
+ */
+export async function createRazorpayOrder(
+  amountInr: number,
+  quantityCredits: number
+): Promise<{ ok: true; orderId: string; keyId: string; prefillEmail: string } | { error: string }> {
+  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+    return { error: "Payment gateway not configured" };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: appUser } = await supabase
+    .from("users")
+    .select("client_id, email, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!appUser || appUser.role !== "admin") {
+    return { error: "Only admins can purchase credits" };
+  }
+
+  try {
+    const response = await fetch("https://api.razorpay.com/v1/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64")}`,
+      },
+      body: JSON.stringify({
+        amount: Math.round(amountInr * 100), // amount in paise
+        currency: "INR",
+        receipt: `topup_${Date.now()}`,
+        notes: {
+          client_id: appUser.client_id,
+          type: "topup",
+          credits: quantityCredits
+        }
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      return { error: err?.error?.description ?? "Failed to create order" };
+    }
+
+    const order = await response.json() as { id: string };
+
+    return {
+      ok: true,
+      orderId: order.id,
+      keyId: RAZORPAY_KEY_ID,
+      prefillEmail: appUser.email,
+    };
   } catch (err) {
     return { error: (err as Error).message };
   }
