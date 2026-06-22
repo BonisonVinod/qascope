@@ -130,8 +130,8 @@ export default async function SettingsPage() {
             >
               OpenRouter
             </a>{" "}
-            (one key, hundreds of models, pay-as-you-go), but OpenAI direct,
-            Together AI, Groq, Azure, or any custom endpoint also work. Every
+            (one key, hundreds of models, pay-as-you-go), but OpenAI,
+            Anthropic, Gemini, Grok, Groq, Azure, or any custom endpoint also work. Every
             workspace must supply its own key &mdash; we never bill your
             scoring through ours.
           </p>

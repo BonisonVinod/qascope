@@ -86,11 +86,6 @@ export async function transcribeAudio(
     );
   }
 
-  if (workspaceConfig.provider === "bedrock") {
-    throw new Error(
-      "The configured provider does not support OpenAI-compatible audio transcription. Use OpenAI or another provider with a compatible speech-to-text endpoint.",
-    );
-  }
 
   const filename = inferAudioFilename(input.filename, input.contentType);
   if (!isSupportedAudioFilename(filename)) {

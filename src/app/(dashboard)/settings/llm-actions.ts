@@ -14,11 +14,12 @@ export type LlmSettingsState =
 
 const VALID_PROVIDERS: ReadonlyArray<LlmProvider> = [
   "openai",
+  "anthropic",
+  "gemini",
+  "xai",
   "openrouter",
-  "together",
   "groq",
   "azure",
-  "bedrock",
   "custom",
 ];
 
@@ -127,14 +128,8 @@ export async function saveLlmSettings(
   if (apiKey.length > 500) {
     return { ok: false, error: "API key looks too long; please check it." };
   }
-  if (provider !== "bedrock" && baseUrl && !baseUrl.startsWith("http")) {
+  if (baseUrl && !baseUrl.startsWith("http")) {
     return { ok: false, error: "Base URL must start with http:// or https://." };
-  }
-  if (provider === "bedrock" && !baseUrl) {
-    return {
-      ok: false,
-      error: "AWS region is required for Bedrock (e.g. us-east-1).",
-    };
   }
   if (embeddingApiKey && embeddingApiKey.length > 500) {
     return { ok: false, error: "Embedding API key looks too long; please check it." };
@@ -211,7 +206,7 @@ export async function testLlmSettings(
   if ((provider === "custom" || provider === "azure") && !baseUrl) {
     return { ok: false, error: `${provider} requires a base URL.` };
   }
-  if (provider !== "bedrock" && baseUrl && !baseUrl.startsWith("http")) {
+  if (baseUrl && !baseUrl.startsWith("http")) {
     return { ok: false, error: "Base URL must start with http:// or https://." };
   }
 
@@ -297,12 +292,6 @@ export async function testVoiceTranscriptionSettings(
 
   const provider = readProvider(formData);
   if (!provider) return { ok: false, error: "Pick a provider first." };
-  if (provider === "bedrock") {
-    return {
-      ok: false,
-      error: "Bedrock is not supported for voice transcription in this version.",
-    };
-  }
 
   const admin = createAdminClient();
   const { data: existingClient } = await admin

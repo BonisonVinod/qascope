@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import {
   saveLlmSettings,
   testLlmSettings,
@@ -10,8 +10,31 @@ import {
 import {
   PROVIDER_INFO,
   PROVIDER_ORDER,
+  PROVIDER_MODELS,
+  CUSTOM_MODEL_SENTINEL,
   type LlmProvider,
+  type ModelEntry,
 } from "@/lib/llm/client";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Find the recommended model for a provider, or fall back to the first one. */
+function defaultModelForProvider(provider: LlmProvider): string {
+  const models = PROVIDER_MODELS[provider];
+  const rec = models.find((m) => m.recommended);
+  return rec?.id ?? models[0]?.id ?? "";
+}
+
+/** Check if the saved model matches any catalog entry for the current provider. */
+function isKnownModel(provider: LlmProvider, modelId: string): boolean {
+  return PROVIDER_MODELS[provider].some((m) => m.id === modelId);
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function LlmSettingsForm({
   current,
@@ -38,12 +61,45 @@ export function LlmSettingsForm({
     FormData
   >(testVoiceTranscriptionSettings, undefined);
 
+  // --- Provider state ---
   const [provider, setProvider] = useState<LlmProvider>(
     current.provider ?? "openrouter",
   );
+
+  // --- Model state ---
+  // Determine initial model selection: known catalog entry or custom
+  const savedModel = current.model ?? "";
+  const savedIsKnown =
+    current.provider != null && isKnownModel(current.provider, savedModel);
+
+  const [selectedModelId, setSelectedModelId] = useState<string>(
+    savedIsKnown ? savedModel : savedModel ? CUSTOM_MODEL_SENTINEL : defaultModelForProvider(current.provider ?? "openrouter"),
+  );
+  const [customModelText, setCustomModelText] = useState(
+    savedIsKnown ? "" : savedModel,
+  );
+
+  const isCustomModel = selectedModelId === CUSTOM_MODEL_SENTINEL || PROVIDER_MODELS[provider].length === 0;
+  // The actual model value sent in the hidden form field
+  const resolvedModel = isCustomModel ? customModelText : selectedModelId;
+
+  // When provider changes, auto-select the recommended model
+  useEffect(() => {
+    const models = PROVIDER_MODELS[provider];
+    if (models.length === 0) {
+      // Custom/no catalog — always show text input
+      setSelectedModelId(CUSTOM_MODEL_SENTINEL);
+      setCustomModelText(PROVIDER_INFO[provider].defaultModel);
+    } else {
+      setSelectedModelId(defaultModelForProvider(provider));
+      setCustomModelText("");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider]);
+
+  // --- Other fields ---
   const [apiKey, setApiKey] = useState("");
   const [baseUrl, setBaseUrl] = useState(current.baseUrl ?? "");
-  const [model, setModel] = useState(current.model ?? "");
   const [useSeparateEmbedding, setUseSeparateEmbedding] = useState(
     current.hasEmbeddingApiKey,
   );
@@ -53,29 +109,19 @@ export function LlmSettingsForm({
   );
 
   const info = PROVIDER_INFO[provider];
-  const isBedrock = provider === "bedrock";
-  const apiKeyLabel = isBedrock ? "AWS Bedrock Bearer token" : "API key";
-  const baseUrlLabel = isBedrock ? "AWS Region" : "Base URL";
-  const baseUrlOptional = !isBedrock;
-  const baseUrlPlaceholder = isBedrock
-    ? "us-east-1"
-    : info.defaultBaseUrl || "https://your-endpoint.example.com/v1";
-  const baseUrlHint = isBedrock
-    ? "Required for Bedrock. Use the AWS region where your inference profile lives, e.g. us-east-1."
-    : info.defaultBaseUrl
-      ? `Defaults to ${info.defaultBaseUrl} when blank.`
-      : "Required for this provider. Paste the endpoint URL from your dashboard.";
-  const modelPlaceholder = isBedrock
-    ? "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
-    : info.defaultModel || "model-id";
-  const modelHint = isBedrock
-    ? "Bedrock inference profile ID. Default is Claude 3.5 Sonnet."
-    : info.defaultModel
-      ? `Defaults to ${info.defaultModel} when blank.`
-      : "Required for this provider. Copy the model id from your provider docs.";
+  const models: ModelEntry[] = PROVIDER_MODELS[provider];
+  const baseUrlOptional = provider !== "azure" && provider !== "custom";
+  const baseUrlPlaceholder = info.defaultBaseUrl || "https://your-endpoint.example.com/v1";
+  const baseUrlHint = info.defaultBaseUrl
+    ? `Defaults to ${info.defaultBaseUrl} when blank.`
+    : "Required for this provider. Paste the endpoint URL from your dashboard.";
 
   return (
     <form action={formAction} className="space-y-5">
+      {/* Hidden field that always carries the resolved model value */}
+      <input type="hidden" name="model" value={resolvedModel} />
+
+      {/* ── Provider Dropdown ── */}
       <div>
         <label
           htmlFor="provider"
@@ -99,12 +145,78 @@ export function LlmSettingsForm({
         <p className="mt-1 text-xs text-zinc-500">{info.description}</p>
       </div>
 
+      {/* ── Model Selection ── */}
+      <div>
+        <label
+          htmlFor="modelSelect"
+          className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
+        >
+          Model
+        </label>
+
+        {models.length > 0 ? (
+          <>
+            <select
+              id="modelSelect"
+              value={selectedModelId}
+              onChange={(e) => {
+                setSelectedModelId(e.target.value);
+                if (e.target.value !== CUSTOM_MODEL_SENTINEL) {
+                  setCustomModelText("");
+                }
+              }}
+              className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.recommended ? "⭐ " : ""}
+                  {m.label}
+                  {m.context ? ` (${m.context})` : ""}
+                </option>
+              ))}
+              <option disabled>───────────</option>
+              <option value={CUSTOM_MODEL_SENTINEL}>
+                ✏️ Custom model ID...
+              </option>
+            </select>
+
+            {isCustomModel && (
+              <input
+                id="customModel"
+                value={customModelText}
+                onChange={(e) => setCustomModelText(e.target.value)}
+                placeholder="Enter custom model ID (e.g. gpt-4o-2024-08-06)"
+                className="mt-2 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              />
+            )}
+          </>
+        ) : (
+          /* Custom / no catalog — always a text input */
+          <input
+            id="customModel"
+            value={customModelText}
+            onChange={(e) => setCustomModelText(e.target.value)}
+            placeholder="model-id (e.g. gpt-4o-mini)"
+            className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          />
+        )}
+
+        <p className="mt-1 text-xs text-zinc-500">
+          {isCustomModel
+            ? "Type the exact model ID from your provider's docs."
+            : info.defaultModel
+              ? `Selected model will be used for all QA scoring.`
+              : "Required for this provider."}
+        </p>
+      </div>
+
+      {/* ── API Key ── */}
       <div>
         <label
           htmlFor="apiKey"
           className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
         >
-          {apiKeyLabel}
+          API Key
         </label>
         <input
           id="apiKey"
@@ -123,12 +235,13 @@ export function LlmSettingsForm({
         </p>
       </div>
 
+      {/* ── Base URL ── */}
       <div>
         <label
           htmlFor="baseUrl"
           className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
         >
-          {baseUrlLabel}
+          Base URL
           {baseUrlOptional && <span className="text-zinc-400"> (optional)</span>}
         </label>
         <input
@@ -142,24 +255,7 @@ export function LlmSettingsForm({
         <p className="mt-1 text-xs text-zinc-500">{baseUrlHint}</p>
       </div>
 
-      <div>
-        <label
-          htmlFor="model"
-          className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
-        >
-          Model <span className="text-zinc-400">(optional)</span>
-        </label>
-        <input
-          id="model"
-          name="model"
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          placeholder={modelPlaceholder}
-          className="mt-1 block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <p className="mt-1 text-xs text-zinc-500">{modelHint}</p>
-      </div>
-
+      {/* ── Separate Embedding Key ── */}
       <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
         <label className="flex items-center gap-2 text-sm font-medium">
           <input
@@ -226,6 +322,7 @@ export function LlmSettingsForm({
         )}
       </div>
 
+      {/* ── Action Buttons ── */}
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
